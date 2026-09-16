@@ -1,0 +1,985 @@
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { Subscription, finalize, skip } from 'rxjs';
+import { CatalogBrowseRepository, CatalogFamilySort } from '../../core/domain/repositories/catalog-browse.repository';
+import {
+  CatalogFamily,
+  CatalogOffer,
+  CatalogPack,
+  catalogListingKey,
+  flattenFamilyPacks,
+  familyHeroImage,
+  isCatalogSearchReady,
+  matchStatus,
+  offerListingTitle
+} from '../../core/domain/models/catalog-family.model';
+import { CategoryNode } from '../../core/domain/models/category.model';
+import { categoryDisplayName } from '../../core/domain/category-display';
+import {
+  displayPackSize as formatPackSize,
+  packChipLabel as formatPackChipLabel,
+  packSizeDir as formatPackSizeDir
+} from '../../core/domain/pack-size-display';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import {
+  pharmacyDisplayName,
+  pharmacyLogo as resolvePharmacyLogo
+} from '../../core/domain/pharmacy-brands';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { LocaleService } from '../../core/services/locale.service';
+import { NotificationService } from '../../core/services/notification.service';
+
+/** Server-side page size — do not load the full catalog into the browser. */
+const CATALOG_PAGE_SIZE = 24;
+const SEARCH_PAGE_SIZE = 24;
+
+interface CategoryOption {
+  slug: string;
+  name: string;
+}
+
+@Component({
+  selector: 'app-products-admin',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, CurrencyPipe, DecimalPipe],
+  template: `
+    <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
+      <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
+        <div class="h-1.5 bg-[#C27938]"></div>
+        <div class="flex flex-col gap-4 p-5 sm:p-6">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div class="min-w-0">
+              <div class="inline-flex items-center gap-2 rounded-full bg-[#F8EEE2] px-3 py-1 text-[11px] font-bold text-[#C27938]">
+                <span class="size-1.5 rounded-full bg-[#C27938]"></span>
+                {{ 'productsAdmin.badge' | t }}
+              </div>
+              <h1 class="mt-3 text-balance text-3xl font-extrabold text-[#181A1D] sm:text-4xl">
+                {{ 'productsAdmin.title' | t }}
+              </h1>
+              <p class="mt-1.5 max-w-2xl text-pretty text-sm font-medium text-[#8A735C]">
+                {{ 'productsAdmin.subtitleAll' | t }}
+              </p>
+            </div>
+            <a
+              routerLink="/categories"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-4 text-sm font-bold text-[#181A1D] hover:bg-[#FBF8F4]"
+            >
+              <i class="pi pi-sitemap text-sm"></i>
+              {{ 'productsAdmin.toCategories' | t }}
+            </a>
+          </div>
+
+          <div class="grid gap-3 border-t border-[#EDE0D0] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            <label class="block space-y-1.5 sm:col-span-2 lg:col-span-1">
+              <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.search' | t }}</span>
+              <input
+                type="search"
+                class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                [ngModel]="query()"
+                (ngModelChange)="onQueryChange($event)"
+                [placeholder]="'productsAdmin.searchPlaceholder' | t"
+                autocomplete="off"
+                [attr.aria-busy]="searching()"
+              />
+            </label>
+
+            <label class="block space-y-1.5">
+              <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterCategory' | t }}</span>
+              <select
+                class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                [ngModel]="categorySlug()"
+                (ngModelChange)="onCategoryChange($event)"
+              >
+                <option value="">{{ 'productsAdmin.filterAllCategories' | t }}</option>
+                @for (cat of categoryOptions(); track cat.slug) {
+                  <option [value]="cat.slug">{{ cat.name }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="block space-y-1.5">
+              <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterBrand' | t }}</span>
+              <select
+                class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                [ngModel]="brand()"
+                (ngModelChange)="onBrandChange($event)"
+              >
+                <option value="">{{ 'productsAdmin.allBrands' | t }}</option>
+                @for (b of brands(); track b) {
+                  <option [value]="b">{{ b }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="block space-y-1.5">
+              <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterSort' | t }}</span>
+              <select
+                class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                [ngModel]="sort()"
+                (ngModelChange)="onSortChange($event)"
+              >
+                <option value="nameAsc">{{ 'productsAdmin.sortNameAsc' | t }}</option>
+                <option value="nameDesc">{{ 'productsAdmin.sortNameDesc' | t }}</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 text-sm font-semibold tabular-nums text-[#8A735C]">
+            <span>
+              {{ 'productsAdmin.showing' | t }}:
+              <span class="text-[#181A1D]">{{ rangeStart() }}–{{ rangeEnd() }}</span>
+              {{ 'productsAdmin.pageOf' | t }}
+              <span class="text-[#181A1D]">{{ total() }}</span>
+            </span>
+            @if (searching()) {
+              <span class="text-[#C27938]">{{ 'productsAdmin.searching' | t }}</span>
+            } @else if (query().trim() && !searchReady()) {
+              <span>{{ 'productsAdmin.searchHint' | t }}</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      @if (loading() && families().length === 0) {
+        <div class="rounded-2xl border border-[#E8D5BE] bg-white px-6 py-16 text-center text-sm font-medium text-[#8A735C]">
+          {{ 'productsAdmin.loading' | t }}
+        </div>
+      } @else if (error()) {
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">
+          {{ 'productsAdmin.error' | t }}
+        </div>
+      } @else if (families().length === 0) {
+        <div class="rounded-2xl border border-dashed border-[#E8D5BE] bg-white px-6 py-16 text-center text-sm font-medium text-[#8A735C]">
+          {{ 'productsAdmin.empty' | t }}
+        </div>
+      } @else {
+        <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm" [attr.aria-busy]="searching()">
+          <div
+            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
+          >
+            <span></span>
+            <span>{{ 'productsAdmin.colProduct' | t }}</span>
+            <span>{{ 'productsAdmin.groupCode' | t }}</span>
+            <span>{{ 'productsAdmin.colBarcode' | t }}</span>
+            <span>{{ 'productsAdmin.colPrice' | t }}</span>
+            <span>{{ 'productsAdmin.colActions' | t }}</span>
+          </div>
+          @for (family of families(); track listingKey(family)) {
+            <article class="border-t border-[#EDE0D0] even:bg-[#FBF8F4]/60 hover:bg-[#F8EEE2]/50">
+              <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
+                <div class="size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4]">
+                  @if (cardImage(family); as img) {
+                    <img [src]="img" [alt]="family.label" class="size-full object-contain p-1" loading="lazy" />
+                  } @else {
+                    <div class="flex size-full items-center justify-center text-[#C27938]/40">
+                      <i class="pi pi-image text-sm" aria-hidden="true"></i>
+                    </div>
+                  }
+                </div>
+
+                <div class="min-w-0">
+                  <div class="text-[11px] font-bold text-[#C27938]">
+                    {{ family.brand || ('productsAdmin.unknownBrand' | t) }}
+                  </div>
+                  <h2 class="line-clamp-2 text-pretty text-sm font-extrabold leading-snug text-[#181A1D]">
+                    {{ family.label }}
+                  </h2>
+                  <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                    <span [class]="matchBadgeClass(family)">{{ matchLabelKey(family) | t }}</span>
+                    <span class="text-[11px] font-semibold tabular-nums text-[#8A735C]">
+                      {{ cardPharmacyCount(family) }} {{ 'productsAdmin.pharmacies' | t }}
+                    </span>
+                    @if (!priceSyncOn(family)) {
+                      <span class="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-800">
+                        {{ 'productsAdmin.priceSyncPaused' | t }}
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-1">
+                  <code class="inline-block rounded-md bg-[#181A1D] px-1.5 py-1 font-mono text-[11px] font-bold text-white">
+                    {{ family.groupCode || '—' }}
+                  </code>
+                  @if (family.groupCode) {
+                    <button
+                      type="button"
+                      class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#181A1D] hover:bg-[#FBF8F4]"
+                      (click)="copyCode(family.groupCode!)"
+                      [attr.aria-label]="'productsAdmin.copyCode' | t"
+                    >
+                      <i class="pi pi-copy text-xs" aria-hidden="true"></i>
+                    </button>
+                  }
+                </div>
+
+                <div>
+                  @if (canEditBarcode(family)) {
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-1">
+                        <input
+                          type="text"
+                          dir="ltr"
+                          inputmode="numeric"
+                          class="min-h-9 w-full min-w-0 rounded-lg border bg-[#FBF8F4] px-2 font-mono text-xs font-bold tabular-nums text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                          [ngClass]="barcodeError(family) ? 'border-rose-400' : 'border-[#E8D5BE]'"
+                          [ngModel]="barcodeValue(family)"
+                          (ngModelChange)="setBarcodeDraft(family, $event)"
+                          [placeholder]="'productsAdmin.internationalCode' | t"
+                          [attr.aria-label]="'productsAdmin.internationalCode' | t"
+                          [attr.aria-invalid]="!!barcodeError(family)"
+                          [attr.aria-describedby]="barcodeError(family) ? barcodeErrorId(family) : null"
+                        />
+                        <button
+                          type="button"
+                          class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-[#181A1D] px-2.5 text-[11px] font-bold text-white hover:bg-black disabled:opacity-50"
+                          [disabled]="barcodeBusyId() === cardMasterId(family)"
+                          (click)="saveBarcode(family)"
+                        >
+                          {{ 'productsAdmin.saveBarcode' | t }}
+                        </button>
+                      </div>
+                      @if (barcodeError(family); as err) {
+                        <p
+                          class="text-xs font-medium text-rose-700"
+                          [id]="barcodeErrorId(family)"
+                          aria-live="polite"
+                        >{{ err }}</p>
+                      }
+                    </div>
+                  } @else {
+                    <span class="font-mono text-xs font-bold tabular-nums text-[#181A1D]" dir="ltr">
+                      {{ cardBarcode(family) || '—' }}
+                    </span>
+                  }
+                </div>
+
+                <div class="tabular-nums">
+                  <div class="text-sm font-extrabold text-[#181A1D]">
+                    {{ cardPrice(family) | currency: 'SAR':'symbol':'1.2-2' }}
+                  </div>
+                  @if (cardSavings(family); as savings) {
+                    <div class="text-[11px] font-bold text-[#8A735C]">
+                      {{ 'productsAdmin.savePercent' | t }}
+                      {{ savings | number: '1.0-1' }}٪
+                    </div>
+                  }
+                </div>
+
+                <div class="flex flex-wrap items-center gap-1 lg:flex-nowrap">
+                  <button
+                    type="button"
+                    class="inline-flex min-h-8 items-center whitespace-nowrap rounded-lg bg-[#C27938] px-2 text-[11px] font-bold text-white hover:bg-[#a8662e]"
+                    [attr.aria-expanded]="offersOpen(family)"
+                    [attr.aria-controls]="offersPanelId(family)"
+                    (click)="toggleExpand(listingKey(family))"
+                  >
+                    {{
+                      offersOpen(family)
+                        ? ('productsAdmin.hideOffers' | t)
+                        : ('productsAdmin.showOffers' | t)
+                    }}
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex min-h-8 items-center whitespace-nowrap rounded-lg bg-[#181A1D] px-2 text-[11px] font-bold text-white hover:bg-black"
+                    (click)="openDetail(family)"
+                  >
+                    {{ 'productsAdmin.details' | t }}
+                  </button>
+                  <button
+                    type="button"
+                    role="switch"
+                    [attr.aria-checked]="priceSyncOn(family)"
+                    class="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 text-[11px] font-bold"
+                    [ngClass]="
+                      priceSyncOn(family)
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                        : 'border-rose-200 bg-rose-50 text-rose-800'
+                    "
+                    [disabled]="!cardMasterId(family) || (cardMasterId(family) || '').startsWith('live:') || priceSyncBusyId() === cardMasterId(family)"
+                    (click)="togglePriceSync(family)"
+                  >
+                    <span
+                      class="size-2 rounded-full"
+                      [class]="priceSyncOn(family) ? 'bg-emerald-500' : 'bg-rose-500'"
+                    ></span>
+                    {{
+                      (priceSyncOn(family) ? 'productsAdmin.priceSyncOn' : 'productsAdmin.priceSyncOff') | t
+                    }}
+                  </button>
+                </div>
+              </div>
+
+              @if (offersOpen(family)) {
+                <div [id]="offersPanelId(family)" class="border-t border-[#EDE0D0] bg-[#FBF8F4] p-4 sm:p-5">
+                  @if (family.packs.length > 1) {
+                    <div class="mb-3">
+                      <div class="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#A68B6D]">
+                        {{ 'productsAdmin.sizesLabel' | t }}
+                      </div>
+                      <div
+                        class="flex flex-wrap gap-2"
+                        role="listbox"
+                        [attr.aria-label]="'productsAdmin.sizesLabel' | t"
+                      >
+                        @for (pack of family.packs; track pack.masterId) {
+                          <button
+                            type="button"
+                            role="option"
+                            [attr.aria-selected]="selectedPackId(family) === pack.masterId"
+                            class="inline-flex min-h-10 items-center justify-center rounded-lg border px-3.5 text-sm font-bold tabular-nums"
+                            [ngClass]="
+                              selectedPackId(family) === pack.masterId
+                                ? 'border-[#C27938] bg-[#C27938] text-white'
+                                : 'border-[#E8D5BE] bg-white text-[#181A1D] hover:bg-[#FBF8F4]'
+                            "
+                            [attr.dir]="packSizeDir(pack.packSize)"
+                            (click)="selectPack(family.familyKey, pack.masterId)"
+                          >
+                            {{ packChipLabel(pack) }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wide text-[#A68B6D]">
+                      {{ 'productsAdmin.offers' | t }}
+                    </h3>
+                    @if (selectedPack(family); as pack) {
+                      <div class="text-xs font-bold tabular-nums text-[#181A1D]">
+                        {{ pack.lowestPrice | currency: 'SAR':'symbol':'1.2-2' }}
+                        @if (pack.highestPrice > pack.lowestPrice) {
+                          <span class="font-semibold text-[#8A735C]">
+                            – {{ pack.highestPrice | currency: 'SAR':'symbol':'1.2-2' }}
+                          </span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  @if (selectedPack(family)?.requiresPackReview) {
+                    <p class="mb-2 text-sm font-semibold text-amber-800">{{ 'productsAdmin.packReview' | t }}</p>
+                  }
+                  <div class="space-y-2">
+                    @for (offer of selectedOffers(family); track offer.pharmacyCode + (offer.pharmacyProductId || offer.productUrl)) {
+                      <div
+                        class="flex flex-col gap-3 rounded-xl border border-[#E8D5BE] bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div class="flex min-w-0 flex-1 items-center gap-3">
+                          @if (pharmacyLogo(offer.pharmacyCode); as logo) {
+                            <img
+                              [src]="logo"
+                              [alt]="pharmacyLabel(offer)"
+                              class="size-10 shrink-0 rounded-lg border border-[#E8D5BE] bg-white object-contain p-1"
+                            />
+                          } @else {
+                            <span
+                              class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#F8EEE2] text-[#C27938]"
+                            >
+                              <i class="pi pi-shop text-sm"></i>
+                            </span>
+                          }
+                          <div class="min-w-0 flex-1">
+                            <div class="text-sm font-bold text-[#181A1D]">
+                              {{ pharmacyLabel(offer) }}
+                            </div>
+                            @if (listingTitle(offer); as listing) {
+                              <div class="mt-0.5 text-pretty text-sm font-semibold text-[#4A4038]">
+                                {{ listing }}
+                              </div>
+                            }
+                            <div class="mt-0.5 text-sm font-extrabold tabular-nums text-[#181A1D]">
+                              {{ offer.price | currency: (offer.currency || 'SAR'):'symbol':'1.2-2' }}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-medium text-[#8A735C]">
+                              <span>{{ offer.availability || ('productsAdmin.inStock' | t) }}</span>
+                              <span aria-hidden="true">·</span>
+                              <span [attr.dir]="packSizeDir(offer.packSize)" class="tabular-nums font-semibold text-[#4A4038]">
+                                {{ displayPackSize(offer.packSize) || ('productsAdmin.unknownOfferPack' | t) }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                          @if (offer.productUrl) {
+                            <a
+                              [href]="offer.productUrl"
+                              target="_blank"
+                              rel="noopener"
+                              class="inline-flex min-h-9 items-center rounded-lg border border-[#E8D5BE] px-3 text-[11px] font-bold text-[#181A1D] hover:bg-[#FBF8F4]"
+                            >
+                              {{ 'productsAdmin.openOffer' | t }}
+                            </a>
+                          }
+                          @if (offer.pharmacyProductId) {
+                            <div class="flex items-center gap-1">
+                              <input
+                                class="min-h-9 w-28 rounded-lg border border-[#E8D5BE] bg-[#FBF8F4] px-2 font-mono text-xs font-bold uppercase outline-none focus:border-[#C27938]"
+                                [placeholder]="'productsAdmin.pasteCode' | t"
+                                [ngModel]="linkDrafts()[offer.pharmacyProductId!] || ''"
+                                (ngModelChange)="setDraft(offer.pharmacyProductId!, $event)"
+                              />
+                              <button
+                                type="button"
+                                class="inline-flex min-h-9 items-center rounded-lg bg-[#181A1D] px-3 text-[11px] font-bold text-white hover:bg-black disabled:opacity-50"
+                                [disabled]="linkingId() === offer.pharmacyProductId"
+                                (click)="linkOffer(offer)"
+                              >
+                                {{ 'productsAdmin.link' | t }}
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    } @empty {
+                      <div class="rounded-xl border border-dashed border-[#E8D5BE] bg-white px-4 py-8 text-center text-sm text-[#8A735C]">
+                        {{ 'productsAdmin.empty' | t }}
+                      </div>
+                    }
+                    </div>
+                </div>
+              }
+            </article>
+          }
+        </div>
+
+        @if (totalPages() > 1) {
+          <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <button
+              type="button"
+              class="inline-flex min-h-10 items-center rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40"
+              [disabled]="page() <= 1 || loading()"
+              (click)="goToPage(page() - 1)"
+            >
+              {{ 'productsAdmin.pagePrev' | t }}
+            </button>
+            @for (p of pageButtons(); track p) {
+              @if (p === '…') {
+                <span class="px-1 text-sm font-bold text-[#A68B6D]">…</span>
+              } @else {
+                <button
+                  type="button"
+                  class="inline-flex size-10 items-center justify-center rounded-xl text-xs font-bold tabular-nums"
+                  [ngClass]="
+                    page() === p
+                      ? 'bg-[#181A1D] text-white'
+                      : 'border border-[#E8D5BE] bg-white text-[#181A1D] hover:bg-[#FBF8F4]'
+                  "
+                  [disabled]="loading()"
+                  (click)="goToPage(+$any(p))"
+                >
+                  {{ p }}
+                </button>
+              }
+            }
+            <button
+              type="button"
+              class="inline-flex min-h-10 items-center rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40"
+              [disabled]="page() >= totalPages() || loading()"
+              (click)="goToPage(page() + 1)"
+            >
+              {{ 'productsAdmin.pageNext' | t }}
+            </button>
+          </div>
+        }
+      }
+    </section>
+  `
+})
+export class ProductsAdminComponent implements OnInit, OnDestroy {
+  private readonly catalog = inject(CatalogBrowseRepository);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
+  readonly locale = inject(LocaleService);
+
+  readonly families = signal<CatalogFamily[]>([]);
+  readonly brands = signal<string[]>([]);
+  readonly categoryNodes = signal<CategoryNode[]>([]);
+  readonly query = signal('');
+  readonly categorySlug = signal('');
+  readonly brand = signal('');
+  readonly sort = signal<CatalogFamilySort>('nameAsc');
+  readonly page = signal(1);
+  readonly total = signal(0);
+  readonly loading = signal(false);
+  readonly error = signal(false);
+  readonly selectedPackIds = signal<Record<string, string>>({});
+  readonly linkDrafts = signal<Record<string, string>>({});
+  readonly linkingId = signal<string | null>(null);
+  readonly openOfferKeys = signal<ReadonlySet<string>>(new Set());
+  readonly priceSyncBusyId = signal<string | null>(null);
+  readonly barcodeDrafts = signal<Record<string, string>>({});
+  readonly barcodeErrors = signal<Record<string, string>>({});
+  readonly barcodeBusyId = signal<string | null>(null);
+  readonly searching = signal(false);
+  readonly listPageSize = signal(CATALOG_PAGE_SIZE);
+
+  private queryTimer: ReturnType<typeof setTimeout> | null = null;
+  private fetchSub: Subscription | null = null;
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.total() / this.listPageSize()))
+  );
+  readonly rangeStart = computed(() =>
+    this.total() === 0 ? 0 : (this.page() - 1) * this.listPageSize() + 1
+  );
+  readonly rangeEnd = computed(() =>
+    Math.min(this.page() * this.listPageSize(), this.total())
+  );
+  readonly pageButtons = computed(() => this.buildPageButtons(this.page(), this.totalPages()));
+  readonly categoryOptions = computed(() => this.flattenCategories(this.categoryNodes()));
+  readonly searchReady = computed(() => isCatalogSearchReady(this.query()));
+
+  ngOnInit(): void {
+    const slug = this.route.snapshot.queryParamMap.get('categorySlug')?.trim() ?? '';
+    if (slug) this.categorySlug.set(slug);
+    this.reload();
+    this.route.queryParamMap.pipe(skip(1)).subscribe((params) => {
+      const next = params.get('categorySlug')?.trim() ?? '';
+      if (next === this.categorySlug()) return;
+      this.categorySlug.set(next);
+      this.reload();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.queryTimer) clearTimeout(this.queryTimer);
+    this.fetchSub?.unsubscribe();
+  }
+
+  onQueryChange(value: string): void {
+    this.query.set(value);
+    if (this.queryTimer) clearTimeout(this.queryTimer);
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      this.reload();
+      return;
+    }
+    this.queryTimer = setTimeout(() => {
+      if (!isCatalogSearchReady(this.query())) return;
+      this.reload();
+    }, 300);
+  }
+
+  onCategoryChange(value: string): void {
+    this.categorySlug.set(value);
+    this.reload();
+  }
+
+  onBrandChange(value: string): void {
+    this.brand.set(value);
+    this.reload();
+  }
+
+  onSortChange(value: string): void {
+    this.sort.set(value === 'nameDesc' ? 'nameDesc' : 'nameAsc');
+    this.reload();
+  }
+
+  goToPage(page: number): void {
+    const target = Math.min(Math.max(1, page), this.totalPages());
+    if (target === this.page() || this.loading() || this.searching()) return;
+    this.fetch(target);
+  }
+
+  listingKey(family: CatalogFamily): string {
+    return catalogListingKey(family);
+  }
+
+  toggleExpand(key: string): void {
+    this.openOfferKeys.update((cur) => {
+      const next = new Set(cur);
+      if (next.has(key)) {
+        next.delete(key);
+        return next;
+      }
+      const family = this.families().find((f) => this.listingKey(f) === key);
+      if (family) this.ensurePackSelection(family);
+      next.add(key);
+      return next;
+    });
+  }
+
+  offersOpen(family: CatalogFamily): boolean {
+    return this.openOfferKeys().has(this.listingKey(family));
+  }
+
+  selectPack(familyKey: string, masterId: string): void {
+    this.selectedPackIds.update((m) => ({ ...m, [familyKey]: masterId }));
+  }
+
+  selectedPackId(family: CatalogFamily): string | null {
+    const id = this.selectedPackIds()[family.familyKey];
+    if (id && family.packs.some((p) => p.masterId === id)) return id;
+    return family.packs[0]?.masterId ?? null;
+  }
+
+  selectedPack(family: CatalogFamily): CatalogPack | null {
+    const id = this.selectedPackId(family);
+    if (!id) return null;
+    return family.packs.find((p) => p.masterId === id) ?? family.packs[0] ?? null;
+  }
+
+  selectedOffers(family: CatalogFamily): CatalogOffer[] {
+    return [...(this.selectedPack(family)?.offers ?? [])].sort((a, b) => a.price - b.price);
+  }
+
+  packChipLabel(pack: CatalogPack): string {
+    return formatPackChipLabel(pack.packSize, pack.label, { locale: this.locale.locale() });
+  }
+
+  displayPackSize(packSize: string | null | undefined): string {
+    return formatPackSize(packSize, this.locale.locale());
+  }
+
+  packSizeDir(packSize: string | null | undefined): 'ltr' | null {
+    return formatPackSizeDir(this.displayPackSize(packSize));
+  }
+
+  openDetail(family: CatalogFamily): void {
+    void this.router.navigate(['/products/detail'], {
+      queryParams: { key: family.familyKey }
+    });
+  }
+
+  setDraft(id: string, value: string): void {
+    this.linkDrafts.update((m) => ({ ...m, [id]: value }));
+  }
+
+  linkOffer(offer: CatalogOffer): void {
+    const id = offer.pharmacyProductId;
+    if (!id) return;
+    const code = (this.linkDrafts()[id] || '').trim();
+    if (!code) {
+      this.notifications.showError(this.i18n.t('productsAdmin.codeRequired'), this.i18n.t('productsAdmin.link'));
+      return;
+    }
+    this.linkingId.set(id);
+    this.catalog
+      .linkByGroupCode(id, code)
+      .pipe(finalize(() => this.linkingId.set(null)))
+      .subscribe({
+        next: (res) => {
+          this.notifications.showSuccess(this.i18n.t('productsAdmin.linkedOk'), res.code);
+          this.reloadKeepingSelection();
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('productsAdmin.linkedFail'),
+            this.i18n.t('productsAdmin.link')
+          );
+        }
+      });
+  }
+
+  pharmacyLogo(code: string | null | undefined): string | null {
+    return resolvePharmacyLogo(code);
+  }
+
+  cardImage(family: CatalogFamily): string | null {
+    return familyHeroImage(family);
+  }
+
+  cardPrice(family: CatalogFamily): number {
+    const pack = this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
+    return pack?.lowestPrice || pack?.offers[0]?.price || 0;
+  }
+
+  cardPharmacyCount(family: CatalogFamily): number {
+    const pack = this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
+    return pack?.pharmacyCount || pack?.offers.length || 0;
+  }
+
+  cardSavings(family: CatalogFamily): number | null {
+    const pack = this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
+    const value = pack?.savingsPercent;
+    return value != null && value > 0 ? value : null;
+  }
+
+  cardBarcode(family: CatalogFamily): string | null {
+    const pack = this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
+    const code = pack?.barcode == null ? '' : String(pack.barcode).trim();
+    return code || null;
+  }
+
+  cardMasterId(family: CatalogFamily): string | null {
+    const pack = this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
+    const id = pack?.masterId?.trim();
+    return id || null;
+  }
+
+  listingTitle(offer: CatalogOffer): string {
+    return offerListingTitle(offer);
+  }
+
+  offersPanelId(family: CatalogFamily): string {
+    return `offers-${this.listingKey(family)}`;
+  }
+
+  canEditBarcode(family: CatalogFamily): boolean {
+    const id = this.cardMasterId(family);
+    return !!id && !id.startsWith('live:');
+  }
+
+  barcodeValue(family: CatalogFamily): string {
+    const id = this.cardMasterId(family);
+    if (!id) return '';
+    const drafts = this.barcodeDrafts();
+    if (Object.prototype.hasOwnProperty.call(drafts, id)) return drafts[id] ?? '';
+    return this.cardBarcode(family) ?? '';
+  }
+
+  setBarcodeDraft(family: CatalogFamily, value: string): void {
+    const id = this.cardMasterId(family);
+    if (!id) return;
+    this.barcodeDrafts.update((m) => ({ ...m, [id]: value }));
+    this.barcodeErrors.update((m) => {
+      const next = { ...m };
+      delete next[id];
+      return next;
+    });
+  }
+
+  barcodeError(family: CatalogFamily): string | null {
+    const id = this.cardMasterId(family);
+    if (!id) return null;
+    return this.barcodeErrors()[id] ?? null;
+  }
+
+  barcodeErrorId(family: CatalogFamily): string {
+    return `barcode-err-${this.cardMasterId(family) ?? 'none'}`;
+  }
+
+  saveBarcode(family: CatalogFamily): void {
+    const id = this.cardMasterId(family);
+    if (!id || id.startsWith('live:') || this.barcodeBusyId() === id) return;
+    const value = this.barcodeValue(family).trim();
+    if (!value) {
+      this.barcodeErrors.update((m) => ({ ...m, [id]: this.i18n.t('productsAdmin.barcodeInvalid') }));
+      return;
+    }
+    this.barcodeBusyId.set(id);
+    this.catalog
+      .setMasterBarcode(id, value)
+      .pipe(finalize(() => this.barcodeBusyId.set(null)))
+      .subscribe({
+        next: (res) => {
+          this.families.update((list) =>
+            list.map((row) => ({
+              ...row,
+              packs: row.packs.map((pack) =>
+                pack.masterId === res.id ? { ...pack, barcode: res.barcode } : pack
+              )
+            }))
+          );
+          this.barcodeDrafts.update((m) => {
+            const next = { ...m };
+            delete next[id];
+            return next;
+          });
+          this.barcodeErrors.update((m) => {
+            const next = { ...m };
+            delete next[id];
+            return next;
+          });
+          this.notifications.showSuccess(this.i18n.t('productsAdmin.barcodeSaved'), res.barcode);
+        },
+        error: () => {
+          this.barcodeErrors.update((m) => ({ ...m, [id]: this.i18n.t('productsAdmin.barcodeInvalid') }));
+        }
+      });
+  }
+
+  priceSyncOn(family: CatalogFamily): boolean {
+    const pack = this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
+    return pack?.priceSyncEnabled !== false;
+  }
+
+  copyCode(code: string): void {
+    void navigator.clipboard.writeText(code).then(() => {
+      this.notifications.showSuccess(this.i18n.t('productsAdmin.copied'), code);
+    });
+  }
+
+  togglePriceSync(family: CatalogFamily): void {
+    const id = this.cardMasterId(family);
+    if (!id || id.startsWith('live:') || this.priceSyncBusyId() === id) return;
+
+    const next = !this.priceSyncOn(family);
+    this.priceSyncBusyId.set(id);
+    this.catalog
+      .setPriceSyncEnabled(id, next)
+      .pipe(finalize(() => this.priceSyncBusyId.set(null)))
+      .subscribe({
+        next: (res) => {
+          this.families.update((list) =>
+            list.map((row) => ({
+              ...row,
+              packs: row.packs.map((pack) =>
+                pack.masterId === res.id ? { ...pack, priceSyncEnabled: res.enabled } : pack
+              )
+            }))
+          );
+          this.notifications.showSuccess(
+            this.i18n.t(res.enabled ? 'productsAdmin.priceSyncOnMsg' : 'productsAdmin.priceSyncOffMsg'),
+            this.i18n.t('productsAdmin.priceSyncLabel')
+          );
+        }
+      });
+  }
+
+  matchLabelKey(family: CatalogFamily): string {
+    switch (matchStatus(family)) {
+      case 'Exact':
+        return 'productsAdmin.matchConfirmed';
+      case 'Comparable':
+        return 'productsAdmin.matchComparable';
+      case 'Single':
+        return 'productsAdmin.matchSingle';
+      default:
+        return 'productsAdmin.matchPending';
+    }
+  }
+
+  matchBadgeClass(family: CatalogFamily): string {
+    switch (matchStatus(family)) {
+      case 'Exact':
+        return 'rounded-full bg-[#E8F5EE] px-2 py-0.5 text-[11px] font-bold text-[#1B7A45]';
+      case 'Pending':
+        return 'rounded-full bg-[#F8EEE2] px-2 py-0.5 text-[11px] font-bold text-[#C27938]';
+      default:
+        return 'rounded-full bg-[#FBF8F4] px-2 py-0.5 text-[11px] font-bold text-[#8A735C]';
+    }
+  }
+
+  pharmacyLabel(offer: CatalogOffer): string {
+    return pharmacyDisplayName(offer.pharmacyCode, offer.pharmacyName, this.locale.locale());
+  }
+
+  private ensurePackSelection(family: CatalogFamily): void {
+    const current = this.selectedPackIds()[family.familyKey];
+    if (current && family.packs.some((p) => p.masterId === current)) return;
+    const first = family.packs[0]?.masterId;
+    if (first) {
+      this.selectedPackIds.update((m) => ({ ...m, [family.familyKey]: first }));
+    }
+  }
+
+  private filtersRequested = false;
+
+  private ensureFilterOptions(): void {
+    if (this.filtersRequested) return;
+    this.filtersRequested = true;
+    this.loadFilterOptions();
+  }
+
+  private loadFilterOptions(): void {
+    this.catalog.getCategoryStructure().subscribe({
+      next: (nodes) => this.categoryNodes.set(nodes),
+      error: () => this.categoryNodes.set([])
+    });
+    this.catalog.listFamilyBrands().subscribe({
+      next: (rows) => this.brands.set(rows),
+      error: () => this.brands.set([])
+    });
+  }
+
+  private flattenCategories(nodes: CategoryNode[]): CategoryOption[] {
+    const out: CategoryOption[] = [];
+    const walk = (list: CategoryNode[], prefix = '') => {
+      for (const n of list) {
+        const label = categoryDisplayName(n, this.locale.locale());
+        const name = prefix ? `${prefix} / ${label}` : label;
+        if (n.slug) out.push({ slug: n.slug, name });
+        if (n.children?.length) walk(n.children, name);
+      }
+    };
+    walk(nodes);
+    return out.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  }
+
+  private buildPageButtons(current: number, total: number): Array<number | '…'> {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const pages = new Set<number>([1, total, current, current - 1, current + 1, 2, total - 1]);
+    const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+    const result: Array<number | '…'> = [];
+    let prev = 0;
+    for (const p of sorted) {
+      if (prev && p - prev > 1) result.push('…');
+      result.push(p);
+      prev = p;
+    }
+    return result;
+  }
+
+  private reloadKeepingSelection(): void {
+    const openKeys = this.openOfferKeys();
+    const packs = this.selectedPackIds();
+    this.error.set(false);
+    this.fetch(this.page(), () => {
+      this.selectedPackIds.set(packs);
+      this.openOfferKeys.set(openKeys);
+    });
+  }
+
+  private reload(): void {
+    this.error.set(false);
+    this.openOfferKeys.set(new Set());
+    this.fetch(1);
+  }
+
+  private fetch(page: number, after?: () => void): void {
+    this.fetchSub?.unsubscribe();
+    const hasRows = this.families().length > 0;
+    this.loading.set(!hasRows);
+    this.searching.set(hasRows);
+    const q = this.query().trim();
+    const categorySlug = this.categorySlug().trim();
+    const brand = this.brand().trim();
+    const sort = this.sort();
+    const targetPage = Math.max(1, page);
+    const pageSize = q ? SEARCH_PAGE_SIZE : CATALOG_PAGE_SIZE;
+
+    this.fetchSub = this.catalog
+      .listFamilies({
+        query: q || undefined,
+        categorySlug: categorySlug || undefined,
+        brand: brand || undefined,
+        sort,
+        page: targetPage,
+        pageSize
+      })
+      .pipe(
+        finalize(() => {
+          this.loading.set(false);
+          this.searching.set(false);
+        })
+      )
+      .subscribe({
+        next: (result) => {
+          const cards = flattenFamilyPacks(result.data);
+          this.page.set(result.page || targetPage);
+          this.listPageSize.set(result.pageSize || pageSize);
+          this.total.set(result.total);
+          this.families.set(cards);
+          after?.();
+          this.ensureFilterOptions();
+        },
+        error: () => {
+          this.error.set(true);
+          this.families.set([]);
+          this.total.set(0);
+          this.ensureFilterOptions();
+        }
+      });
+  }
+}

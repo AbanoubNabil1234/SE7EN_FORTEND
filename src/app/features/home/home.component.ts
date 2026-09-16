@@ -1,0 +1,134 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { ProductFacade } from '../products/facades/product.facade';
+import { ProductCardComponent } from '../products/components/product-card/product-card.component';
+import { ComparisonModalComponent } from '../products/components/comparison-modal/comparison-modal.component';
+import { ButtonComponent } from '../../shared/components/button/button.component';
+
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [CommonModule, RouterLink, ProductCardComponent, ComparisonModalComponent, ButtonComponent],
+  template: `
+    <div class="space-y-16 py-8">
+      <!-- Hero Section -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8 pb-12 relative">
+        <!-- Floating Logo Badge -->
+        <div class="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-brand-100/80 dark:bg-carbon-900 border border-brand-300 dark:border-carbon-700 text-brand-900 dark:text-brand-300 text-xs font-black mb-6 shadow-sm">
+          <div class="w-4 h-4 rounded bg-brand-500 flex items-center justify-center text-carbon-950 font-black text-[10px]">
+            7
+          </div>
+          Live Egyptian Pharmacy Price Comparison Engine
+        </div>
+
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-carbon-900 dark:text-white tracking-tight max-w-4xl mx-auto leading-[1.1]">
+          Stop Overpaying for <span class="gradient-brand-text">Medications</span> & Health Essentials.
+        </h1>
+        <p class="text-base sm:text-xl text-carbon-600 dark:text-carbon-400 max-w-2xl mx-auto mt-6 leading-relaxed font-medium">
+          Compare real-time prices across verified pharmacies (El-Ezaby, Seif, Roushdy, 19011) with instant active ingredient alternatives.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <app-button variant="primary" size="lg" routerLink="/products">
+            <i class="pi pi-search mr-2 font-bold"></i> Compare Pharmacy Prices
+          </app-button>
+          <app-button variant="brand-dark" size="lg" routerLink="/products">
+            <i class="pi pi-bolt mr-2"></i> Live Demo Engine
+          </app-button>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-16 text-left">
+          <div class="p-6 bg-white dark:bg-carbon-900 rounded-2xl border border-brand-200/50 dark:border-carbon-800 shadow-sm">
+            <div class="text-3xl font-black text-brand-600 dark:text-brand-400">10,000+</div>
+            <div class="text-xs text-carbon-500 font-bold mt-1">Normalized Drugs</div>
+          </div>
+          <div class="p-6 bg-white dark:bg-carbon-900 rounded-2xl border border-brand-200/50 dark:border-carbon-800 shadow-sm">
+            <div class="text-3xl font-black text-brand-600 dark:text-brand-400">Up to 40%</div>
+            <div class="text-xs text-carbon-500 font-bold mt-1">Direct Savings</div>
+          </div>
+          <div class="p-6 bg-white dark:bg-carbon-900 rounded-2xl border border-brand-200/50 dark:border-carbon-800 shadow-sm">
+            <div class="text-3xl font-black text-brand-600 dark:text-brand-400">4+ Chains</div>
+            <div class="text-xs text-carbon-500 font-bold mt-1">Live Comparison</div>
+          </div>
+          <div class="p-6 bg-white dark:bg-carbon-900 rounded-2xl border border-brand-200/50 dark:border-carbon-800 shadow-sm">
+            <div class="text-3xl font-black text-brand-600 dark:text-brand-400">100%</div>
+            <div class="text-xs text-carbon-500 font-bold mt-1">Clean Architecture</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Featured Medications Section -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+              <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest">Trending Now</span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-black text-carbon-900 dark:text-white">Featured Medications</h2>
+          </div>
+          <app-button variant="ghost" size="sm" routerLink="/products">
+            View All <i class="pi pi-arrow-right ml-1"></i>
+          </app-button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (product of facade.products().slice(0, 3); track product.id) {
+            <app-product-card
+              [product]="product"
+              (compareClicked)="facade.openPriceComparison($event)"
+            ></app-product-card>
+          }
+        </div>
+      </section>
+
+      <!-- Clean Architecture Feature Highlights -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-gradient-to-br from-carbon-900 to-carbon-950 rounded-3xl p-8 sm:p-12 text-white border border-brand-500/20 shadow-2xl relative overflow-hidden">
+          <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-brand-500/10 blur-3xl pointer-events-none"></div>
+
+          <div class="relative z-10 max-w-3xl">
+            <span class="text-xs font-black text-brand-400 uppercase tracking-widest">Architecture Highlights</span>
+            <h3 class="text-2xl sm:text-4xl font-black mt-2 leading-tight">
+              Engineered with Strict Clean Architecture & Design Patterns
+            </h3>
+            <p class="text-sm text-carbon-300 mt-4 leading-relaxed font-medium">
+              Every layer adheres strictly to SOLID and Domain-Driven Design (DDD). Business entities are pure TypeScript, use cases encapsulate business flows, infrastructure handles concrete HTTP adapters, and Angular Signals drive reactive facades.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+              <div class="p-4 rounded-xl bg-carbon-800/80 border border-carbon-700">
+                <div class="font-bold text-brand-400 text-sm">Repository Pattern</div>
+                <div class="text-xs text-carbon-400 mt-1">Decoupled data sources & testable contracts</div>
+              </div>
+              <div class="p-4 rounded-xl bg-carbon-800/80 border border-carbon-700">
+                <div class="font-bold text-brand-400 text-sm">Facade + Signals</div>
+                <div class="text-xs text-carbon-400 mt-1">Reactive view models with zero boilerplate</div>
+              </div>
+              <div class="p-4 rounded-xl bg-carbon-800/80 border border-carbon-700">
+                <div class="font-bold text-brand-400 text-sm">Adapter & Mappers</div>
+                <div class="text-xs text-carbon-400 mt-1">Pure entity transforms from external APIs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Comparison Modal -->
+      <app-comparison-modal
+        [comparison]="facade.activeComparison()"
+        (close)="facade.closePriceComparison()"
+      ></app-comparison-modal>
+    </div>
+  `
+})
+export class HomeComponent implements OnInit {
+  readonly facade = inject(ProductFacade);
+
+  ngOnInit(): void {
+    this.facade.loadProducts();
+  }
+}

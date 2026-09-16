@@ -1,0 +1,72 @@
+{
+  "/api": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true,
+    "timeout": 180000,
+    "proxyTimeout": 180000
+  },
+  "/categories": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true,
+    "timeout": 180000,
+    "proxyTimeout": 180000
+  },
+  "/catalog": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true,
+    "timeout": 180000,
+    "proxyTimeout": 180000
+  },
+  "/search": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true,
+    "timeout": 180000,
+    "proxyTimeout": 180000
+  },
+  "/admin": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true,
+    "timeout": 180000,
+    "proxyTimeout": 180000
+  },
+  "/deals": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/compare": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/pharmacies": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/master-products": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/media": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/images": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/health": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

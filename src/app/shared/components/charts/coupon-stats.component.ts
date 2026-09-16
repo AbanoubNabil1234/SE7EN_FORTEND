@@ -1,0 +1,73 @@
+import { Component, input } from '@angular/core';
+import { CommonModule, DecimalPipe } from '@angular/common';
+import { CouponStatRow } from '../../../core/domain/models/dashboard.model';
+
+@Component({
+  selector: 'app-coupon-stats',
+  standalone: true,
+  imports: [CommonModule, DecimalPipe],
+  template: `
+    <div class="relative w-full space-y-4 rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-[#181A1D] dark:text-white">
+            أكواد الخصم الأكثر استخداماً
+          </h3>
+          <p class="text-xs font-medium text-[#8A735C] dark:text-neutral-400">
+            عدد مرات نسخ واستخدام الكوبونات عبر تطبيق الهاتف والويب
+          </p>
+        </div>
+        <div class="rounded-xl bg-[#F8EEE2] px-3 py-1 text-xs font-extrabold text-[#C27938] dark:bg-neutral-800">
+          إجمالي الاستخدامات: {{ totalRedemptions() | number }}
+        </div>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        @if (coupons().length === 0) {
+          <div class="py-8 text-center text-sm font-medium text-[#8A735C]">
+            لا توجد بيانات استخدام للكوبونات
+          </div>
+        } @else {
+          @for (coupon of coupons(); track coupon.code) {
+            <div class="space-y-1.5 rounded-xl border border-neutral-100 bg-[#FBF8F4] p-3.5 transition-colors hover:border-[#E8D5BE] dark:border-neutral-800/80 dark:bg-neutral-800/40">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="rounded-lg bg-[#181A1D] px-2.5 py-1 text-xs font-black text-white dark:bg-white dark:text-black tracking-wider uppercase">
+                    {{ coupon.code }}
+                  </span>
+                  <span class="rounded-md bg-[#C27938]/10 px-2 py-0.5 text-[11px] font-extrabold text-[#C27938] uppercase">
+                    {{ coupon.pharmacyCode }}
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs font-bold shrink-0">
+                  <span class="text-[#181A1D] dark:text-white tabular-nums">
+                    <strong>{{ coupon.copyCount | number }}</strong> / {{ coupon.maxCopies | number }}
+                  </span>
+                  <span class="text-[11px] font-semibold text-[#8A735C] dark:text-neutral-400">استخدام</span>
+                </div>
+              </div>
+
+              <!-- Usage Progress Bar -->
+              <div class="relative h-2 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+                <div
+                  class="h-full rounded-full bg-gradient-to-r from-[#C27938] to-[#10B981] transition-all duration-500"
+                  [style.width.%]="usagePercentage(coupon)"
+                ></div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  `
+})
+export class CouponStatsComponent {
+  readonly coupons = input<CouponStatRow[]>([]);
+  readonly totalRedemptions = input(0);
+
+  usagePercentage(coupon: CouponStatRow): number {
+    if (!coupon.maxCopies || coupon.maxCopies <= 0) return 100;
+    return Math.min(100, Math.round((coupon.copyCount / coupon.maxCopies) * 100));
+  }
+}

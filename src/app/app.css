@@ -1,0 +1,277 @@
+.global-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #f8eee2;
+  color: #693c22;
+  font-family: 'Cairo', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.global-loading__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  background-image:
+    linear-gradient(rgba(162, 93, 42, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(162, 93, 42, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 12%, transparent 72%);
+}
+
+.global-loading__orbit {
+  --orbit-size: min(76vw, 300px, 44vh);
+  --node-radius: calc(var(--orbit-size) * 0.34);
+  position: relative;
+  width: var(--orbit-size);
+  aspect-ratio: 1;
+  animation: loading-fade-in 240ms ease-out both;
+}
+
+.global-loading__wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.global-loading__ring {
+  fill: none;
+  stroke: rgba(194, 121, 56, 0.32);
+  stroke-width: 1.2;
+}
+
+.global-loading__ring--inner {
+  stroke-dasharray: 3 7;
+  stroke: rgba(162, 93, 42, 0.2);
+}
+
+/* Sweeping beam traveling along the circular orbit */
+.global-loading__pulse {
+  fill: none;
+  stroke: rgba(194, 121, 56, 0.85);
+  stroke-width: 2.8;
+  stroke-dasharray: 45 760;
+  stroke-linecap: round;
+  transform-origin: 210px 210px;
+  animation: loading-sweep 3.6s linear infinite;
+}
+
+/* Central SE7EN Hub */
+.global-loading__hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 4.8rem;
+  height: 4.8rem;
+  border: 3px solid rgba(255, 255, 255, 0.96);
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 8px rgba(212, 146, 77, 0.14),
+    0 0 36px rgba(212, 146, 77, 0.28),
+    0 18px 40px -18px rgba(105, 60, 34, 0.4);
+  transform: translate(-50%, -50%);
+  animation: loading-hub-pulse 1.8s ease-in-out infinite;
+}
+
+.global-loading__hub img {
+  width: 70%;
+  height: 70%;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.global-loading__hub span {
+  position: absolute;
+  bottom: -1.35rem;
+  font-family: 'Outfit', 'Cairo', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+/* Fixed station position on the orbit path */
+.global-loading__node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3.4rem;
+  height: 3.4rem;
+  display: grid;
+  place-items: center;
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--angle))
+    translateY(calc(var(--node-radius) * -1))
+    rotate(calc(var(--angle) * -1));
+  pointer-events: none;
+}
+
+/* Subtle checkpoint dot on the wire */
+.global-loading__marker {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: rgba(194, 121, 56, 0.38);
+  box-shadow: 0 0 6px rgba(194, 121, 56, 0.3);
+}
+
+/* Relay wrapper: appears sequentially, stays visible, then dissolves in same sequence */
+.global-loading__relay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(0.25);
+  animation: loading-relay-handover 3600ms cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  animation-fill-mode: both;
+}
+
+/* Logo container disk */
+.global-loading__disk {
+  display: grid;
+  place-items: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0.35rem;
+  border: 2px solid rgba(194, 121, 56, 0.6);
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 5px rgba(255, 255, 255, 0.85),
+    0 0 20px rgba(194, 121, 56, 0.4),
+    0 12px 28px -10px rgba(105, 60, 34, 0.4);
+}
+
+.global-loading__disk img {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  object-fit: contain;
+}
+
+.global-loading__caption {
+  position: absolute;
+  bottom: 8%;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #693c22;
+  letter-spacing: 0.02em;
+}
+
+.global-loading__dots i {
+  font-style: normal;
+  display: inline-block;
+  animation: loading-dot-blink 1.4s infinite both;
+}
+
+.global-loading__dots i:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.global-loading__dots i:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+/* Keyframes */
+@keyframes loading-fade-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Sweeping light beam around the circle in 3.5s */
+@keyframes loading-sweep {
+  from {
+    transform: rotate(-90deg);
+  }
+  to {
+    transform: rotate(270deg);
+  }
+}
+
+/* Staggered Accumulate & Dissolve:
+   1. Pops into view sequentially & stays visible while subsequent logos appear.
+   2. Holds visible state with all 7 stations complete.
+   3. Dissolves sequentially in the exact same order (FIFO), then loops. */
+@keyframes loading-relay-handover {
+  0% {
+    opacity: 0;
+    transform: scale(0.25);
+    filter: blur(2px);
+  }
+  4.5% {
+    opacity: 1;
+    transform: scale(1.12);
+    filter: blur(0);
+  }
+  6.5% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  47% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  52% {
+    opacity: 0;
+    transform: scale(0.25);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.25);
+    filter: blur(2px);
+  }
+}
+
+@keyframes loading-hub-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 8px rgba(212, 146, 77, 0.14), 0 0 36px rgba(212, 146, 77, 0.25), 0 18px 40px -18px rgba(105, 60, 34, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(212, 146, 77, 0.2), 0 0 48px rgba(212, 146, 77, 0.4), 0 18px 40px -18px rgba(105, 60, 34, 0.4);
+  }
+}
+
+@keyframes loading-dot-blink {
+  0%, 20% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .global-loading__orbit,
+  .global-loading__relay,
+  .global-loading__pulse,
+  .global-loading__hub,
+  .global-loading__dots i {
+    animation: none;
+  }
+
+  .global-loading__relay {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+}

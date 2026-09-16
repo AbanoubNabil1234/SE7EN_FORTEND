@@ -1,0 +1,87 @@
+@import "primeicons/primeicons.css";
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+app-root {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+:root {
+  --color-brand-primary: #d4924d;
+  --color-brand-light: #f8eee2;
+  --color-brand-dark: #181a1d;
+  --color-brand-accent: #c27938;
+}
+
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-[#FAF8F5] text-carbon-900 dark:bg-carbon-950 dark:text-carbon-100 font-sans antialiased transition-colors duration-200 selection:bg-brand-500 selection:text-white;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* Custom Utilities for se7en aesthetics */
+@layer utilities {
+  .glass-card {
+    @apply bg-white/80 dark:bg-carbon-900/80 backdrop-blur-md border border-brand-200/40 dark:border-carbon-800/80 shadow-sm;
+  }
+
+  .glow-brand {
+    box-shadow: 0 0 25px -5px rgba(212, 146, 77, 0.35);
+  }
+
+  .gradient-brand-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-brand-600 via-brand-500 to-amber-500;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

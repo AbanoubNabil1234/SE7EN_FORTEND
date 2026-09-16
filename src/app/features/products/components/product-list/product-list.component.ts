@@ -1,0 +1,86 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ProductFacade } from '../../facades/product.facade';
+import { ProductCardComponent } from '../product-card/product-card.component';
+import { ProductFilterComponent } from '../product-filter/product-filter.component';
+import { ComparisonModalComponent } from '../comparison-modal/comparison-modal.component';
+
+/**
+ * Smart (Container) Component:
+ * Injects ProductFacade, consumes reactive signals, and passes state down to presentational components.
+ */
+@Component({
+  selector: 'app-product-list',
+  standalone: true,
+  imports: [CommonModule, ProductCardComponent, ProductFilterComponent, ComparisonModalComponent],
+  template: `
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <!-- Header & Stats Summary -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+            <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest">Live Drug Directory</span>
+          </div>
+          <h1 class="text-3xl font-black tracking-tight text-carbon-900 dark:text-white">
+            Pharmacy Price Comparison
+          </h1>
+          <p class="text-sm text-carbon-600 dark:text-carbon-400 mt-1">
+            Compare prices live across licensed pharmacies in Egypt. Save up to 40% on prescriptions.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-brand-50 dark:bg-carbon-900 border border-brand-200 dark:border-carbon-800 text-xs font-bold text-carbon-700 dark:text-brand-300">
+            Showing <span class="text-brand-600 dark:text-brand-400 font-black">{{ facade.totalProductsCount() }}</span> Medications
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Component -->
+      <app-product-filter
+        [searchQuery]="facade.searchQuery()"
+        [selectedCategory]="facade.selectedCategory()"
+        (searchChange)="facade.setSearchQuery($event)"
+        (categoryChange)="facade.setCategory($event)"
+      ></app-product-filter>
+
+      <!-- Products Grid -->
+      @if (facade.loading()) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+            <div class="bg-white dark:bg-carbon-900 rounded-2xl h-84 animate-pulse border border-brand-100 dark:border-carbon-800"></div>
+          }
+        </div>
+      } @else if (facade.products().length === 0) {
+        <div class="text-center py-20 bg-white dark:bg-carbon-900/80 rounded-3xl border border-brand-200/60 dark:border-carbon-800 shadow-sm">
+          <i class="pi pi-search text-5xl text-brand-400 dark:text-carbon-600 mb-4"></i>
+          <h3 class="text-lg font-black text-carbon-900 dark:text-white">No medications match your search</h3>
+          <p class="text-xs text-carbon-500 mt-1">Try typing generic name (e.g. Paracetamol, Amoxicillin) or select 'All'.</p>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (product of facade.products(); track product.id) {
+            <app-product-card
+              [product]="product"
+              (compareClicked)="facade.openPriceComparison($event)"
+            ></app-product-card>
+          }
+        </div>
+      }
+
+      <!-- Live Comparison Modal -->
+      <app-comparison-modal
+        [comparison]="facade.activeComparison()"
+        (close)="facade.closePriceComparison()"
+      ></app-comparison-modal>
+    </div>
+  `
+})
+export class ProductListComponent implements OnInit {
+  readonly facade = inject(ProductFacade);
+
+  ngOnInit(): void {
+    this.facade.loadProducts();
+  }
+}

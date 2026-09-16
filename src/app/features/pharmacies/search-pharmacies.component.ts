@@ -1,0 +1,384 @@
+import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs';
+import { LocaleService } from '../../core/services/locale.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.constants';
+
+interface PharmacyVisibility {
+  id: string;
+  code: string;
+  name: string;
+  nameArabic: string;
+  isEnabled: boolean;
+  showInCustomerSearch: boolean;
+}
+
+interface CatalogImportResult {
+  updated: number;
+  created: number;
+  unchanged: number;
+  skipped: number;
+  errors: { row: number; message: string }[];
+}
+
+@Component({
+  selector: 'app-search-pharmacies',
+  standalone: true,
+  imports: [CommonModule, TranslatePipe],
+  template: `
+    <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
+      <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
+        <div class="h-1.5 bg-[#C27938]"></div>
+        <div class="p-5 sm:p-6">
+          <div class="inline-flex items-center gap-2 rounded-full bg-[#F8EEE2] px-3 py-1 text-[11px] font-bold text-[#C27938]">
+            <span class="size-1.5 rounded-full bg-[#C27938]"></span>
+            {{ 'searchPharmacies.badge' | t }}
+          </div>
+          <h1 class="mt-3 text-balance text-3xl font-extrabold text-[#181A1D] sm:text-4xl">
+            {{ 'searchPharmacies.title' | t }}
+          </h1>
+          <p class="mt-1.5 max-w-2xl text-pretty text-sm font-medium text-[#8A735C]">
+            {{ 'searchPharmacies.subtitle' | t }}
+          </p>
+        </div>
+        <div class="grid grid-cols-2 border-t border-[#EDE0D0] sm:grid-cols-3">
+          <div class="border-e border-[#EDE0D0] px-4 py-3.5 sm:px-5">
+            <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'searchPharmacies.statTotal' | t }}</div>
+            <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">{{ items().length }}</div>
+          </div>
+          <div class="border-e border-[#EDE0D0] px-4 py-3.5 sm:px-5">
+            <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'searchPharmacies.statVisible' | t }}</div>
+            <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#C27938]">{{ visibleCount() }}</div>
+          </div>
+          <div class="col-span-2 px-4 py-3.5 sm:col-span-1 sm:px-5">
+            <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'searchPharmacies.statHidden' | t }}</div>
+            <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">
+              {{ items().length - visibleCount() }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="rounded-2xl border border-[#E8D5BE] bg-white p-8 text-center text-sm text-[#8A735C]">
+          {{ 'searchPharmacies.loading' | t }}
+        </div>
+      } @else if (error()) {
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">
+          {{ error() }}
+        </div>
+      } @else {
+        <ul class="space-y-3">
+          @for (p of items(); track p.id) {
+            <li
+              class="flex flex-col gap-3 rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5"
+            >
+              <div class="flex min-w-0 items-center gap-3">
+                <img
+                  [src]="'assets/pharmacies/' + p.code + '.png'"
+                  [alt]="p.name"
+                  class="size-12 rounded-xl border border-[#EDE0D0] object-contain bg-[#FBF8F4] p-1"
+                  (error)="$any($event.target).src = 'assets/logo.png'"
+                />
+                <div class="min-w-0">
+                  <div class="truncate text-base font-bold text-[#181A1D]">
+                    {{ locale.isRtl() ? p.nameArabic || p.name : p.name }}
+                  </div>
+                  <div class="mt-0.5 flex flex-wrap items-center gap-2 text-xs font-medium text-[#8A735C]">
+                    <span class="uppercase tracking-wide">{{ p.code }}</span>
+                    @if (!p.isEnabled) {
+                      <span class="rounded-md bg-[#F3EDE5] px-1.5 py-0.5 text-[10px] font-bold text-[#A68B6D]">
+                        {{ 'searchPharmacies.harvestOff' | t }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+                <button
+                  type="button"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
+                  [disabled]="sheetBusy()"
+                  [attr.aria-label]="('searchPharmacies.exportSheet' | t) + ' ' + p.name"
+                  (click)="exportSheet(p)"
+                >
+                  <i class="pi pi-download text-xs" [class.pi-spin]="exportingId() === p.id" aria-hidden="true"></i>
+                  {{
+                    exportingId() === p.id
+                      ? ('searchPharmacies.exporting' | t)
+                      : ('searchPharmacies.exportSheet' | t)
+                  }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
+                  [disabled]="sheetBusy()"
+                  [attr.aria-label]="('searchPharmacies.importSheet' | t) + ' ' + p.name"
+                  (click)="pickImport(p)"
+                >
+                  <i class="pi pi-upload text-xs" [class.pi-spin]="importingId() === p.id" aria-hidden="true"></i>
+                  {{
+                    importingId() === p.id
+                      ? ('searchPharmacies.importing' | t)
+                      : ('searchPharmacies.importSheet' | t)
+                  }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
+                  [disabled]="!p.isEnabled || syncingId() === p.id"
+                  [attr.title]="!p.isEnabled ? ('searchPharmacies.syncHarvestOff' | t) : null"
+                  (click)="syncPrices(p)"
+                >
+                  <i class="pi pi-refresh text-xs" [class.pi-spin]="syncingId() === p.id"></i>
+                  {{
+                    syncingId() === p.id
+                      ? ('searchPharmacies.syncing' | t)
+                      : ('searchPharmacies.syncPrices' | t)
+                  }}
+                </button>
+                <label class="inline-flex cursor-pointer items-center gap-3">
+                  <span class="text-xs font-bold text-[#8A735C]">
+                    {{
+                      p.showInCustomerSearch
+                        ? ('searchPharmacies.visible' | t)
+                        : ('searchPharmacies.hidden' | t)
+                    }}
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    class="relative h-8 w-14 rounded-full transition-colors"
+                    [class.bg-[#C27938]]="p.showInCustomerSearch"
+                    [class.bg-[#E8D5BE]]="!p.showInCustomerSearch"
+                    [attr.aria-checked]="p.showInCustomerSearch"
+                    [attr.aria-label]="('searchPharmacies.toggleAria' | t) + ' ' + p.name"
+                    [disabled]="savingId() === p.id"
+                    (click)="toggle(p)"
+                  >
+                    <span
+                      class="absolute top-1 size-6 rounded-full bg-white shadow transition-transform"
+                      [class.start-1]="!p.showInCustomerSearch"
+                      [class.end-1]="p.showInCustomerSearch"
+                      [style.inset-inline-start]="p.showInCustomerSearch ? 'auto' : '0.25rem'"
+                      [style.inset-inline-end]="p.showInCustomerSearch ? '0.25rem' : 'auto'"
+                    ></span>
+                  </button>
+                </label>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+    <input
+      #sheetFile
+      type="file"
+      accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      class="sr-only"
+      (change)="onSheetSelected($event)"
+    />
+  `
+})
+export class SearchPharmaciesComponent implements OnInit {
+  private readonly http = inject(HttpClient);
+  private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
+  readonly locale = inject(LocaleService);
+  private readonly sheetFile = viewChild<ElementRef<HTMLInputElement>>('sheetFile');
+  private pendingImport: PharmacyVisibility | null = null;
+
+  readonly items = signal<PharmacyVisibility[]>([]);
+  readonly loading = signal(true);
+  readonly error = signal('');
+  readonly savingId = signal<string | null>(null);
+  readonly syncingId = signal<string | null>(null);
+  readonly exportingId = signal<string | null>(null);
+  readonly importingId = signal<string | null>(null);
+  readonly sheetBusy = () => this.exportingId() !== null || this.importingId() !== null;
+
+  readonly visibleCount = () => this.items().filter((p) => p.showInCustomerSearch).length;
+
+  ngOnInit(): void {
+    this.reload();
+  }
+
+  reload(): void {
+    this.loading.set(true);
+    this.error.set('');
+    this.http
+      .get<PharmacyVisibility[]>(API_ENDPOINTS.PHARMACY_SEARCH_VISIBILITY)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (rows) => this.items.set(rows ?? []),
+        error: () => this.error.set(this.i18n.t('searchPharmacies.loadError'))
+      });
+  }
+
+  syncPrices(p: PharmacyVisibility): void {
+    if (!p.isEnabled || this.syncingId() === p.id) return;
+
+    this.syncingId.set(p.id);
+    this.http
+      .post<{ enqueued: boolean }>(API_ENDPOINTS.PHARMACY_PRICE_SYNC(p.id), {})
+      .pipe(finalize(() => this.syncingId.set(null)))
+      .subscribe({
+        next: () =>
+          this.notifications.showSuccess(
+            this.i18n.t('searchPharmacies.syncOk'),
+            this.i18n.t('searchPharmacies.syncTitle')
+          )
+      });
+  }
+
+  toggle(p: PharmacyVisibility): void {
+    const next = !p.showInCustomerSearch;
+    this.savingId.set(p.id);
+    this.http
+      .put<PharmacyVisibility>(`${API_ENDPOINTS.PHARMACY_SEARCH_VISIBILITY_BASE}/${p.id}/search-visibility`, {
+        showInCustomerSearch: next
+      })
+      .pipe(finalize(() => this.savingId.set(null)))
+      .subscribe({
+        next: (updated) => {
+          this.items.update((list) =>
+            list.map((row) => (row.id === updated.id ? { ...row, ...updated } : row))
+          );
+          this.notifications.showSuccess(
+            next
+              ? this.i18n.t('searchPharmacies.shownMsg')
+              : this.i18n.t('searchPharmacies.hiddenMsg'),
+            this.i18n.t('searchPharmacies.savedTitle')
+          );
+        },
+        error: () =>
+          this.notifications.showError(
+            this.i18n.t('searchPharmacies.saveError'),
+            this.i18n.t('searchPharmacies.savedTitle')
+          )
+      });
+  }
+
+  exportSheet(p: PharmacyVisibility): void {
+    if (this.sheetBusy()) return;
+
+    this.exportingId.set(p.id);
+    this.http
+      .get(API_ENDPOINTS.PHARMACY_CATALOG_XLSX(p.id), { responseType: 'blob' })
+      .pipe(finalize(() => this.exportingId.set(null)))
+      .subscribe({
+        next: (blob) => {
+          if (!blob?.size) {
+            this.notifications.showError(
+              this.i18n.t('searchPharmacies.exportError'),
+              this.i18n.t('searchPharmacies.sheetTitle')
+            );
+            return;
+          }
+          this.saveBlob(blob, `${p.code}-catalog.xlsx`);
+          this.notifications.showSuccess(
+            this.i18n.t('searchPharmacies.exportOk'),
+            this.i18n.t('searchPharmacies.sheetTitle')
+          );
+        },
+        error: (err: HttpErrorResponse) =>
+          void this.readHttpError(err).then((message) =>
+            this.notifications.showError(
+              message || this.i18n.t('searchPharmacies.exportError'),
+              this.i18n.t('searchPharmacies.sheetTitle')
+            )
+          )
+      });
+  }
+
+  pickImport(p: PharmacyVisibility): void {
+    if (this.sheetBusy()) return;
+    this.pendingImport = p;
+    this.sheetFile()?.nativeElement.click();
+  }
+
+  onSheetSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const pharmacy = this.pendingImport;
+    input.value = '';
+    this.pendingImport = null;
+    if (!file || !pharmacy) return;
+
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      this.notifications.showError(
+        this.i18n.t('searchPharmacies.fileTypeError'),
+        this.i18n.t('searchPharmacies.sheetTitle')
+      );
+      return;
+    }
+
+    const body = new FormData();
+    body.append('file', file, file.name);
+    this.importingId.set(pharmacy.id);
+    this.http
+      .post<CatalogImportResult>(API_ENDPOINTS.PHARMACY_CATALOG_XLSX(pharmacy.id), body)
+      .pipe(finalize(() => this.importingId.set(null)))
+      .subscribe({
+        next: (result) => {
+          const counts = this.fill(this.i18n.t('searchPharmacies.importCounts'), {
+            updated: result.updated ?? 0,
+            created: result.created ?? 0,
+            unchanged: result.unchanged ?? 0,
+            skipped: result.skipped ?? 0
+          });
+          const first = result.errors?.[0];
+          const detail = first
+            ? `${counts} — ${this.fill(this.i18n.t('searchPharmacies.importRowError'), {
+                row: first.row,
+                message: first.message
+              })}`
+            : counts;
+          if (first) {
+            this.notifications.showWarn(detail, this.i18n.t('searchPharmacies.importOk'));
+          } else {
+            this.notifications.showSuccess(detail, this.i18n.t('searchPharmacies.importOk'));
+          }
+        },
+        error: (err: HttpErrorResponse) =>
+          void this.readHttpError(err).then((message) =>
+            this.notifications.showError(
+              message || this.i18n.t('searchPharmacies.importError'),
+              this.i18n.t('searchPharmacies.sheetTitle')
+            )
+          )
+      });
+  }
+
+  private saveBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private async readHttpError(error: HttpErrorResponse): Promise<string> {
+    const body = error.error;
+    if (typeof body?.message === 'string' && body.message.trim()) return body.message;
+    if (body instanceof Blob) {
+      try {
+        const parsed = JSON.parse(await body.text()) as { message?: string };
+        if (parsed?.message?.trim()) return parsed.message;
+      } catch {
+        return '';
+      }
+    }
+    return '';
+  }
+
+  private fill(template: string, values: Record<string, string | number>): string {
+    return template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ''));
+  }
+}
