@@ -565,7 +565,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     this.queryTimer = setTimeout(() => {
       if (!isCatalogSearchReady(this.query())) return;
       this.reload();
-    }, 300);
+    }, 120);
   }
 
   onCategoryChange(value: string): void {

@@ -554,7 +554,7 @@ export class DashboardComponent implements OnInit {
       if (!this.activeSlug()) return;
       this.resetProducts();
       this.fetchProducts(1, false);
-    }, 350);
+    }, 120);
   }
 
   loadMore(): void {
