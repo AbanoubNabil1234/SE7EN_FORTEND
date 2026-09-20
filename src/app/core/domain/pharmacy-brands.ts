@@ -55,6 +55,13 @@ export const PHARMACY_BRANDS: readonly PharmacyBrand[] = [
     nameAr: 'فارما براند',
     logo: 'assets/pharmacies/pharmabrand.png',
     icon: 'assets/pharmacies/pharmabrand-icon.png'
+  },
+  {
+    code: 'almujtama',
+    nameEn: 'Al-Mujtama',
+    nameAr: 'صيدلية المجتمع',
+    logo: 'assets/pharmacies/almujtama.png',
+    icon: 'assets/pharmacies/almujtama-icon.png'
   }
 ] as const;
 

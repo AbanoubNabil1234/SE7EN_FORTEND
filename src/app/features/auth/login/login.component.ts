@@ -1187,12 +1187,13 @@ export class LoginComponent {
 
   readonly pharmacies: PharmacySource[] = [
     { code: 'nahdi', nameEn: 'Nahdi', nameAr: 'النهدي', logo: 'assets/pharmacies/nahdi.svg', angle: 0 },
-    { code: 'aldawaa', nameEn: 'Al-Dawaa', nameAr: 'الدواء', logo: 'assets/pharmacies/aldawaa.png', angle: 360 / 7 },
-    { code: 'whites', nameEn: 'Whites', nameAr: 'وايتس', logo: 'assets/pharmacies/whites.png', angle: (360 / 7) * 2 },
-    { code: 'united', nameEn: 'United', nameAr: 'يونايتد', logo: 'assets/pharmacies/united.png', angle: (360 / 7) * 3 },
-    { code: 'lemon', nameEn: 'Lemon', nameAr: 'ليمون', logo: 'assets/pharmacies/lemon.png', angle: (360 / 7) * 4 },
-    { code: 'ibrand', nameEn: 'iBrand', nameAr: 'آي براند', logo: 'assets/pharmacies/ibrand.png', angle: (360 / 7) * 5 },
-    { code: 'pharmabrand', nameEn: 'Pharma Brand', nameAr: 'فارما براند', logo: 'assets/pharmacies/pharmabrand.png', angle: (360 / 7) * 6 }
+    { code: 'aldawaa', nameEn: 'Al-Dawaa', nameAr: 'الدواء', logo: 'assets/pharmacies/aldawaa.png', angle: 360 / 8 },
+    { code: 'whites', nameEn: 'Whites', nameAr: 'وايتس', logo: 'assets/pharmacies/whites.png', angle: (360 / 8) * 2 },
+    { code: 'united', nameEn: 'United', nameAr: 'يونايتد', logo: 'assets/pharmacies/united.png', angle: (360 / 8) * 3 },
+    { code: 'lemon', nameEn: 'Lemon', nameAr: 'ليمون', logo: 'assets/pharmacies/lemon.png', angle: (360 / 8) * 4 },
+    { code: 'ibrand', nameEn: 'iBrand', nameAr: 'آي براند', logo: 'assets/pharmacies/ibrand.png', angle: (360 / 8) * 5 },
+    { code: 'pharmabrand', nameEn: 'Pharma Brand', nameAr: 'فارما براند', logo: 'assets/pharmacies/pharmabrand.png', angle: (360 / 8) * 6 },
+    { code: 'almujtama', nameEn: 'Al-Mujtama', nameAr: 'المجتمع', logo: 'assets/pharmacies/almujtama.png', angle: (360 / 8) * 7 }
   ];
 
   readonly form = this.fb.nonNullable.group({

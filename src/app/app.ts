@@ -34,12 +34,13 @@ export class App {
   private routeLoadingTimer: ReturnType<typeof setTimeout> | null = null;
   readonly loadingPharmacies: LoadingPharmacy[] = [
     { code: 'nahdi', logo: 'assets/pharmacies/nahdi.svg', angle: 0 },
-    { code: 'aldawaa', logo: 'assets/pharmacies/aldawaa.png', angle: 360 / 7 },
-    { code: 'whites', logo: 'assets/pharmacies/whites.png', angle: (360 / 7) * 2 },
-    { code: 'united', logo: 'assets/pharmacies/united.png', angle: (360 / 7) * 3 },
-    { code: 'lemon', logo: 'assets/pharmacies/lemon.png', angle: (360 / 7) * 4 },
-    { code: 'ibrand', logo: 'assets/pharmacies/ibrand.png', angle: (360 / 7) * 5 },
-    { code: 'pharmabrand', logo: 'assets/pharmacies/pharmabrand.png', angle: (360 / 7) * 6 }
+    { code: 'aldawaa', logo: 'assets/pharmacies/aldawaa.png', angle: 360 / 8 },
+    { code: 'whites', logo: 'assets/pharmacies/whites.png', angle: (360 / 8) * 2 },
+    { code: 'united', logo: 'assets/pharmacies/united.png', angle: (360 / 8) * 3 },
+    { code: 'lemon', logo: 'assets/pharmacies/lemon.png', angle: (360 / 8) * 4 },
+    { code: 'ibrand', logo: 'assets/pharmacies/ibrand.png', angle: (360 / 8) * 5 },
+    { code: 'pharmabrand', logo: 'assets/pharmacies/pharmabrand.png', angle: (360 / 8) * 6 },
+    { code: 'almujtama', logo: 'assets/pharmacies/almujtama.png', angle: (360 / 8) * 7 }
   ];
 
   constructor() {
