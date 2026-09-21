@@ -35,7 +35,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
-import { MergeFamilyModalComponent } from './components/merge-family-modal/merge-family-modal.component';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -56,8 +55,7 @@ interface CategoryOption {
     TranslatePipe,
     CurrencyPipe,
     DecimalPipe,
-    QuickAddProductModalComponent,
-    MergeFamilyModalComponent
+    QuickAddProductModalComponent
   ],
   template: `
     <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
@@ -599,13 +597,7 @@ interface CategoryOption {
       [isOpen]="isQuickAddOpen()"
       (close)="closeQuickAdd()"
       (productAdded)="onQuickProductAdded()"
-    />
-
-    <app-merge-family-modal
-      [sourceFamily]="mergeFamily()"
-      [isOpen]="isMergeOpen()"
-      (close)="closeMergeModal()"
-      (merged)="onFamilyMerged()"
+      (familyMerged)="onFamilyMerged()"
     />
   `
 })
@@ -641,9 +633,6 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   readonly quickAddFamily = signal<CatalogFamily | null>(null);
   readonly isQuickAddOpen = signal<boolean>(false);
-
-  readonly mergeFamily = signal<CatalogFamily | null>(null);
-  readonly isMergeOpen = signal<boolean>(false);
 
   private queryTimer: ReturnType<typeof setTimeout> | null = null;
   private fetchSub: Subscription | null = null;
@@ -826,17 +815,11 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   openMergeModal(family: CatalogFamily): void {
-    this.mergeFamily.set(family);
-    this.isMergeOpen.set(true);
-  }
-
-  closeMergeModal(): void {
-    this.isMergeOpen.set(false);
-    this.mergeFamily.set(null);
+    this.openQuickAdd(family);
   }
 
   onFamilyMerged(): void {
-    this.closeMergeModal();
+    this.closeQuickAdd();
     this.reloadKeepingSelection();
   }
 

@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../../../core/domain/repositories/catalog-browse.repository';
 import {
   CatalogFamily,
+  GroupCodeMergeResult,
   PharmacyProductSearchHit,
   catalogFamilyTitle
 } from '../../../../core/domain/models/catalog-family.model';
@@ -40,7 +41,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
                 <span class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#F8EEE2] text-[#C27938]">
-                  <i class="pi pi-plus text-sm"></i>
+                  <i class="pi pi-link text-sm"></i>
                 </span>
                 <h3 class="text-base font-extrabold text-[#181A1D] truncate">
                   {{ 'quickAdd.modalTitle' | t }}
@@ -68,7 +69,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
           </div>
 
           <!-- Search Input Section -->
-          <div class="p-4 border-b border-[#EDE0D0] bg-white">
+          <div class="p-4 border-b border-[#EDE0D0] bg-white space-y-2">
             <div class="relative flex items-center">
               <span class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-[#A68B6D]">
                 <i class="pi pi-search text-sm"></i>
@@ -92,6 +93,32 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
                 </button>
               }
             </div>
+
+            <!-- Quick Direct Merge Banner when query looks like a group code G-XXXXXX -->
+            @if (isGroupCodeQuery(searchQuery())) {
+              <div class="flex items-center justify-between gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2 text-xs text-amber-900 animate-fade-in">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <i class="pi pi-link text-amber-700 shrink-0"></i>
+                  <span class="truncate">
+                    {{ 'productsAdmin.mergePrompt' | t }}: <strong class="font-mono">{{ searchQuery().trim().toUpperCase() }}</strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[#C27938] px-3 text-xs font-extrabold text-white hover:bg-[#a5632b] disabled:opacity-50 transition-colors shadow-xs"
+                  [disabled]="mergingCode() === searchQuery().trim().toUpperCase()"
+                  (click)="mergeGroup(searchQuery().trim().toUpperCase())"
+                >
+                  @if (mergingCode() === searchQuery().trim().toUpperCase()) {
+                    <i class="pi pi-spin pi-spinner text-xs"></i>
+                    <span>{{ 'quickAdd.mergingFamily' | t }}</span>
+                  } @else {
+                    <i class="pi pi-check text-xs"></i>
+                    <span>{{ 'productsAdmin.confirmMerge' | t }}</span>
+                  }
+                </button>
+              </div>
+            }
 
             @if (loading()) {
               <div class="mt-2 flex items-center justify-between text-xs font-semibold text-[#C27938]">
@@ -188,33 +215,68 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
                           </span>
                         }
                         @if (hit.manualGroupCode && hit.manualGroupCode !== family()?.groupCode) {
-                          <span class="rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
-                            {{ 'quickAdd.alreadyLinked' | t }}: {{ hit.manualGroupCode }}
+                          <span class="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                            <i class="pi pi-link text-[10px] text-amber-600"></i>
+                            <span>{{ 'quickAdd.alreadyLinked' | t }}:</span>
+                            <span class="font-mono font-extrabold">{{ hit.manualGroupCode }}</span>
                           </span>
                         }
                       </div>
                     </div>
                   </div>
 
-                  <!-- Add Button -->
-                  <div class="shrink-0 flex items-center justify-end">
-                    <button
-                      type="button"
-                      class="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#181A1D] px-3.5 text-xs font-bold text-white hover:bg-black disabled:opacity-50 transition-colors"
-                      [disabled]="linkingId() === hit.id || isAlreadyInFamily(hit)"
-                      (click)="addHitToFamily(hit)"
-                    >
-                      @if (linkingId() === hit.id) {
-                        <i class="pi pi-spin pi-spinner text-xs"></i>
-                        <span>{{ 'quickAdd.adding' | t }}</span>
-                      } @else if (isAlreadyInFamily(hit)) {
-                        <i class="pi pi-check text-xs text-emerald-400"></i>
+                  <!-- Actions Button(s) -->
+                  <div class="shrink-0 flex flex-wrap items-center gap-1.5 justify-end">
+                    @if (isAlreadyInFamily(hit)) {
+                      <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-800">
+                        <i class="pi pi-check text-xs"></i>
                         <span>{{ 'productsAdmin.link' | t }}</span>
-                      } @else {
-                        <i class="pi pi-plus text-xs text-[#C27938]"></i>
-                        <span>{{ 'quickAdd.addToFamily' | t }}</span>
-                      }
-                    </button>
+                      </span>
+                    } @else if (hit.manualGroupCode && hit.manualGroupCode !== family()?.groupCode) {
+                      <!-- Offer belongs to another group: Option to Merge Entire Family or Add this Offer only -->
+                      <button
+                        type="button"
+                        class="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#C27938] px-3 text-xs font-extrabold text-white hover:bg-[#a5632b] disabled:opacity-50 transition-colors shadow-xs"
+                        [disabled]="mergingCode() === hit.manualGroupCode || linkingId() === hit.id"
+                        (click)="mergeGroup(hit.manualGroupCode!)"
+                      >
+                        @if (mergingCode() === hit.manualGroupCode) {
+                          <i class="pi pi-spin pi-spinner text-xs"></i>
+                          <span>{{ 'quickAdd.mergingFamily' | t }}</span>
+                        } @else {
+                          <i class="pi pi-link text-xs"></i>
+                          <span>{{ 'quickAdd.mergeFamily' | t }}</span>
+                        }
+                      </button>
+                      <button
+                        type="button"
+                        class="inline-flex min-h-9 items-center gap-1 rounded-lg border border-[#E8D5BE] bg-white px-2.5 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] disabled:opacity-50 transition-colors"
+                        [disabled]="linkingId() === hit.id || mergingCode() === hit.manualGroupCode"
+                        (click)="addHitToFamily(hit)"
+                      >
+                        @if (linkingId() === hit.id) {
+                          <i class="pi pi-spin pi-spinner text-xs"></i>
+                        } @else {
+                          <i class="pi pi-plus text-xs text-[#C27938]"></i>
+                        }
+                        <span>{{ 'quickAdd.addSingle' | t }}</span>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#181A1D] px-3.5 text-xs font-bold text-white hover:bg-black disabled:opacity-50 transition-colors"
+                        [disabled]="linkingId() === hit.id"
+                        (click)="addHitToFamily(hit)"
+                      >
+                        @if (linkingId() === hit.id) {
+                          <i class="pi pi-spin pi-spinner text-xs"></i>
+                          <span>{{ 'quickAdd.adding' | t }}</span>
+                        } @else {
+                          <i class="pi pi-plus text-xs text-[#C27938]"></i>
+                          <span>{{ 'quickAdd.addToFamily' | t }}</span>
+                        }
+                      </button>
+                    }
                   </div>
                 </div>
               }
@@ -261,11 +323,13 @@ export class QuickAddProductModalComponent {
 
   readonly close = output<void>();
   readonly productAdded = output<{ pharmacyProductId: string; groupCode: string }>();
+  readonly familyMerged = output<GroupCodeMergeResult>();
 
   readonly searchQuery = signal<string>('');
   readonly hits = signal<PharmacyProductSearchHit[]>([]);
   readonly loading = signal<boolean>(false);
   readonly linkingId = signal<string | null>(null);
+  readonly mergingCode = signal<string | null>(null);
   readonly hasSearched = signal<boolean>(false);
 
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
@@ -286,6 +350,11 @@ export class QuickAddProductModalComponent {
     return fam.packs.some((pack) =>
       pack.offers.some((offer) => offer.pharmacyProductId === hit.id)
     );
+  }
+
+  isGroupCodeQuery(query: string): boolean {
+    const q = (query || '').trim().toUpperCase();
+    return q.startsWith('G-') && q.length >= 4;
   }
 
   onSearchInput(query: string): void {
@@ -368,6 +437,47 @@ export class QuickAddProductModalComponent {
               this.i18n.t('quickAdd.linkFailed'),
               this.i18n.t('productsAdmin.link')
             );
+          }
+        }
+      });
+  }
+
+  mergeGroup(otherCode: string): void {
+    const fam = this.family();
+    const currentCode = (fam?.groupCode || '').trim().toUpperCase();
+    const sourceCode = (otherCode || '').trim().toUpperCase();
+    if (!fam || !currentCode || !sourceCode) return;
+
+    if (sourceCode === currentCode) {
+      this.notifications.showError(
+        this.i18n.t('productsAdmin.mergeSameError'),
+        this.i18n.t('productsAdmin.mergeGroup')
+      );
+      return;
+    }
+
+    this.mergingCode.set(sourceCode);
+    this.catalog
+      .mergeGroups(sourceCode, currentCode)
+      .pipe(finalize(() => this.mergingCode.set(null)))
+      .subscribe({
+        next: (res) => {
+          this.notifications.showSuccess(
+            this.i18n.t('quickAdd.familyMergedSuccess'),
+            `${sourceCode} ➔ ${currentCode}`
+          );
+          this.familyMerged.emit(res);
+          this.onClose();
+        },
+        error: (err: { status?: number; error?: { code?: string; message?: string } }) => {
+          if (err?.status === 409 || err?.error?.code === 'same_pharmacy_in_family') {
+            this.notifications.showError(
+              this.i18n.t('productsAdmin.mergeConflictError'),
+              this.i18n.t('productsAdmin.mergeGroup')
+            );
+          } else {
+            const msg = err?.error?.message || this.i18n.t('productsAdmin.mergeFailed');
+            this.notifications.showError(msg, this.i18n.t('productsAdmin.mergeGroup'));
           }
         }
       });
