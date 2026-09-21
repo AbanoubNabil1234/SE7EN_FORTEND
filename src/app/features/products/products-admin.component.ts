@@ -529,12 +529,26 @@ interface CategoryOption {
                               <button
                                 type="button"
                                 class="inline-flex min-h-9 items-center rounded-lg bg-[#181A1D] px-3 text-[11px] font-bold text-white hover:bg-black disabled:opacity-50"
-                                [disabled]="linkingId() === offer.pharmacyProductId"
+                                [disabled]="linkingId() === offer.pharmacyProductId || unlinkingId() === offer.pharmacyProductId"
                                 (click)="linkOffer(offer)"
                               >
                                 {{ 'productsAdmin.link' | t }}
                               </button>
                             </div>
+                            <button
+                              type="button"
+                              class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/70 px-2.5 text-[11px] font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 disabled:opacity-50 transition-colors shadow-2xs"
+                              [disabled]="unlinkingId() === offer.pharmacyProductId || linkingId() === offer.pharmacyProductId"
+                              [title]="'productsAdmin.unlink' | t"
+                              (click)="unlinkOffer(offer)"
+                            >
+                              @if (unlinkingId() === offer.pharmacyProductId) {
+                                <i class="pi pi-spin pi-spinner text-xs"></i>
+                              } @else {
+                                <i class="pi pi-unlink text-xs"></i>
+                              }
+                              <span>{{ 'productsAdmin.unlink' | t }}</span>
+                            </button>
                           }
                         </div>
                       </div>
@@ -623,6 +637,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly selectedPackIds = signal<Record<string, string>>({});
   readonly linkDrafts = signal<Record<string, string>>({});
   readonly linkingId = signal<string | null>(null);
+  readonly unlinkingId = signal<string | null>(null);
   readonly openOfferKeys = signal<ReadonlySet<string>>(new Set());
   readonly priceSyncBusyId = signal<string | null>(null);
   readonly barcodeDrafts = signal<Record<string, string>>({});
@@ -794,6 +809,33 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
           this.notifications.showError(
             this.i18n.t('productsAdmin.linkedFail'),
             this.i18n.t('productsAdmin.link')
+          );
+        }
+      });
+  }
+
+  unlinkOffer(offer: CatalogOffer): void {
+    const id = offer.pharmacyProductId;
+    if (!id) return;
+    const confirmed = window.confirm(this.i18n.t('productsAdmin.unlinkConfirm'));
+    if (!confirmed) return;
+
+    this.unlinkingId.set(id);
+    this.catalog
+      .unlinkOffer(id)
+      .pipe(finalize(() => this.unlinkingId.set(null)))
+      .subscribe({
+        next: () => {
+          this.notifications.showSuccess(
+            this.i18n.t('productsAdmin.unlinkedOk'),
+            this.pharmacyLabel(offer)
+          );
+          this.reloadKeepingSelection();
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('productsAdmin.unlinkedFail'),
+            this.i18n.t('productsAdmin.unlink')
           );
         }
       });

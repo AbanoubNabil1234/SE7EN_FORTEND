@@ -378,10 +378,24 @@ import { QuickAddProductModalComponent } from './components/quick-add-product-mo
                             <button
                               type="button"
                               class="inline-flex min-h-8 items-center rounded-lg bg-teal-700 px-2.5 text-[11px] font-bold text-white hover:bg-teal-800 disabled:opacity-50"
-                              [disabled]="linkingId() === offer.pharmacyProductId"
+                              [disabled]="linkingId() === offer.pharmacyProductId || unlinkingId() === offer.pharmacyProductId"
                               (click)="linkOffer(offer)"
                             >
                               {{ 'productDetail.link' | t }}
+                            </button>
+                            <button
+                              type="button"
+                              class="inline-flex min-h-8 items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 text-[11px] font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 disabled:opacity-50 transition-colors shadow-2xs"
+                              [disabled]="unlinkingId() === offer.pharmacyProductId || linkingId() === offer.pharmacyProductId"
+                              [title]="'productDetail.unlink' | t"
+                              (click)="unlinkOffer(offer)"
+                            >
+                              @if (unlinkingId() === offer.pharmacyProductId) {
+                                <i class="pi pi-spin pi-spinner text-xs"></i>
+                              } @else {
+                                <i class="pi pi-unlink text-xs"></i>
+                              }
+                              <span>{{ 'productDetail.unlink' | t }}</span>
                             </button>
                           }
                         </div>
@@ -420,6 +434,7 @@ export class ProductDetailComponent implements OnInit {
   readonly error = signal(false);
   readonly linkDrafts = signal<Record<string, string>>({});
   readonly linkingId = signal<string | null>(null);
+  readonly unlinkingId = signal<string | null>(null);
   readonly selectedMasterId = signal<string | null>(null);
   readonly isQuickAddOpen = signal<boolean>(false);
 
@@ -538,6 +553,34 @@ export class ProductDetailComponent implements OnInit {
         },
         error: () => {
           this.notifications.showError(this.i18n.t('productDetail.linkedFail'), this.i18n.t('productDetail.link'));
+        }
+      });
+  }
+
+  unlinkOffer(offer: CatalogOffer): void {
+    const id = offer.pharmacyProductId;
+    if (!id) return;
+    const confirmed = window.confirm(this.i18n.t('productDetail.unlinkConfirm'));
+    if (!confirmed) return;
+
+    this.unlinkingId.set(id);
+    this.catalog
+      .unlinkOffer(id)
+      .pipe(finalize(() => this.unlinkingId.set(null)))
+      .subscribe({
+        next: () => {
+          this.notifications.showSuccess(
+            this.i18n.t('productDetail.unlinkedOk'),
+            this.pharmacyLabel(offer)
+          );
+          const key = this.family()?.familyKey;
+          if (key) this.load(key);
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('productDetail.unlinkedFail'),
+            this.i18n.t('productDetail.unlink')
+          );
         }
       });
   }

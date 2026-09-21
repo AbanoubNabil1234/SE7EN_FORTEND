@@ -24,6 +24,7 @@ export abstract class CatalogBrowseRepository {
   }): Observable<CatalogFamilyPage>;
   abstract getFamilyByKey(familyKey: string): Observable<CatalogFamily>;
   abstract linkByGroupCode(pharmacyProductId: string, code: string): Observable<GroupCodeLinkResult>;
+  abstract unlinkOffer(pharmacyProductId: string): Observable<boolean>;
   abstract mergeGroups(sourceGroupCode: string, targetGroupCode: string): Observable<GroupCodeMergeResult>;
   abstract searchPharmacyProducts(query: string, take?: number): Observable<PharmacyProductSearchHit[]>;
   abstract setPriceSyncEnabled(masterProductId: string, enabled: boolean): Observable<{ id: string; enabled: boolean }>;

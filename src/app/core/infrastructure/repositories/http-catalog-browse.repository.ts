@@ -161,6 +161,20 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       );
   }
 
+  unlinkOffer(pharmacyProductId: string): Observable<boolean> {
+    return this.http
+      .post<{ success: boolean }>(API_ENDPOINTS.ADMIN_GROUP_CODE_UNLINK, {
+        pharmacyProductId
+      })
+      .pipe(
+        map((res) => {
+          this.familiesCache.clear();
+          this.searchCache.clear();
+          return Boolean(res.success);
+        })
+      );
+  }
+
   mergeGroups(sourceGroupCode: string, targetGroupCode: string): Observable<GroupCodeMergeResult> {
     return this.http
       .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_GROUP_CODE_MERGE, {

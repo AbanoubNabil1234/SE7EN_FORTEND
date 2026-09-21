@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
   LIVE_SEARCH: '/search/live',
   ADMIN_GROUP_CODE_ENSURE: '/admin/group-codes/ensure',
   ADMIN_GROUP_CODE_LINK: '/admin/group-codes/link',
+  ADMIN_GROUP_CODE_UNLINK: '/admin/group-codes/unlink',
   ADMIN_GROUP_CODE_MERGE: '/admin/group-codes/merge',
   ADMIN_PHARMACY_PRODUCT_SEARCH: '/admin/pharmacy-products/search',
   ADMIN_MASTER_PRICE_SYNC: (id: string) => `/admin/masters/${id}/price-sync`,
