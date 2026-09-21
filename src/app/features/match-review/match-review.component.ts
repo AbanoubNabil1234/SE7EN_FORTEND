@@ -222,12 +222,20 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                       </td>
                       <td class="px-3 py-3">
                         <div class="flex items-center gap-2.5">
-                          <div class="size-10 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center">
+                          <div class="size-10 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center relative">
                             @if (row.imageUrl) {
-                              <img [src]="row.imageUrl" [alt]="row.name" referrerpolicy="no-referrer" loading="lazy" class="size-full object-contain p-0.5" (error)="onImgError($event)" />
-                            } @else {
-                              <i class="pi pi-image text-[#C27938]/40 text-xs"></i>
+                              <img
+                                #rowImg
+                                [src]="row.imageUrl"
+                                [alt]="row.name"
+                                loading="lazy"
+                                class="size-full object-contain p-0.5 relative z-10 transition-opacity duration-200"
+                                [class.opacity-0]="rowImg.dataset['failed'] === 'true'"
+                                (load)="rowImg.dataset['failed'] = 'false'"
+                                (error)="rowImg.dataset['failed'] = 'true'"
+                              />
                             }
+                            <i class="pi pi-image text-[#C27938]/40 text-xs absolute inset-0 m-auto flex items-center justify-center pointer-events-none"></i>
                           </div>
                           <div class="min-w-0">
                             <div class="font-semibold text-[#181A1D] truncate">{{ row.name }}</div>
@@ -372,19 +380,22 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         <div class="mb-2 h-36 w-full rounded-lg overflow-hidden bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center relative">
           @if (card.imageUrl) {
             <img
+              #imgEl
               [src]="card.imageUrl"
               [alt]="card.name"
-              referrerpolicy="no-referrer"
               loading="lazy"
-              class="size-full object-contain p-2"
-              (error)="onImgError($event)"
+              class="size-full object-contain p-2 relative z-10 transition-opacity duration-200"
+              [class.opacity-0]="imgEl.dataset['failed'] === 'true'"
+              (load)="imgEl.dataset['failed'] = 'false'"
+              (error)="imgEl.dataset['failed'] = 'true'"
             />
-          } @else {
-            <div class="flex flex-col items-center justify-center text-[#C27938]/40 gap-1 p-2">
-              <i class="pi pi-image text-2xl" aria-hidden="true"></i>
-              <span class="text-[10px] font-semibold text-[#A68B6D]">لا توجد صورة</span>
-            </div>
           }
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-[#C27938]/40 gap-1 p-2 text-center pointer-events-none">
+            <i class="pi pi-image text-2xl" aria-hidden="true"></i>
+            <span class="text-[10px] font-semibold text-[#A68B6D]">
+              {{ card.imageUrl ? (card.pharmacyCode === 'aldawaa' ? 'صورة الدواء غير متاحة خارجياً' : 'تعذر تحميل الصورة') : 'لا توجد صورة' }}
+            </span>
+          </div>
         </div>
         <div class="font-semibold text-sm text-[#181A1D] leading-snug">{{ card.name }}</div>
         @if (card.englishName) {
@@ -465,19 +476,6 @@ export class MatchReviewComponent implements OnInit {
     this.pageSize.set(size);
     this.page.set(1);
     this.reload();
-  }
-
-  onImgError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    if (img) {
-      img.style.display = 'none';
-      if (img.parentElement) {
-        const placeholder = document.createElement('div');
-        placeholder.className = 'flex flex-col items-center justify-center text-[#C27938]/40 gap-1 p-2 text-center';
-        placeholder.innerHTML = '<i class="pi pi-image text-2xl"></i><span class="text-[10px] font-semibold text-[#A68B6D]">تعذر تحميل الصورة</span>';
-        img.parentElement.appendChild(placeholder);
-      }
-    }
   }
 
   reload(): void {
