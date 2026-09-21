@@ -167,6 +167,15 @@ import { QuickAddProductModalComponent } from './components/quick-add-product-mo
                       {{ 'productDetail.matchConfirmed' | t }}
                     </span>
                   }
+                  @if (hasAiMatch(f)) {
+                    <span
+                      class="inline-flex items-center gap-1 rounded-full bg-violet-50 border border-violet-200 px-2.5 py-0.5 text-[11px] font-bold text-violet-700 shadow-xs"
+                      [title]="'productDetail.aiMatchTooltip' | t"
+                    >
+                      <i class="pi pi-sparkles text-[11px] text-violet-500" aria-hidden="true"></i>
+                      <span>{{ 'productDetail.aiMatchBadge' | t }}</span>
+                    </span>
+                  }
                 </div>
 
                 <div class="pt-1 text-lg font-bold tabular-nums text-slate-900 sm:text-xl">
@@ -475,6 +484,11 @@ export class ProductDetailComponent implements OnInit {
   }
 
   readonly isAiMatch = isAiMatch;
+
+  hasAiMatch(family?: CatalogFamily | null): boolean {
+    if (!family) return false;
+    return family.packs.some((p) => p.offers.some((o) => isAiMatch(o)));
+  }
 
   familyTitle(f: CatalogFamily): string {
     return catalogFamilyTitle(f, this.locale.locale());

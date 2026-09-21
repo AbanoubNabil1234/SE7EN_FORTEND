@@ -276,6 +276,15 @@ interface CategoryOption {
                   </h2>
                   <div class="mt-1 flex flex-wrap items-center gap-1.5">
                     <span [class]="matchBadgeClass(family)">{{ matchLabelKey(family) | t }}</span>
+                    @if (hasAiMatch(family)) {
+                      <span
+                        class="inline-flex items-center gap-1 rounded-full bg-violet-50 border border-violet-200 px-2 py-0.5 text-[11px] font-bold text-violet-700 shadow-xs"
+                        [title]="'productsAdmin.aiMatchTooltip' | t"
+                      >
+                        <i class="pi pi-sparkles text-[11px] text-violet-500" aria-hidden="true"></i>
+                        <span>{{ 'productsAdmin.aiMatchBadge' | t }}</span>
+                      </span>
+                    }
                     <span class="text-[11px] font-semibold tabular-nums text-[#8A735C]">
                       {{ cardPharmacyCount(family) }} {{ 'productsAdmin.pharmacies' | t }}
                     </span>
@@ -825,6 +834,10 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   readonly isAiMatch = isAiMatch;
+
+  hasAiMatch(family: CatalogFamily): boolean {
+    return family.packs.some((p) => p.offers.some((o) => isAiMatch(o)));
+  }
 
   familyTitle(family: CatalogFamily): string {
     return catalogFamilyTitle(family, this.locale.locale());
