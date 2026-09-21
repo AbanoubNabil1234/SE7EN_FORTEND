@@ -64,8 +64,26 @@ interface CatalogImportResult {
       </div>
 
       @if (loading()) {
-        <div class="rounded-2xl border border-[#E8D5BE] bg-white p-8 text-center text-sm text-[#8A735C]">
-          {{ 'searchPharmacies.loading' | t }}
+        <!-- Pharmacies Skeleton List -->
+        <div class="space-y-3 animate-pulse">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="flex flex-col gap-3 rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div class="flex min-w-0 items-center gap-3">
+                <div class="size-12 rounded-xl bg-[#F3E7D8] shrink-0"></div>
+                <div class="space-y-2">
+                  <div class="h-5 w-36 rounded bg-[#E8D5BE]"></div>
+                  <div class="flex items-center gap-2">
+                    <div class="h-4 w-20 rounded bg-[#F8EEE2]"></div>
+                    <div class="h-4 w-16 rounded bg-[#F8EEE2]"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="h-6 w-12 rounded-full bg-[#E8D5BE]"></div>
+                <div class="h-9 w-24 rounded-xl bg-[#F3E7D8]"></div>
+              </div>
+            </div>
+          }
         </div>
       } @else if (error()) {
         <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">

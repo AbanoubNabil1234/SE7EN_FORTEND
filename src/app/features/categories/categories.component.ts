@@ -46,8 +46,19 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       </div>
 
       @if (loading()) {
-        <div class="rounded-2xl border border-[#E8D5BE] bg-white px-6 py-16 text-center text-sm font-medium text-[#8A735C]">
-          {{ 'categories.loading' | t }}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
+          @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+            <div class="rounded-2xl border border-[#E8D5BE] bg-white p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="size-10 rounded-xl bg-[#F8EEE2]"></div>
+                <div class="h-4 w-12 rounded-full bg-[#F3E7D8]"></div>
+              </div>
+              <div class="space-y-1.5">
+                <div class="h-5 w-32 rounded bg-[#E8D5BE]"></div>
+                <div class="h-3.5 w-20 rounded bg-[#F8EEE2]"></div>
+              </div>
+            </div>
+          }
         </div>
       } @else if (error()) {
         <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">

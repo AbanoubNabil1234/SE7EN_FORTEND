@@ -113,9 +113,52 @@ const PAGE_SIZE = 24;
       <!-- TAB 1: EXECUTIVE ANALYTICS & REAL CHARTS -->
       @if (activeTab() === 'analytics') {
         @if (snapshotLoading() && !snapshot()) {
-          <div class="rounded-3xl border border-[#E8D5BE] bg-white p-12 text-center text-sm font-bold text-[#8A735C] dark:border-neutral-800 dark:bg-neutral-900">
-            <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]" aria-hidden="true"></i>
-            <p class="mt-3">جاري تحميل إحصائيات النظام الحية والرسوم البيانية…</p>
+          <!-- Dashboard Skeletons -->
+          <div class="space-y-6 animate-pulse">
+            <!-- 4 KPI Cards Skeletons -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              @for (kpi of [1, 2, 3, 4]; track kpi) {
+                <div class="rounded-3xl border border-[#E8D5BE] bg-white p-5 space-y-3 dark:border-neutral-800 dark:bg-neutral-900 shadow-sm">
+                  <div class="flex items-center justify-between">
+                    <div class="size-10 rounded-2xl bg-[#F8EEE2] dark:bg-neutral-800"></div>
+                    <div class="h-5 w-16 rounded-full bg-[#F3E7D8] dark:bg-neutral-800"></div>
+                  </div>
+                  <div class="space-y-2 pt-1">
+                    <div class="h-4 w-28 rounded bg-[#F3E7D8] dark:bg-neutral-800"></div>
+                    <div class="h-8 w-24 rounded-lg bg-[#E8D5BE] dark:bg-neutral-700"></div>
+                    <div class="h-3.5 w-32 rounded bg-[#F3E7D8]/70 dark:bg-neutral-800/70"></div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- 2 Analytics Chart Skeletons -->
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div class="rounded-3xl border border-[#E8D5BE] bg-white p-6 space-y-5 dark:border-neutral-800 dark:bg-neutral-900 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <div class="h-5 w-44 rounded bg-[#E8D5BE] dark:bg-neutral-700"></div>
+                  <div class="h-4 w-20 rounded bg-[#F3E7D8] dark:bg-neutral-800"></div>
+                </div>
+                <div class="h-64 rounded-2xl bg-[#FBF8F4] dark:bg-neutral-800/50 p-4 flex items-end justify-between gap-3">
+                  <div class="w-full h-1/3 rounded-t-lg bg-[#E8D5BE]/60"></div>
+                  <div class="w-full h-2/3 rounded-t-lg bg-[#E8D5BE]"></div>
+                  <div class="w-full h-1/2 rounded-t-lg bg-[#E8D5BE]/70"></div>
+                  <div class="w-full h-4/5 rounded-t-lg bg-[#C27938]/60"></div>
+                  <div class="w-full h-3/5 rounded-t-lg bg-[#E8D5BE]/80"></div>
+                  <div class="w-full h-2/5 rounded-t-lg bg-[#E8D5BE]/50"></div>
+                </div>
+              </div>
+
+              <div class="rounded-3xl border border-[#E8D5BE] bg-white p-6 space-y-5 dark:border-neutral-800 dark:bg-neutral-900 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <div class="h-5 w-48 rounded bg-[#E8D5BE] dark:bg-neutral-700"></div>
+                  <div class="h-4 w-20 rounded bg-[#F3E7D8] dark:bg-neutral-800"></div>
+                </div>
+                <div class="h-64 rounded-2xl bg-[#FBF8F4] dark:bg-neutral-800/50 p-6 flex items-center justify-center">
+                  <div class="size-48 rounded-full border-8 border-[#E8D5BE] border-t-[#C27938]/70"></div>
+                </div>
+              </div>
+            </div>
           </div>
         } @else if (snapshotError()) {
           <div class="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-sm font-bold text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200">

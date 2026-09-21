@@ -103,9 +103,28 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       </div>
 
       @if (loading()) {
-        <div class="flex min-h-64 items-center justify-center rounded-2xl border border-[#E8D5BE] bg-white p-8 text-[#8A735C]">
-          <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]" aria-hidden="true"></i>
-          <span class="ms-3 text-sm font-bold">{{ 'magazines.loading' | t }}</span>
+        <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm animate-pulse">
+          <div class="border-b border-[#EDE0D0] bg-[#FBF8F4] px-4 py-3 flex items-center justify-between">
+            <div class="h-4 w-32 rounded bg-[#E8D5BE]"></div>
+            <div class="h-4 w-20 rounded bg-[#F3E7D8]"></div>
+          </div>
+          <div class="divide-y divide-[#F2E8DC] p-4 space-y-3">
+            @for (row of [1, 2, 3, 4, 5]; track row) {
+              <div class="flex items-center justify-between gap-4 pt-3 first:pt-0">
+                <div class="flex items-center gap-3">
+                  <div class="size-12 rounded-xl bg-[#F3E7D8]"></div>
+                  <div class="space-y-1.5">
+                    <div class="h-4 w-40 rounded bg-[#E8D5BE]"></div>
+                    <div class="h-3 w-28 rounded bg-[#F8EEE2]"></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="h-5 w-20 rounded-full bg-[#F3E7D8]"></div>
+                  <div class="h-8 w-20 rounded-lg bg-[#E8D5BE]/60"></div>
+                </div>
+              </div>
+            }
+          </div>
         </div>
       } @else if (error()) {
         <div class="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/50 p-8 text-center">

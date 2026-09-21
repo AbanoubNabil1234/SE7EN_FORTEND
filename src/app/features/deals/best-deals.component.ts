@@ -77,7 +77,7 @@ const PAGE_SIZE = 24;
       </div>
 
       @if (loading() && deals().length === 0) {
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" aria-hidden="true">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 animate-pulse" aria-hidden="true">
           @for (slot of skeletonSlots; track slot) {
             <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white">
               <div class="aspect-[4/3] bg-[#FBF8F4]"></div>

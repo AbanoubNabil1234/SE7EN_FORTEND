@@ -28,7 +28,7 @@ export class App {
   readonly initialLoading = signal(true);
   readonly routeLoading = signal(false);
   readonly showLoading = computed(
-    () => this.initialLoading() || this.routeLoading() || this.loadingService.isLoading()
+    () => this.initialLoading() || this.routeLoading()
   );
   private routeStartedAt = 0;
   private routeLoadingTimer: ReturnType<typeof setTimeout> | null = null;
@@ -57,7 +57,7 @@ export class App {
         event instanceof NavigationCancel ||
         event instanceof NavigationError
       ) {
-        const remaining = Math.max(0, 3000 - (Date.now() - this.routeStartedAt));
+        const remaining = Math.max(0, 450 - (Date.now() - this.routeStartedAt));
         this.routeLoadingTimer = setTimeout(() => {
           this.routeLoading.set(false);
           this.routeLoadingTimer = null;
@@ -66,7 +66,7 @@ export class App {
     });
 
     afterNextRender(() => {
-      window.setTimeout(() => this.initialLoading.set(false), 2000);
+      window.setTimeout(() => this.initialLoading.set(false), 800);
     });
   }
 }

@@ -107,8 +107,28 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       </div>
 
       @if (loading()) {
-        <div class="rounded-2xl border border-[#E8D5BE] bg-white px-6 py-16 text-center text-sm font-medium text-[#8A735C]">
-          {{ 'coupons.loading' | t }}
+        <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm animate-pulse">
+          <div class="border-b border-[#EDE0D0] bg-[#FBF8F4] px-4 py-3 flex items-center justify-between">
+            <div class="h-4 w-32 rounded bg-[#E8D5BE]"></div>
+            <div class="h-4 w-20 rounded bg-[#F3E7D8]"></div>
+          </div>
+          <div class="divide-y divide-[#F2E8DC] p-4 space-y-3">
+            @for (row of [1, 2, 3, 4, 5]; track row) {
+              <div class="flex items-center justify-between gap-4 pt-3 first:pt-0">
+                <div class="flex items-center gap-3">
+                  <div class="h-7 w-20 rounded-md bg-[#181A1D]/20"></div>
+                  <div class="space-y-1.5">
+                    <div class="h-4 w-36 rounded bg-[#E8D5BE]"></div>
+                    <div class="h-3 w-24 rounded bg-[#F8EEE2]"></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="h-5 w-16 rounded-full bg-[#F3E7D8]"></div>
+                  <div class="h-5 w-20 rounded bg-[#E8D5BE]/60"></div>
+                </div>
+              </div>
+            }
+          </div>
         </div>
       } @else if (error()) {
         <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">

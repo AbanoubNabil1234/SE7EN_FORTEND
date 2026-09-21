@@ -97,8 +97,24 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       </div>
 
       @if (loading()) {
-        <div class="rounded-2xl border border-[#E8D5BE] bg-white px-6 py-16 text-center text-sm font-medium text-[#8A735C]">
-          {{ 'billboards.loading' | t }}
+        <div class="space-y-3 animate-pulse">
+          @for (i of [1, 2, 3]; track i) {
+            <article class="grid overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm md:grid-cols-[240px_minmax(0,1fr)]">
+              <div class="h-40 bg-[#F8EEE2]"></div>
+              <div class="p-5 space-y-3">
+                <div class="flex items-center gap-2">
+                  <div class="h-5 w-16 rounded-full bg-[#E8D5BE]"></div>
+                  <div class="h-5 w-20 rounded-full bg-[#F3E7D8]"></div>
+                </div>
+                <div class="h-5 w-2/3 rounded bg-[#E8D5BE]"></div>
+                <div class="h-4 w-1/2 rounded bg-[#F8EEE2]"></div>
+                <div class="pt-3 flex gap-2">
+                  <div class="h-8 w-20 rounded-lg bg-[#E8D5BE]/60"></div>
+                  <div class="h-8 w-20 rounded-lg bg-[#E8D5BE]/40"></div>
+                </div>
+              </div>
+            </article>
+          }
         </div>
       } @else if (error()) {
         <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">

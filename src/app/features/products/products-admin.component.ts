@@ -148,8 +148,39 @@ interface CategoryOption {
       </div>
 
       @if (loading() && families().length === 0) {
-        <div class="rounded-2xl border border-[#E8D5BE] bg-white px-6 py-16 text-center text-sm font-medium text-[#8A735C]">
-          {{ 'productsAdmin.loading' | t }}
+        <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm" aria-hidden="true">
+          <div
+            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
+          >
+            <span></span>
+            <span>{{ 'productsAdmin.colProduct' | t }}</span>
+            <span>{{ 'productsAdmin.groupCode' | t }}</span>
+            <span>{{ 'productsAdmin.colBarcode' | t }}</span>
+            <span>{{ 'productsAdmin.colPrice' | t }}</span>
+            <span>{{ 'productsAdmin.colActions' | t }}</span>
+          </div>
+          @for (slot of [1, 2, 3, 4, 5, 6, 7, 8]; track slot) {
+            <div class="animate-pulse border-t border-[#EDE0D0] px-3 py-2.5">
+              <div class="grid grid-cols-1 gap-2 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
+                <div class="size-11 rounded-lg bg-[#F3E7D8]"></div>
+                <div class="min-w-0 space-y-1.5">
+                  <div class="h-3 w-20 rounded bg-[#F0E2D1]"></div>
+                  <div class="h-4 w-4/5 rounded bg-[#E8D5BE]"></div>
+                  <div class="flex items-center gap-2">
+                    <div class="h-3.5 w-16 rounded-full bg-[#F3E7D8]"></div>
+                    <div class="h-3.5 w-24 rounded bg-[#F3E7D8]"></div>
+                  </div>
+                </div>
+                <div class="h-6 w-20 rounded-md bg-[#F3E7D8]"></div>
+                <div class="h-6 w-28 rounded-md bg-[#F3E7D8]"></div>
+                <div class="h-5 w-16 rounded bg-[#E8D5BE]"></div>
+                <div class="flex items-center gap-1.5">
+                  <div class="h-8 w-16 rounded-lg bg-[#F3E7D8]"></div>
+                  <div class="h-8 w-16 rounded-lg bg-[#F3E7D8]"></div>
+                </div>
+              </div>
+            </div>
+          }
         </div>
       } @else if (error()) {
         <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">
@@ -160,7 +191,12 @@ interface CategoryOption {
           {{ 'productsAdmin.empty' | t }}
         </div>
       } @else {
-        <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm" [attr.aria-busy]="searching()">
+        <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm transition-opacity duration-200" [class.opacity-70]="searching()" [attr.aria-busy]="searching()">
+          @if (searching()) {
+            <div class="h-0.5 w-full bg-[#F8EEE2] overflow-hidden">
+              <div class="h-full w-full bg-[#C27938] animate-pulse"></div>
+            </div>
+          }
           <div
             class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
           >

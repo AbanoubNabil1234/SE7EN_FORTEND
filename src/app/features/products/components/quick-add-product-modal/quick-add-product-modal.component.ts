@@ -94,16 +94,44 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
             </div>
 
             @if (loading()) {
-              <div class="mt-2 flex items-center gap-2 text-xs font-semibold text-[#C27938]">
-                <i class="pi pi-spin pi-spinner text-xs"></i>
-                <span>{{ 'quickAdd.searching' | t }}</span>
+              <div class="mt-2 flex items-center justify-between text-xs font-semibold text-[#C27938]">
+                <span class="flex items-center gap-1.5">
+                  <i class="pi pi-spin pi-spinner text-xs"></i>
+                  <span>{{ 'quickAdd.searching' | t }}</span>
+                </span>
+                <span class="h-1.5 w-24 rounded-full bg-[#E8D5BE] overflow-hidden">
+                  <span class="block h-full w-full bg-[#C27938] animate-pulse"></span>
+                </span>
               </div>
             }
           </div>
 
           <!-- Results Body -->
           <div class="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-[220px] max-h-[50vh] divide-y divide-[#F2E8DC]">
-            @if (hits().length > 0) {
+            @if (loading() && hits().length === 0) {
+              <!-- Quick Add Skeletons -->
+              <div class="space-y-2.5 animate-pulse">
+                @for (item of [1, 2, 3]; track item) {
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border border-[#EDE0D0] bg-white">
+                    <div class="flex items-start gap-3 min-w-0 flex-1">
+                      <div class="size-10 shrink-0 rounded-lg bg-[#F3E7D8]"></div>
+                      <div class="space-y-2 flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                          <div class="h-4 w-20 rounded bg-[#F8EEE2]"></div>
+                          <div class="h-3.5 w-14 rounded bg-[#F8EEE2]"></div>
+                        </div>
+                        <div class="h-4 w-3/4 rounded bg-[#E8D5BE]"></div>
+                        <div class="flex items-center gap-2">
+                          <div class="h-4 w-16 rounded bg-[#F3E7D8]"></div>
+                          <div class="h-4 w-24 rounded bg-[#F8EEE2]"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="h-9 w-28 rounded-lg bg-[#E8D5BE]/60 shrink-0"></div>
+                  </div>
+                }
+              </div>
+            } @else if (hits().length > 0) {
               @for (hit of hits(); track hit.id) {
                 <div class="pt-2.5 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border border-[#EDE0D0] bg-white hover:bg-[#FBF8F4] transition-colors">
                   <!-- Product Info with Pharmacy Logo -->

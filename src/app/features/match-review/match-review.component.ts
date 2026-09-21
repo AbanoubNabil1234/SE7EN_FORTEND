@@ -97,8 +97,53 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       </div>
 
       @if (loading()) {
-        <div class="rounded-2xl border border-[#E8D5BE] bg-white px-6 py-16 text-center text-sm text-[#8A735C]">
-          {{ 'matchReview.loading' | t }}
+        <!-- Match Review Split Skeleton -->
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] animate-pulse">
+          <!-- Left Table Skeleton -->
+          <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white">
+            <div class="border-b border-[#EDE0D0] bg-[#FBF8F4] px-4 py-3 flex items-center justify-between">
+              <div class="h-4 w-28 rounded bg-[#E8D5BE]"></div>
+              <div class="h-4 w-20 rounded bg-[#F3E7D8]"></div>
+            </div>
+            <div class="divide-y divide-[#F2E8DC] p-4 space-y-3">
+              @for (row of [1, 2, 3, 4, 5]; track row) {
+                <div class="flex items-center justify-between gap-3 pt-3 first:pt-0">
+                  <div class="flex items-center gap-3">
+                    <div class="size-8 rounded-lg bg-[#F3E7D8]"></div>
+                    <div class="space-y-1.5">
+                      <div class="h-4 w-40 rounded bg-[#E8D5BE]"></div>
+                      <div class="h-3 w-24 rounded bg-[#F3E7D8]"></div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="h-5 w-14 rounded-full bg-[#F8EEE2]"></div>
+                    <div class="h-4 w-16 rounded bg-[#F3E7D8]"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Right Detail Card Skeleton -->
+          <div class="space-y-4 rounded-2xl border border-[#E8D5BE] bg-white p-5">
+            <div class="h-5 w-32 rounded bg-[#E8D5BE]"></div>
+            <div class="flex items-center gap-3">
+              <div class="size-20 rounded-xl bg-[#F8EEE2] border border-[#EDE0D0]"></div>
+              <div class="space-y-2 flex-1">
+                <div class="h-4 w-3/4 rounded bg-[#E8D5BE]"></div>
+                <div class="h-3.5 w-1/2 rounded bg-[#F3E7D8]"></div>
+                <div class="h-5 w-20 rounded-full bg-[#F8EEE2]"></div>
+              </div>
+            </div>
+            <div class="space-y-2 pt-3 border-t border-[#EDE0D0]">
+              <div class="h-4 w-24 rounded bg-[#F3E7D8]"></div>
+              <div class="h-10 w-full rounded-xl bg-[#F8EEE2]"></div>
+            </div>
+            <div class="flex gap-2 pt-2">
+              <div class="h-9 flex-1 rounded-xl bg-[#E8D5BE]/70"></div>
+              <div class="h-9 flex-1 rounded-xl bg-[#181A1D]/30"></div>
+            </div>
+          </div>
         </div>
       } @else if (error()) {
         <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{{ 'matchReview.error' | t }}</div>

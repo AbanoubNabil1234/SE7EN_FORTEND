@@ -27,8 +27,62 @@ import { QuickAddProductModalComponent } from './components/quick-add-product-mo
   template: `
     <section class="w-full space-y-3 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       @if (loading()) {
-        <div class="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center text-sm font-medium text-slate-500">
-          {{ 'productDetail.loading' | t }}
+        <!-- Skeleton Product Detail View -->
+        <div class="space-y-4 animate-pulse">
+          <!-- Skeleton Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="h-9 w-28 rounded-lg bg-[#E8D5BE]/60"></div>
+            <div class="h-5 w-48 rounded bg-[#F3E7D8]"></div>
+            <div class="h-9 w-32 rounded-lg bg-[#E8D5BE]/60"></div>
+          </div>
+
+          <!-- Skeleton Identity / Hero Card -->
+          <div class="rounded-xl border border-[#E8D5BE] bg-white p-4 sm:p-5">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+              <div class="mx-auto size-32 shrink-0 rounded-xl bg-[#F8EEE2] border border-[#EDE0D0] sm:mx-0 flex items-center justify-center">
+                <i class="pi pi-image text-3xl text-[#E8D5BE]"></i>
+              </div>
+              <div class="min-w-0 flex-1 space-y-3">
+                <div class="h-4 w-24 rounded bg-[#F3E7D8]"></div>
+                <div class="h-6 w-3/4 rounded-lg bg-[#E8D5BE]"></div>
+                <div class="flex gap-2">
+                  <div class="h-4 w-20 rounded bg-[#F3E7D8]"></div>
+                  <div class="h-4 w-24 rounded bg-[#F3E7D8]"></div>
+                </div>
+                <div class="pt-2 flex flex-wrap gap-2">
+                  <div class="h-7 w-20 rounded-lg bg-[#F8EEE2]"></div>
+                  <div class="h-7 w-24 rounded-lg bg-[#F8EEE2]"></div>
+                  <div class="h-7 w-16 rounded-lg bg-[#F8EEE2]"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skeleton Offers Table Card -->
+          <div class="rounded-xl border border-[#E8D5BE] bg-white overflow-hidden shadow-sm">
+            <div class="border-b border-[#EDE0D0] bg-[#FBF8F4] px-4 py-3 flex items-center justify-between">
+              <div class="h-5 w-32 rounded bg-[#E8D5BE]"></div>
+              <div class="h-8 w-28 rounded-lg bg-[#E8D5BE]/70"></div>
+            </div>
+            <div class="divide-y divide-[#F2E8DC] p-4 space-y-3">
+              @for (row of [1, 2, 3, 4]; track row) {
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 first:pt-0">
+                  <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-lg bg-[#F3E7D8]"></div>
+                    <div class="space-y-1.5">
+                      <div class="h-4 w-24 rounded bg-[#F3E7D8]"></div>
+                      <div class="h-3.5 w-36 rounded bg-[#E8D5BE]/80"></div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="h-5 w-24 rounded-full bg-[#F8EEE2]"></div>
+                    <div class="h-6 w-16 rounded bg-[#E8D5BE]"></div>
+                    <div class="h-8 w-20 rounded-lg bg-[#E8D5BE]/60"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
         </div>
       } @else if (error() || !family()) {
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-6 text-center text-sm font-medium text-rose-700">
