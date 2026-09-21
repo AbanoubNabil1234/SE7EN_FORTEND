@@ -26,6 +26,7 @@ export class HttpMatchReviewRepository extends MatchReviewRepository {
     if (query?.maxScore != null) params = params.set('maxScore', String(query.maxScore));
     if (query?.reason) params = params.set('reason', query.reason);
     if (query?.minAgeHours != null) params = params.set('minAgeHours', String(query.minAgeHours));
+    if (query?.search) params = params.set('search', query.search);
     return this.http.get<unknown>(API_ENDPOINTS.ADMIN_MATCH_REVIEWS, { params }).pipe(map(mapPage));
   }
 

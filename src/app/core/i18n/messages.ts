@@ -103,7 +103,10 @@ export const messagesAr: MessageTree = {
     ageHours: 'العمر (ساعات)',
     forceMatch: 'ربط يدوي',
     masterId: 'معرّف الماستر',
-    confirmForce: 'ربط هذا العرض يدوياً بالمنتج المحدد؟'
+    confirmForce: 'ربط هذا العرض يدوياً بالمنتج المحدد؟',
+    searchPlaceholder: 'ابحث بالاسم، الباركود، أو SKU...',
+    acceptMatch: 'قبول الربط',
+    rejectMatch: 'رفض الربط'
   },
   searchPharmacies: {
     badge: 'تطبيق العميل',
@@ -448,7 +451,8 @@ export const messagesAr: MessageTree = {
     badge: 'إدارة الكتالوج',
     title: 'إدارة المنتجات',
     subtitle: 'عرض العائلات وعروض الصيدليات وربط العروض برمز المجموعة G-….',
-    subtitleAll: 'عرض كل المنتجات المسحوبة في الكتالوج، مع التصفية والبحث ورمز المجموعة.',
+    tabCatalog: 'الكتالوج العام',
+    tabModelReview: 'مراجعة نتائج الموديل',
     toCategories: 'التصنيفات',
     categorySlug: 'التصنيف',
     categoryPlaceholder: 'مثلاً baby',
@@ -859,7 +863,10 @@ export const messagesEn: MessageTree = {
     ageHours: 'Age (hours)',
     forceMatch: 'Force match',
     masterId: 'Master id',
-    confirmForce: 'Manually link this listing onto the chosen SKU?'
+    confirmForce: 'Manually link this listing onto the chosen SKU?',
+    searchPlaceholder: 'Search by title, barcode, or SKU...',
+    acceptMatch: 'Accept Match',
+    rejectMatch: 'Reject Match'
   },
   searchPharmacies: {
     badge: 'Customer app',
@@ -1153,7 +1160,8 @@ export const messagesEn: MessageTree = {
     badge: 'Catalog ops',
     title: 'Product management',
     subtitle: 'Family cards, pharmacy offers, and durable G-…. group codes for manual linking.',
-    subtitleAll: 'Browse every harvested catalog family, with filters, search, and group codes.',
+    tabCatalog: 'Full Catalog',
+    tabModelReview: 'Model Match Review',
     toCategories: 'Categories',
     categorySlug: 'Category',
     categoryPlaceholder: 'e.g. baby',

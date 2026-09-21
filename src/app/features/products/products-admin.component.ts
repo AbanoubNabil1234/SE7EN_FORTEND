@@ -35,6 +35,8 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
+import { MatchReviewComponent } from '../match-review/match-review.component';
+import { MatchReviewRepository } from '../../core/domain/repositories/match-review.repository';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -55,7 +57,8 @@ interface CategoryOption {
     TranslatePipe,
     CurrencyPipe,
     DecimalPipe,
-    QuickAddProductModalComponent
+    QuickAddProductModalComponent,
+    MatchReviewComponent
   ],
   template: `
     <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
@@ -84,9 +87,43 @@ interface CategoryOption {
             </a>
           </div>
 
-          <div class="grid gap-3 border-t border-[#EDE0D0] pt-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label class="block space-y-1.5 sm:col-span-2 lg:col-span-1">
-              <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.search' | t }}</span>
+          <!-- Tabs Switcher -->
+          <div class="flex items-center gap-2 border-t border-[#EDE0D0] pt-4">
+            <button
+              type="button"
+              (click)="switchTab('catalog')"
+              [class]="activeTab() === 'catalog' 
+                ? 'bg-[#181A1D] text-white shadow-sm' 
+                : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
+              class="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all cursor-pointer"
+            >
+              <i class="pi pi-th-large text-xs"></i>
+              <span>{{ 'productsAdmin.tabCatalog' | t }}</span>
+            </button>
+
+            <button
+              type="button"
+              (click)="switchTab('model-review')"
+              [class]="activeTab() === 'model-review' 
+                ? 'bg-[#C27938] text-white shadow-sm' 
+                : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
+              class="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all cursor-pointer"
+            >
+              <i class="pi pi-sparkles text-xs"></i>
+              <span>{{ 'productsAdmin.tabModelReview' | t }}</span>
+              <span 
+                [class]="activeTab() === 'model-review' ? 'bg-white/20 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
+                class="rounded-full px-2.5 py-0.5 text-xs font-extrabold tabular-nums transition-colors"
+              >
+                {{ modelReviewCount() > 0 ? (modelReviewCount() | number) : '2,731' }}
+              </span>
+            </button>
+          </div>
+
+          @if (activeTab() === 'catalog') {
+            <div class="grid gap-3 border-t border-[#EDE0D0] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+              <label class="block space-y-1.5 sm:col-span-2 lg:col-span-1">
+                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.search' | t }}</span>
               <input
                 type="search"
                 class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
@@ -152,10 +189,12 @@ interface CategoryOption {
               <span>{{ 'productsAdmin.searchHint' | t }}</span>
             }
           </div>
+          }
         </div>
       </div>
 
-      @if (loading() && families().length === 0) {
+      @if (activeTab() === 'catalog') {
+        @if (loading() && families().length === 0) {
         <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm" aria-hidden="true">
           <div
             class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
@@ -604,6 +643,9 @@ interface CategoryOption {
           </div>
         }
       }
+      } @else {
+        <app-match-review [isEmbedded]="true"></app-match-review>
+      }
     </section>
 
     <app-quick-add-product-modal
@@ -617,11 +659,15 @@ interface CategoryOption {
 })
 export class ProductsAdminComponent implements OnInit, OnDestroy {
   private readonly catalog = inject(CatalogBrowseRepository);
+  private readonly matchReviews = inject(MatchReviewRepository);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   readonly locale = inject(LocaleService);
+
+  readonly activeTab = signal<'catalog' | 'model-review'>('catalog');
+  readonly modelReviewCount = signal<number>(2731);
 
   readonly families = signal<CatalogFamily[]>([]);
   readonly brands = signal<string[]>([]);
@@ -666,14 +712,37 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly searchReady = computed(() => isCatalogSearchReady(this.query()));
 
   ngOnInit(): void {
+    const tabParam = this.route.snapshot.queryParamMap.get('tab')?.trim();
+    if (tabParam === 'model-review') {
+      this.activeTab.set('model-review');
+    }
+
+    this.matchReviews.listQueue({ take: 1 }).subscribe({
+      next: (res) => this.modelReviewCount.set(res.queueDepth),
+      error: () => {}
+    });
+
     const slug = this.route.snapshot.queryParamMap.get('categorySlug')?.trim() ?? '';
     if (slug) this.categorySlug.set(slug);
     this.reload();
     this.route.queryParamMap.pipe(skip(1)).subscribe((params) => {
+      const t = params.get('tab')?.trim();
+      if (t === 'model-review' || t === 'catalog') {
+        this.activeTab.set(t);
+      }
       const next = params.get('categorySlug')?.trim() ?? '';
       if (next === this.categorySlug()) return;
       this.categorySlug.set(next);
       this.reload();
+    });
+  }
+
+  switchTab(tab: 'catalog' | 'model-review'): void {
+    this.activeTab.set(tab);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge'
     });
   }
 

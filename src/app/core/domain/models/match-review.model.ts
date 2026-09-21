@@ -66,6 +66,7 @@ export interface MatchReviewQuery {
   reason?: string | null;
   minAgeHours?: number | null;
   pharmacyCode?: string | null;
+  search?: string | null;
 }
 
 export function distinctPharmacyCount(members: MatchReviewListingCard[]): number {
