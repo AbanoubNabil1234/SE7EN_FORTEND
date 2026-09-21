@@ -75,7 +75,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
             class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] ps-9 pe-3 text-sm font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
             [value]="searchFilter()"
             (input)="searchFilter.set($any($event.target).value)"
-            (keydown.enter)="reload()"
+            (keydown.enter)="onFilterChange()"
             [attr.placeholder]="'matchReview.searchPlaceholder' | t"
           />
         </div>
@@ -83,7 +83,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         <select
           class="min-h-11 rounded-xl border border-[#E8D5BE] bg-white px-3 text-sm"
           [value]="pharmacyFilter()"
-          (change)="pharmacyFilter.set($any($event.target).value); reload()"
+          (change)="pharmacyFilter.set($any($event.target).value); onFilterChange()"
         >
           <option value="">{{ 'matchReview.allPharmacies' | t }}</option>
           @for (p of pharmacies; track p.code) {
@@ -93,7 +93,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         <input
           class="min-h-11 min-w-36 rounded-xl border border-[#E8D5BE] px-3 text-sm"
           [value]="reasonFilter()"
-          (change)="reasonFilter.set($any($event.target).value); reload()"
+          (change)="reasonFilter.set($any($event.target).value); onFilterChange()"
           [attr.placeholder]="'matchReview.reason' | t"
         />
         <input
@@ -103,18 +103,43 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
           max="1"
           class="min-h-11 w-24 rounded-xl border border-[#E8D5BE] px-3 text-sm"
           [value]="minScore()"
-          (change)="minScore.set($any($event.target).value); reload()"
+          (change)="minScore.set($any($event.target).value); onFilterChange()"
           [attr.placeholder]="'matchReview.minScore' | t"
         />
         <div class="flex flex-wrap gap-2">
-          <button type="button" class="min-h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 text-sm font-bold text-white transition-colors" (click)="bulk('accept')">
+          <button type="button" class="min-h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 text-sm font-bold text-white transition-colors cursor-pointer" (click)="bulk('accept')">
             <i class="pi pi-check me-1"></i>
             {{ 'matchReview.bulkAccept' | t }}
           </button>
-          <button type="button" class="min-h-11 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 text-sm font-bold transition-colors" (click)="bulk('reject')">
+          <button type="button" class="min-h-11 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 text-sm font-bold transition-colors cursor-pointer" (click)="bulk('reject')">
             <i class="pi pi-times me-1"></i>
             {{ 'matchReview.bulkReject' | t }}
           </button>
+        </div>
+      </div>
+
+      <!-- Pagination & Count Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 px-1 text-xs font-semibold tabular-nums text-[#8A735C]">
+        <div class="flex items-center gap-1.5">
+          <span>
+            {{ 'matchReview.showing' | t }}:
+            <span class="font-bold text-[#181A1D]">{{ rangeStart() }}–{{ rangeEnd() }}</span>
+            {{ 'matchReview.pageOf' | t }}
+            <span class="font-bold text-[#181A1D]">{{ queueDepth() }}</span>
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span>{{ 'matchReview.perPage' | t }}:</span>
+          <select
+            class="rounded-lg border border-[#E8D5BE] bg-white px-2.5 py-1 text-xs font-bold text-[#181A1D] outline-none cursor-pointer"
+            [value]="pageSize()"
+            (change)="setPageSize(+$any($event.target).value)"
+          >
+            <option [value]="15">15</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
         </div>
       </div>
 
@@ -217,6 +242,47 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                   }
                 </tbody>
               </table>
+            }
+            @if (totalPages() > 1) {
+              <div class="flex flex-wrap items-center justify-center gap-1.5 border-t border-[#EDE0D0] bg-[#FBF8F4] p-3">
+                <button
+                  type="button"
+                  class="inline-flex min-h-9 items-center gap-1 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40 transition-colors cursor-pointer"
+                  [disabled]="page() <= 1 || loading()"
+                  (click)="goToPage(page() - 1)"
+                >
+                  <i class="pi pi-chevron-right text-[10px]" [class.rotate-180]="!locale.isRtl()"></i>
+                  {{ 'matchReview.pagePrev' | t }}
+                </button>
+                @for (p of pageButtons(); track p) {
+                  @if (p === '…') {
+                    <span class="px-1 text-xs font-bold text-[#A68B6D]">…</span>
+                  } @else {
+                    <button
+                      type="button"
+                      class="inline-flex size-9 items-center justify-center rounded-xl text-xs font-bold tabular-nums transition-colors cursor-pointer"
+                      [ngClass]="
+                        page() === p
+                          ? 'bg-[#181A1D] text-white shadow-xs'
+                          : 'border border-[#E8D5BE] bg-white text-[#181A1D] hover:bg-[#FBF8F4]'
+                      "
+                      [disabled]="loading()"
+                      (click)="goToPage(+$any(p))"
+                    >
+                      {{ p }}
+                    </button>
+                  }
+                }
+                <button
+                  type="button"
+                  class="inline-flex min-h-9 items-center gap-1 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40 transition-colors cursor-pointer"
+                  [disabled]="page() >= totalPages() || loading()"
+                  (click)="goToPage(page() + 1)"
+                >
+                  {{ 'matchReview.pageNext' | t }}
+                  <i class="pi pi-chevron-left text-[10px]" [class.rotate-180]="!locale.isRtl()"></i>
+                </button>
+              </div>
             }
           </div>
 
@@ -327,6 +393,9 @@ export class MatchReviewComponent implements OnInit {
 
   readonly items = signal<MatchReviewQueueItem[]>([]);
   readonly queueDepth = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(25);
+  readonly totalPages = signal(1);
   readonly loading = signal(false);
   readonly error = signal(false);
   readonly searchFilter = signal('');
@@ -341,8 +410,34 @@ export class MatchReviewComponent implements OnInit {
   readonly selectedIds = signal(new Set<string>());
 
   readonly groupCount = computed(() => distinctPharmacyCount(this.detail()?.groupMembers ?? []));
+  readonly rangeStart = computed(() =>
+    this.queueDepth() === 0 ? 0 : (this.page() - 1) * this.pageSize() + 1
+  );
+  readonly rangeEnd = computed(() =>
+    Math.min(this.page() * this.pageSize(), this.queueDepth())
+  );
+  readonly pageButtons = computed(() => this.buildPageButtons(this.page(), this.totalPages()));
 
   ngOnInit(): void {
+    this.reload();
+  }
+
+  onFilterChange(): void {
+    this.page.set(1);
+    this.reload();
+  }
+
+  goToPage(targetPage: number): void {
+    const target = Math.min(Math.max(1, targetPage), this.totalPages());
+    if (target === this.page() || this.loading()) return;
+    this.page.set(target);
+    this.reload();
+  }
+
+  setPageSize(size: number): void {
+    if (this.pageSize() === size) return;
+    this.pageSize.set(size);
+    this.page.set(1);
     this.reload();
   }
 
@@ -351,7 +446,8 @@ export class MatchReviewComponent implements OnInit {
     this.error.set(false);
     this.repo
       .listQueue({
-        take: 50,
+        page: this.page(),
+        take: this.pageSize(),
         pharmacyCode: this.pharmacyFilter() || null,
         method: this.methodFilter() || null,
         reason: this.reasonFilter() || null,
@@ -364,10 +460,29 @@ export class MatchReviewComponent implements OnInit {
         next: (page) => {
           this.items.set(page.items);
           this.queueDepth.set(page.queueDepth);
-          if (page.items[0]) this.open(page.items[0]);
+          this.totalPages.set(page.totalPages ?? 1);
+          if (page.page) this.page.set(page.page);
+          if (page.items[0]) {
+            this.open(page.items[0]);
+          } else {
+            this.selected.set(null);
+            this.detail.set(null);
+          }
         },
         error: () => this.error.set(true)
       });
+  }
+
+  private buildPageButtons(current: number, total: number): (number | string)[] {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = new Set<number>([1, total, current, current - 1, current + 1, 2, total - 1]);
+    const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+    const result: (number | string)[] = [];
+    for (let i = 0; i < sorted.length; i++) {
+      if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push('…');
+      result.push(sorted[i]);
+    }
+    return result;
   }
 
   open(row: MatchReviewQueueItem): void {

@@ -21,6 +21,9 @@ export interface MatchReviewPage {
   items: MatchReviewQueueItem[];
   nextCursor: string | null;
   queueDepth: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
 }
 
 export interface MatchReviewListingCard {
@@ -59,6 +62,7 @@ export interface MatchReviewActionResult {
 export interface MatchReviewQuery {
   cursor?: string | null;
   take?: number;
+  page?: number | null;
   pharmacyId?: string | null;
   method?: string | null;
   minScore?: number | null;

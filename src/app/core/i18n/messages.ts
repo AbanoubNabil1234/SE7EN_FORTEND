@@ -106,7 +106,12 @@ export const messagesAr: MessageTree = {
     confirmForce: 'ربط هذا العرض يدوياً بالمنتج المحدد؟',
     searchPlaceholder: 'ابحث بالاسم، الباركود، أو SKU...',
     acceptMatch: 'قبول الربط',
-    rejectMatch: 'رفض الربط'
+    rejectMatch: 'رفض الربط',
+    pagePrev: 'السابق',
+    pageNext: 'التالي',
+    pageOf: 'من',
+    showing: 'عرض',
+    perPage: 'لكل صفحة'
   },
   searchPharmacies: {
     badge: 'تطبيق العميل',
@@ -866,7 +871,12 @@ export const messagesEn: MessageTree = {
     confirmForce: 'Manually link this listing onto the chosen SKU?',
     searchPlaceholder: 'Search by title, barcode, or SKU...',
     acceptMatch: 'Accept Match',
-    rejectMatch: 'Reject Match'
+    rejectMatch: 'Reject Match',
+    pagePrev: 'Previous',
+    pageNext: 'Next',
+    pageOf: 'of',
+    showing: 'Showing',
+    perPage: 'per page'
   },
   searchPharmacies: {
     badge: 'Customer app',

@@ -73,7 +73,10 @@ export function mapPage(raw: unknown): MatchReviewPage {
   return {
     items,
     nextCursor: text(r, 'nextCursor', 'NextCursor') || null,
-    queueDepth: num(r, 'queueDepth', 'QueueDepth') ?? items.length
+    queueDepth: num(r, 'queueDepth', 'QueueDepth') ?? items.length,
+    page: num(r, 'page', 'Page') ?? 1,
+    pageSize: num(r, 'pageSize', 'PageSize') ?? 50,
+    totalPages: num(r, 'totalPages', 'TotalPages') ?? 1
   };
 }
 
