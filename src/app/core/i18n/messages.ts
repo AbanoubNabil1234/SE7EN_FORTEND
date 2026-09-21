@@ -519,7 +519,25 @@ export const messagesAr: MessageTree = {
     priceSyncOff: 'متوقفة',
     priceSyncPaused: 'مزامنة السعر متوقفة',
     priceSyncOnMsg: 'هيتحدث سعر المنتج ده مع الصيدليات.',
-    priceSyncOffMsg: 'اتوقفت مزامنة سعر المنتج ده.'
+    priceSyncOffMsg: 'اتوقفت مزامنة سعر المنتج ده.',
+    aiMatchBadge: 'تطابق AI',
+    aiMatchTooltip: 'تم التطابق بواسطة نموذج الذكاء الاصطناعي (اسم مقابل اسم)'
+  },
+  quickAdd: {
+    addOffer: 'إضافة منتج',
+    modalTitle: 'إضافة منتج إلى العائلة',
+    modalSubtitle: 'ابحث في جميع منتجات الصيدليات بالاسم أو الباركود لإضافته إلى هذه العائلة.',
+    searchPlaceholder: 'ابحث باسم المنتج أو الباركود في كل الصيدليات…',
+    searchBtn: 'بحث',
+    searching: 'جاري البحث…',
+    noResults: 'لا توجد منتجات مطابقة للبحث.',
+    startTyping: 'اكتب حرفين على الأقل للبحث في منتجات الصيدليات المسجلة.',
+    addToFamily: 'إضافة للعائلة',
+    adding: 'جاري الإضافة…',
+    addedSuccess: 'تمت إضافة المنتج إلى العائلة بنجاح!',
+    alreadyLinked: 'مرتبط بمجموعة أخرى',
+    conflictPharmacy: 'هذه الصيدلية تمتلك عرضاً بالفعل في هذه العائلة.',
+    linkFailed: 'تعذر إضافة المنتج للعائلة — يرجى التحقق وإعادة المحاولة.'
   },
   productDetail: {
     back: 'رجوع للمنتجات',
@@ -556,7 +574,9 @@ export const messagesAr: MessageTree = {
     colPrice: 'السعر',
     colWas: 'قبل',
     colAvailability: 'التوفر',
-    colActions: 'إجراءات'
+    colActions: 'إجراءات',
+    aiMatchBadge: 'تطابق AI',
+    aiMatchTooltip: 'تم التطابق بواسطة نموذج الذكاء الاصطناعي (اسم مقابل اسم)'
   },
   placeholder: {
     coming: 'قريبًا.',
@@ -1177,7 +1197,25 @@ export const messagesEn: MessageTree = {
     priceSyncOff: 'Off',
     priceSyncPaused: 'Price sync paused',
     priceSyncOnMsg: 'This product’s price will refresh with pharmacies.',
-    priceSyncOffMsg: 'Price sync is paused for this product.'
+    priceSyncOffMsg: 'Price sync is paused for this product.',
+    aiMatchBadge: 'AI Match',
+    aiMatchTooltip: 'Matched via AI model (name-to-name)'
+  },
+  quickAdd: {
+    addOffer: 'Add Product',
+    modalTitle: 'Add Product to Family',
+    modalSubtitle: 'Search all pharmacy products by name or barcode to link into this family.',
+    searchPlaceholder: 'Search by product name or barcode across all pharmacies…',
+    searchBtn: 'Search',
+    searching: 'Searching…',
+    noResults: 'No products match your search.',
+    startTyping: 'Type at least 2 characters to search pharmacy products.',
+    addToFamily: 'Add to family',
+    adding: 'Adding…',
+    addedSuccess: 'Product added to family successfully!',
+    alreadyLinked: 'Linked to another group',
+    conflictPharmacy: 'This pharmacy already has an offer in this family.',
+    linkFailed: 'Failed to add product to family — please try again.'
   },
   productDetail: {
     back: 'Back to products',
@@ -1214,7 +1252,9 @@ export const messagesEn: MessageTree = {
     colPrice: 'Price',
     colWas: 'Was',
     colAvailability: 'Availability',
-    colActions: 'Actions'
+    colActions: 'Actions',
+    aiMatchBadge: 'AI Match',
+    aiMatchTooltip: 'Matched via AI model (name-to-name)'
   },
   placeholder: {
     coming: 'Coming next.',

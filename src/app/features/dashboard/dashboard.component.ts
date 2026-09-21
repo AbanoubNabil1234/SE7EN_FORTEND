@@ -5,7 +5,7 @@ import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../core/domain/repositories/catalog-browse.repository';
 import { DashboardRepository } from '../../core/domain/repositories/dashboard.repository';
 import { CategoryNode } from '../../core/domain/models/category.model';
-import { CatalogFamily, familyMatchType, isConfirmedMatch } from '../../core/domain/models/catalog-family.model';
+import { CatalogFamily, catalogFamilyTitle, familyMatchType, isConfirmedMatch } from '../../core/domain/models/catalog-family.model';
 import { OpsDashboardSnapshot } from '../../core/domain/models/dashboard.model';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LocaleService } from '../../core/services/locale.service';
@@ -395,7 +395,7 @@ const PAGE_SIZE = 24;
                 <article class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                   <div class="relative aspect-[4/3] bg-[#FBF8F4] dark:bg-neutral-950">
                     @if (cardImage(family); as img) {
-                      <img [src]="img" [alt]="family.label" class="size-full object-contain p-4" loading="lazy" />
+                      <img [src]="img" [alt]="familyTitle(family)" class="size-full object-contain p-4" loading="lazy" />
                     } @else {
                       <div class="flex size-full items-center justify-center text-[#C27938]/40">
                         <i class="pi pi-image text-3xl" aria-hidden="true"></i>
@@ -421,7 +421,7 @@ const PAGE_SIZE = 24;
                       {{ family.brand || ('dashboard.unknownBrand' | t) }}
                     </div>
                     <h3 class="line-clamp-2 text-sm font-bold leading-snug text-[#181A1D] dark:text-white">
-                      {{ family.label }}
+                      {{ familyTitle(family) }}
                     </h3>
                     <div class="flex items-end justify-between gap-2">
                       <div>
@@ -560,6 +560,10 @@ export class DashboardComponent implements OnInit {
   loadMore(): void {
     if (!this.hasMore() || this.productsLoading()) return;
     this.fetchProducts(this.page() + 1, true);
+  }
+
+  familyTitle(family: CatalogFamily): string {
+    return catalogFamilyTitle(family, this.locale.locale());
   }
 
   cardImage(family: CatalogFamily): string | null {

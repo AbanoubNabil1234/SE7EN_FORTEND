@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../core/domain/repositories/catalog-browse.repository';
-import { CatalogFamily, CatalogOffer, CatalogPack, familyMatchType, isConfirmedMatch } from '../../core/domain/models/catalog-family.model';
+import { CatalogFamily, CatalogOffer, CatalogPack, catalogFamilyTitle, catalogPackTitle, familyMatchType, isAiMatch, isConfirmedMatch } from '../../core/domain/models/catalog-family.model';
 import {
   pharmacyDisplayName,
   pharmacyLogo as resolvePharmacyLogo
@@ -18,11 +18,12 @@ import {
   packChipLabel as formatPackChipLabel,
   packSizeDir as formatPackSizeDir
 } from '../../core/domain/pack-size-display';
+import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, CurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, CurrencyPipe, QuickAddProductModalComponent],
   template: `
     <section class="w-full space-y-3 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       @if (loading()) {
@@ -49,7 +50,7 @@ import {
               {{ 'productDetail.back' | t }}
             </a>
 
-            <div class="min-w-0 flex-1 truncate text-sm font-medium text-slate-500">{{ f.label }}</div>
+            <div class="min-w-0 flex-1 truncate text-sm font-medium text-slate-500">{{ familyTitle(f) }}</div>
 
             <div class="flex flex-wrap items-center gap-2">
               <code
@@ -77,7 +78,7 @@ import {
                 class="mx-auto size-32 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 sm:mx-0"
               >
                 @if (heroImage(f); as img) {
-                  <img [src]="img" [alt]="f.label" class="size-full object-contain p-2" />
+                  <img [src]="img" [alt]="familyTitle(f)" class="size-full object-contain p-2" />
                 } @else {
                   <div class="flex size-full items-center justify-center text-slate-300">
                     <i class="pi pi-image text-3xl"></i>
@@ -90,7 +91,7 @@ import {
                   {{ f.brand || ('productDetail.unknownBrand' | t) }}
                 </div>
                 <h1 class="text-balance text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                  {{ f.label }}
+                  {{ familyTitle(f) }}
                 </h1>
 
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-slate-500">
@@ -166,9 +167,19 @@ import {
           <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
             <div class="border-b border-slate-200 px-4 py-3 sm:px-5">
               <div class="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 class="text-sm font-bold text-slate-900">{{ 'productDetail.offers' | t }}</h2>
-                  <p class="mt-0.5 text-xs text-slate-500">{{ 'productDetail.packsHint' | t }}</p>
+                <div class="flex items-center gap-3">
+                  <div>
+                    <h2 class="text-sm font-bold text-slate-900">{{ 'productDetail.offers' | t }}</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">{{ 'productDetail.packsHint' | t }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-teal-700/30 bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-800 hover:bg-teal-700 hover:text-white transition-colors"
+                    (click)="openQuickAdd()"
+                  >
+                    <i class="pi pi-plus text-xs" aria-hidden="true"></i>
+                    <span>{{ 'quickAdd.addOffer' | t }}</span>
+                  </button>
                 </div>
                 @if (selectedPack(); as pack) {
                   <div class="text-xs font-bold tabular-nums text-slate-700">
@@ -227,18 +238,28 @@ import {
                           >
                             {{ displayPackSize(offer.packSize) || ('productDetail.unknownOfferPack' | t) }}
                           </div>
-                          @if (pack.barcode) {
+                          @if (offer.barcode || pack.barcode; as code) {
                             <button
                               type="button"
                               class="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-teal-700/25 bg-teal-50 px-2 py-1.5 text-start hover:bg-teal-100"
                               [attr.aria-label]="'productDetail.copyBarcode' | t"
-                              (click)="copyBarcode(pack.barcode!)"
+                              (click)="copyBarcode(code)"
                             >
+                              <i class="pi pi-barcode shrink-0 text-[11px] text-teal-700" aria-hidden="true"></i>
                               <span dir="ltr" class="truncate font-mono text-xs font-bold tabular-nums text-slate-900">
-                                {{ pack.barcode }}
+                                {{ code }}
                               </span>
                               <i class="pi pi-copy shrink-0 text-[11px] text-teal-700" aria-hidden="true"></i>
                             </button>
+                          }
+                          @if (isAiMatch(offer)) {
+                            <span
+                              class="inline-flex items-center gap-1 rounded bg-violet-50 border border-violet-200 px-1.5 py-0.5 text-[11px] font-bold text-violet-700 shadow-xs"
+                              [title]="'productDetail.aiMatchTooltip' | t"
+                            >
+                              <i class="pi pi-sparkles text-[11px] text-violet-500" aria-hidden="true"></i>
+                              <span>{{ 'productDetail.aiMatchBadge' | t }}</span>
+                            </span>
                           }
                         </div>
                       </div>
@@ -324,6 +345,13 @@ import {
         }
       }
     </section>
+
+    <app-quick-add-product-modal
+      [family]="family()"
+      [isOpen]="isQuickAddOpen()"
+      (close)="closeQuickAdd()"
+      (productAdded)="onQuickProductAdded()"
+    />
   `
 })
 export class ProductDetailComponent implements OnInit {
@@ -339,6 +367,7 @@ export class ProductDetailComponent implements OnInit {
   readonly linkDrafts = signal<Record<string, string>>({});
   readonly linkingId = signal<string | null>(null);
   readonly selectedMasterId = signal<string | null>(null);
+  readonly isQuickAddOpen = signal<boolean>(false);
 
   readonly selectedPack = computed(() => {
     const f = this.family();
@@ -376,8 +405,15 @@ export class ProductDetailComponent implements OnInit {
     this.selectedMasterId.set(masterId);
   }
 
+  readonly isAiMatch = isAiMatch;
+
+  familyTitle(f: CatalogFamily): string {
+    return catalogFamilyTitle(f, this.locale.locale());
+  }
+
   packChipLabel(pack: CatalogPack): string {
-    return formatPackChipLabel(pack.packSize, pack.label, { locale: this.locale.locale() });
+    const title = catalogPackTitle(pack, this.locale.locale());
+    return formatPackChipLabel(pack.packSize, title || pack.label, { locale: this.locale.locale() });
   }
 
   pharmacyLabel(offer: CatalogOffer): string {
@@ -450,6 +486,20 @@ export class ProductDetailComponent implements OnInit {
           this.notifications.showError(this.i18n.t('productDetail.linkedFail'), this.i18n.t('productDetail.link'));
         }
       });
+  }
+
+  openQuickAdd(): void {
+    this.isQuickAddOpen.set(true);
+  }
+
+  closeQuickAdd(): void {
+    this.isQuickAddOpen.set(false);
+  }
+
+  onQuickProductAdded(): void {
+    this.closeQuickAdd();
+    const key = this.family()?.familyKey;
+    if (key) this.load(key);
   }
 
   private applyFamily(family: CatalogFamily): void {

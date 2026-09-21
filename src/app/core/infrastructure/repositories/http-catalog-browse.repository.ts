@@ -9,7 +9,8 @@ import {
   CatalogFamilyPage,
   CatalogOffer,
   CatalogPack,
-  GroupCodeLinkResult
+  GroupCodeLinkResult,
+  PharmacyProductSearchHit
 } from '../../domain/models/catalog-family.model';
 import { API_ENDPOINTS } from '../http/api-endpoints.constants';
 import { resolveApiUrl } from '../http/api-origin';
@@ -159,6 +160,35 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       );
   }
 
+  searchPharmacyProducts(query: string, take: number = 30): Observable<PharmacyProductSearchHit[]> {
+    const params = new HttpParams()
+      .set('q', query.trim())
+      .set('take', String(take));
+
+    return this.http
+      .get<Array<Record<string, unknown>>>(API_ENDPOINTS.ADMIN_PHARMACY_PRODUCT_SEARCH, { params })
+      .pipe(
+        map((list) =>
+          (Array.isArray(list) ? list : []).map((r) => ({
+            id: String(r['id'] ?? r['Id'] ?? ''),
+            name: String(r['name'] ?? r['Name'] ?? ''),
+            englishName: this.optionalText(r['englishName'] ?? r['EnglishName']),
+            pharmacyCode: String(r['pharmacyCode'] ?? r['PharmacyCode'] ?? ''),
+            pharmacyName: String(r['pharmacyName'] ?? r['PharmacyName'] ?? ''),
+            barcode: this.optionalText(r['barcode'] ?? r['Barcode']),
+            price: this.optionalNumber(r['price'] ?? r['Price']),
+            oldPrice: this.optionalNumber(r['oldPrice'] ?? r['OldPrice']),
+            currency: this.optionalText(r['currency'] ?? r['Currency']) ?? 'SAR',
+            imageUrl: this.optionalText(r['imageUrl'] ?? r['ImageUrl']),
+            productUrl: this.optionalText(r['productUrl'] ?? r['ProductUrl']),
+            packSize: this.optionalText(r['packSize'] ?? r['PackSize']),
+            manualGroupCode: this.optionalText(r['manualGroupCode'] ?? r['ManualGroupCode']),
+            masterProductId: this.optionalText(r['masterProductId'] ?? r['MasterProductId'])
+          }))
+        )
+      );
+  }
+
   setPriceSyncEnabled(masterProductId: string, enabled: boolean): Observable<{ id: string; enabled: boolean }> {
     return this.http
       .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_MASTER_PRICE_SYNC(masterProductId), { enabled })
@@ -254,6 +284,8 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       familyKey: familyKey || label,
       brand: (r['brand'] ?? r['Brand'] ?? null) as string | null,
       label: label || familyKey,
+      arabicName: this.optionalText(r['arabicName'] ?? r['ArabicName']),
+      englishName: this.optionalText(r['englishName'] ?? r['EnglishName']),
       dosageForm: (r['dosageForm'] ?? r['DosageForm'] ?? null) as string | null,
       strength: (r['strength'] ?? r['Strength'] ?? null) as string | null,
       imageUrl: resolveApiUrl((r['imageUrl'] ?? r['ImageUrl'] ?? imageFromPack ?? null) as string | null),
@@ -273,6 +305,8 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     return {
       masterId: String(r['masterId'] ?? r['MasterId'] ?? ''),
       label: String(r['label'] ?? r['Label'] ?? ''),
+      arabicName: this.optionalText(r['arabicName'] ?? r['ArabicName']),
+      englishName: this.optionalText(r['englishName'] ?? r['EnglishName']),
       requiresPackReview: (r['requiresPackReview'] ?? r['RequiresPackReview']) === true,
       packSize: String(r['packSize'] ?? r['PackSize'] ?? ''),
       barcode: this.optionalText(r['barcode'] ?? r['Barcode']),
@@ -302,7 +336,10 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       imageUrl: resolveApiUrl((r['imageUrl'] ?? r['ImageUrl'] ?? null) as string | null),
       pharmacyProductId: pid == null || pid === '' ? null : String(pid),
       packSize: this.optionalText(r['packSize'] ?? r['PackSize']),
-      listingName: String(r['listingName'] ?? r['ListingName'] ?? '').trim() || null
+      listingName: String(r['listingName'] ?? r['ListingName'] ?? '').trim() || null,
+      englishListingName: this.optionalText(r['englishListingName'] ?? r['EnglishListingName'] ?? r['englishName'] ?? r['EnglishName']),
+      barcode: this.optionalText(r['barcode'] ?? r['Barcode']),
+      matchMethod: this.optionalText(r['matchMethod'] ?? r['MatchMethod'])
     };
   }
 
@@ -310,5 +347,11 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     if (value == null) return null;
     const text = String(value).trim();
     return text.length === 0 || text === 'null' || text === 'undefined' ? null : text;
+  }
+
+  private optionalNumber(value: unknown): number | null {
+    if (value == null || value === '') return null;
+    const n = Number(value);
+    return isNaN(n) ? null : n;
   }
 }

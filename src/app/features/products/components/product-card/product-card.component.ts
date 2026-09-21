@@ -5,6 +5,7 @@ import { CardComponent } from '../../../../shared/components/card/card.component
 import { BadgeComponent } from '../../../../shared/components/badge/badge.component';
 import { ButtonComponent } from '../../../../shared/components/button/button.component';
 import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
+import { ProductNamePipe } from '../../../../shared/pipes/product-name.pipe';
 
 /**
  * Presentational (Dumb) Component:
@@ -13,7 +14,7 @@ import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pip
 @Component({
   selector: 'app-product-card',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeComponent, ButtonComponent, CurrencyFormatPipe],
+  imports: [CommonModule, CardComponent, BadgeComponent, ButtonComponent, CurrencyFormatPipe, ProductNamePipe],
   template: `
     <app-card [hoverable]="true">
       <div class="relative flex flex-col h-full">
@@ -29,7 +30,7 @@ import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pip
         <div class="w-full h-44 rounded-xl bg-brand-50/50 dark:bg-carbon-950 overflow-hidden mb-4 flex items-center justify-center relative group border border-brand-200/40 dark:border-carbon-800">
           <img
             [src]="product().imageUrl"
-            [alt]="product().name"
+            [alt]="product() | productName"
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <div class="absolute bottom-2 right-2 bg-carbon-900/85 backdrop-blur-md text-brand-300 px-2.5 py-1 rounded-lg text-xs font-black border border-brand-500/30">
@@ -40,7 +41,7 @@ import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pip
         <!-- Title & Chemical / Dosage details -->
         <div class="flex-1 flex flex-col">
           <span class="text-xs text-brand-600 dark:text-brand-400 font-extrabold uppercase tracking-wider">{{ product().brand }}</span>
-          <h4 class="font-extrabold text-base text-carbon-900 dark:text-white line-clamp-1 mt-0.5">{{ product().name }}</h4>
+          <h4 class="font-extrabold text-base text-carbon-900 dark:text-white line-clamp-1 mt-0.5">{{ product() | productName }}</h4>
           @if (product().genericName) {
             <p class="text-xs text-carbon-500 dark:text-carbon-400 line-clamp-1 mb-2">{{ product().genericName }}</p>
           }

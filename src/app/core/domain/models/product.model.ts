@@ -6,6 +6,8 @@ import { Money } from '../value-objects/money.vo';
 export interface Product {
   id: string;
   name: string;
+  arabicName?: string;
+  englishName?: string;
   genericName?: string;
   brand: string;
   category: string;

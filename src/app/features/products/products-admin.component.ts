@@ -8,9 +8,13 @@ import {
   CatalogFamily,
   CatalogOffer,
   CatalogPack,
+  catalogFamilyTitle,
   catalogListingKey,
+  catalogOfferTitle,
+  catalogPackTitle,
   flattenFamilyPacks,
   familyHeroImage,
+  isAiMatch,
   isCatalogSearchReady,
   matchStatus,
   offerListingTitle
@@ -30,6 +34,7 @@ import {
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -43,7 +48,7 @@ interface CategoryOption {
 @Component({
   selector: 'app-products-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, CurrencyPipe, DecimalPipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, CurrencyPipe, DecimalPipe, QuickAddProductModalComponent],
   template: `
     <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
@@ -171,7 +176,7 @@ interface CategoryOption {
               <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
                 <div class="size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4]">
                   @if (cardImage(family); as img) {
-                    <img [src]="img" [alt]="family.label" class="size-full object-contain p-1" loading="lazy" />
+                    <img [src]="img" [alt]="familyTitle(family)" class="size-full object-contain p-1" loading="lazy" />
                   } @else {
                     <div class="flex size-full items-center justify-center text-[#C27938]/40">
                       <i class="pi pi-image text-sm" aria-hidden="true"></i>
@@ -184,7 +189,7 @@ interface CategoryOption {
                     {{ family.brand || ('productsAdmin.unknownBrand' | t) }}
                   </div>
                   <h2 class="line-clamp-2 text-pretty text-sm font-extrabold leading-snug text-[#181A1D]">
-                    {{ family.label }}
+                    {{ familyTitle(family) }}
                   </h2>
                   <div class="mt-1 flex flex-wrap items-center gap-1.5">
                     <span [class]="matchBadgeClass(family)">{{ matchLabelKey(family) | t }}</span>
@@ -347,9 +352,19 @@ interface CategoryOption {
                   }
 
                   <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wide text-[#A68B6D]">
-                      {{ 'productsAdmin.offers' | t }}
-                    </h3>
+                    <div class="flex items-center gap-2">
+                      <h3 class="text-xs font-bold uppercase tracking-wide text-[#A68B6D]">
+                        {{ 'productsAdmin.offers' | t }}
+                      </h3>
+                      <button
+                        type="button"
+                        class="inline-flex min-h-7 items-center gap-1 rounded-lg border border-[#C27938]/30 bg-[#F8EEE2] px-2 py-0.5 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-colors"
+                        (click)="openQuickAdd(family)"
+                      >
+                        <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
+                        <span>{{ 'quickAdd.addOffer' | t }}</span>
+                      </button>
+                    </div>
                     @if (selectedPack(family); as pack) {
                       <div class="text-xs font-bold tabular-nums text-[#181A1D]">
                         {{ pack.lowestPrice | currency: 'SAR':'symbol':'1.2-2' }}
@@ -402,6 +417,29 @@ interface CategoryOption {
                               <span [attr.dir]="packSizeDir(offer.packSize)" class="tabular-nums font-semibold text-[#4A4038]">
                                 {{ displayPackSize(offer.packSize) || ('productsAdmin.unknownOfferPack' | t) }}
                               </span>
+                              @if (offer.barcode || selectedPack(family)?.barcode; as code) {
+                                <span aria-hidden="true">·</span>
+                                <button
+                                  type="button"
+                                  class="inline-flex items-center gap-1 rounded bg-[#F8EEE2] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#181A1D] hover:bg-[#EDE0D0]"
+                                  [title]="'productsAdmin.copyBarcode' | t"
+                                  (click)="copyCode(code)"
+                                >
+                                  <i class="pi pi-barcode text-[11px] text-[#C27938]" aria-hidden="true"></i>
+                                  <span dir="ltr">{{ code }}</span>
+                                  <i class="pi pi-copy text-[9px] text-[#A68B6D]" aria-hidden="true"></i>
+                                </button>
+                              }
+                              @if (isAiMatch(offer)) {
+                                <span aria-hidden="true">·</span>
+                                <span
+                                  class="inline-flex items-center gap-1 rounded bg-violet-50 border border-violet-200 px-1.5 py-0.5 text-[11px] font-bold text-violet-700 shadow-xs"
+                                  [title]="'productsAdmin.aiMatchTooltip' | t"
+                                >
+                                  <i class="pi pi-sparkles text-[11px] text-violet-500" aria-hidden="true"></i>
+                                  <span>{{ 'productsAdmin.aiMatchBadge' | t }}</span>
+                                </span>
+                              }
                             </div>
                           </div>
                         </div>
@@ -489,6 +527,13 @@ interface CategoryOption {
         }
       }
     </section>
+
+    <app-quick-add-product-modal
+      [family]="quickAddFamily()"
+      [isOpen]="isQuickAddOpen()"
+      (close)="closeQuickAdd()"
+      (productAdded)="onQuickProductAdded()"
+    />
   `
 })
 export class ProductsAdminComponent implements OnInit, OnDestroy {
@@ -520,6 +565,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly barcodeBusyId = signal<string | null>(null);
   readonly searching = signal(false);
   readonly listPageSize = signal(CATALOG_PAGE_SIZE);
+
+  readonly quickAddFamily = signal<CatalogFamily | null>(null);
+  readonly isQuickAddOpen = signal<boolean>(false);
 
   private queryTimer: ReturnType<typeof setTimeout> | null = null;
   private fetchSub: Subscription | null = null;
@@ -627,12 +675,19 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     return family.packs.find((p) => p.masterId === id) ?? family.packs[0] ?? null;
   }
 
+  readonly isAiMatch = isAiMatch;
+
+  familyTitle(family: CatalogFamily): string {
+    return catalogFamilyTitle(family, this.locale.locale());
+  }
+
   selectedOffers(family: CatalogFamily): CatalogOffer[] {
     return [...(this.selectedPack(family)?.offers ?? [])].sort((a, b) => a.price - b.price);
   }
 
   packChipLabel(pack: CatalogPack): string {
-    return formatPackChipLabel(pack.packSize, pack.label, { locale: this.locale.locale() });
+    const title = catalogPackTitle(pack, this.locale.locale());
+    return formatPackChipLabel(pack.packSize, title || pack.label, { locale: this.locale.locale() });
   }
 
   displayPackSize(packSize: string | null | undefined): string {
@@ -679,6 +734,21 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       });
   }
 
+  openQuickAdd(family: CatalogFamily): void {
+    this.quickAddFamily.set(family);
+    this.isQuickAddOpen.set(true);
+  }
+
+  closeQuickAdd(): void {
+    this.isQuickAddOpen.set(false);
+    this.quickAddFamily.set(null);
+  }
+
+  onQuickProductAdded(): void {
+    this.closeQuickAdd();
+    this.reloadKeepingSelection();
+  }
+
   pharmacyLogo(code: string | null | undefined): string | null {
     return resolvePharmacyLogo(code);
   }
@@ -716,7 +786,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   listingTitle(offer: CatalogOffer): string {
-    return offerListingTitle(offer);
+    return offerListingTitle(offer, this.locale.locale());
   }
 
   offersPanelId(family: CatalogFamily): string {
