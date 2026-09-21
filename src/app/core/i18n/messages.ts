@@ -553,6 +553,8 @@ export const messagesAr: MessageTree = {
     adding: 'جاري الإضافة…',
     addedSuccess: 'تمت إضافة المنتج إلى العائلة بنجاح!',
     alreadyLinked: 'عائلة',
+    targetProduct: 'المنتج المراد الإضافة إليه',
+    currentOffers: 'عروض حالية',
     conflictPharmacy: 'هذه الصيدلية تمتلك عرضاً بالفعل في هذه العائلة.',
     linkFailed: 'تعذر إضافة المنتج للعائلة — يرجى التحقق وإعادة المحاولة.'
   },
@@ -1248,6 +1250,8 @@ export const messagesEn: MessageTree = {
     adding: 'Adding…',
     addedSuccess: 'Product added to family successfully!',
     alreadyLinked: 'Family',
+    targetProduct: 'Target Product (Adding To)',
+    currentOffers: 'current offers',
     conflictPharmacy: 'This pharmacy already has an offer in this family.',
     linkFailed: 'Failed to add product to family — please check and retry.'
   },

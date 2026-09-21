@@ -284,3 +284,52 @@ function offerImage(code: string, imageUrl: string, listingName: string | null =
     pharmacyProductId: null
   };
 }
+
+describe('target product hero image resolution', () => {
+  it('prefers family hero image from offers when family.imageUrl is null', () => {
+    const f: CatalogFamily = {
+      familyKey: 'f1',
+      brand: 'Panadol',
+      label: 'بنادول إكسترا',
+      arabicName: 'بنادول إكسترا',
+      englishName: 'Panadol Extra',
+      dosageForm: 'أقراص',
+      strength: '500mg',
+      imageUrl: null,
+      groupCode: 'G-EXTRA1',
+      packs: [
+        {
+          masterId: 'm1',
+          label: '24 قرص',
+          packSize: '24',
+          barcode: '6281001',
+          lowestPrice: 15,
+          highestPrice: 20,
+          savingsPercent: 25,
+          pharmacyCount: 2,
+          priceSyncEnabled: true,
+          offers: [
+            offerImage('nahdi', 'https://cdn.nahdi.com/panadol.jpg'),
+            offerImage('whites', 'https://cdn.whites.com/panadol.jpg')
+          ]
+        }
+      ]
+    };
+    assert.equal(familyHeroImage(f), 'https://cdn.nahdi.com/panadol.jpg');
+    assert.equal(catalogFamilyTitle(f, 'ar'), 'بنادول إكسترا');
+  });
+
+  it('returns explicit family imageUrl if present', () => {
+    const f: CatalogFamily = {
+      familyKey: 'f2',
+      brand: 'Adol',
+      label: 'أدول',
+      dosageForm: null,
+      strength: null,
+      imageUrl: 'https://cdn.custom.com/adol.jpg',
+      groupCode: 'G-ADOL01',
+      packs: []
+    };
+    assert.equal(familyHeroImage(f), 'https://cdn.custom.com/adol.jpg');
+  });
+});

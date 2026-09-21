@@ -7,7 +7,8 @@ import {
   CatalogFamily,
   GroupCodeMergeResult,
   PharmacyProductSearchHit,
-  catalogFamilyTitle
+  catalogFamilyTitle,
+  familyHeroImage
 } from '../../../../core/domain/models/catalog-family.model';
 import { pharmacyLogo as resolvePharmacyLogo } from '../../../../core/domain/pharmacy-brands';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -37,35 +38,86 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
           [attr.dir]="isRtl() ? 'rtl' : 'ltr'"
         >
           <!-- Header -->
-          <div class="px-5 py-4 border-b border-[#EDE0D0] bg-[#FBF8F4] flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2">
-                <span class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#F8EEE2] text-[#C27938]">
-                  <i class="pi pi-link text-sm"></i>
-                </span>
-                <h3 class="text-base font-extrabold text-[#181A1D] truncate">
-                  {{ 'quickAdd.modalTitle' | t }}
-                </h3>
-              </div>
-              <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#8A735C]">
-                <span>{{ currentFamilyTitle() }}</span>
-                @if (family()?.groupCode; as code) {
-                  <span class="rounded bg-[#181A1D] px-1.5 py-0.5 font-mono text-[11px] font-bold text-white">
-                    {{ code }}
-                  </span>
-                }
-              </div>
+          <div class="px-5 py-3.5 border-b border-[#EDE0D0] bg-[#FBF8F4] flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#F8EEE2] text-[#C27938]">
+                <i class="pi pi-link text-sm"></i>
+              </span>
+              <h3 class="text-base font-extrabold text-[#181A1D] truncate">
+                {{ 'quickAdd.modalTitle' | t }}
+              </h3>
             </div>
 
             <!-- Close Button -->
             <button
               type="button"
-              class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#F8EEE2] hover:text-[#181A1D] transition-colors"
+              class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#F8EEE2] hover:text-[#181A1D] transition-colors"
               (click)="onClose()"
               [attr.aria-label]="'common.close' | t"
             >
               <i class="pi pi-times text-xs"></i>
             </button>
+          </div>
+
+          <!-- Target Product / Family Identity Card -->
+          <div class="px-5 py-3.5 bg-gradient-to-r from-[#FBF8F4] via-[#F8EEE2]/60 to-[#FBF8F4] border-b border-[#EDE0D0]">
+            <div class="flex items-center gap-3.5 sm:gap-4">
+              <!-- Target Product Image -->
+              <div class="relative size-16 sm:size-18 shrink-0 rounded-xl border border-[#E8D5BE] bg-white p-1 shadow-sm overflow-hidden flex items-center justify-center">
+                @if (targetImageUrl(); as img) {
+                  <img
+                    [src]="img"
+                    [alt]="currentFamilyTitle()"
+                    class="size-full object-contain"
+                    loading="lazy"
+                    (error)="onTargetImageError()"
+                  />
+                } @else {
+                  <div class="flex size-full flex-col items-center justify-center text-[#A68B6D]/60 bg-[#FBF8F4]">
+                    <i class="pi pi-box text-2xl"></i>
+                  </div>
+                }
+              </div>
+
+              <!-- Target Product Info -->
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 text-[11px] font-extrabold text-[#C27938]">
+                  <i class="pi pi-bullseye text-xs"></i>
+                  <span>{{ 'quickAdd.targetProduct' | t }}</span>
+                </div>
+
+                <!-- Product Name (Arabic / Main Title) -->
+                <h4 class="text-sm sm:text-base font-extrabold text-[#181A1D] leading-snug line-clamp-1 mt-0.5" [title]="currentFamilyTitle()">
+                  {{ currentFamilyTitle() }}
+                </h4>
+
+                <!-- English Name if available and distinct -->
+                @if (family()?.englishName && family()?.englishName !== currentFamilyTitle()) {
+                  <p class="text-xs text-[#8A735C] font-medium truncate" dir="ltr">
+                    {{ family()?.englishName }}
+                  </p>
+                }
+
+                <!-- Meta row: Code, Brand, Offers count -->
+                <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                  @if (family()?.groupCode; as code) {
+                    <span class="inline-flex items-center gap-1 rounded-md bg-[#181A1D] px-2 py-0.5 font-mono text-[11px] font-bold text-white shadow-xs">
+                      <i class="pi pi-hashtag text-[9px] text-[#C27938]"></i>
+                      <span>{{ code }}</span>
+                    </span>
+                  }
+                  @if (family()?.brand; as brand) {
+                    <span class="rounded-md bg-[#F8EEE2] px-2 py-0.5 text-[11px] font-bold text-[#8A735C]">
+                      {{ brand }}
+                    </span>
+                  }
+                  <span class="inline-flex items-center gap-1 rounded-md bg-white border border-[#E8D5BE] px-2 py-0.5 text-[11px] font-semibold text-[#8A735C]">
+                    <i class="pi pi-shop text-[10px] text-[#C27938]"></i>
+                    <span>{{ currentOffersCount() }} {{ 'quickAdd.currentOffers' | t }}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Search Input Section -->
@@ -161,19 +213,36 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
             } @else if (hits().length > 0) {
               @for (hit of hits(); track hit.id) {
                 <div class="pt-2.5 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border border-[#EDE0D0] bg-white hover:bg-[#FBF8F4] transition-colors">
-                  <!-- Product Info with Pharmacy Logo -->
+                  <!-- Product Info with Product Image & Pharmacy Logo -->
                   <div class="flex items-start gap-3 min-w-0 flex-1">
-                    @if (pharmacyLogo(hit.pharmacyCode); as logo) {
-                      <img
-                        [src]="logo"
-                        [alt]="hit.pharmacyName"
-                        class="size-10 shrink-0 rounded-lg border border-[#E8D5BE] bg-white object-contain p-0.5"
-                      />
-                    } @else {
-                      <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#F8EEE2] text-[#C27938]">
-                        <i class="pi pi-shop text-sm"></i>
-                      </span>
-                    }
+                    <div class="relative size-12 shrink-0 rounded-lg border border-[#E8D5BE] bg-white p-0.5 overflow-hidden flex items-center justify-center">
+                      @if (hit.imageUrl) {
+                        <img
+                          [src]="hit.imageUrl"
+                          [alt]="hit.name"
+                          class="size-full object-contain"
+                          loading="lazy"
+                          (error)="onHitImageError(hit)"
+                        />
+                        @if (pharmacyLogo(hit.pharmacyCode); as logo) {
+                          <img
+                            [src]="logo"
+                            [alt]="hit.pharmacyName"
+                            class="absolute bottom-0 end-0 size-4 rounded-full border border-[#E8D5BE] bg-white object-contain p-0.5 shadow-xs"
+                          />
+                        }
+                      } @else if (pharmacyLogo(hit.pharmacyCode); as logo) {
+                        <img
+                          [src]="logo"
+                          [alt]="hit.pharmacyName"
+                          class="size-full object-contain p-1"
+                        />
+                      } @else {
+                        <span class="inline-flex size-full items-center justify-center text-[#C27938]">
+                          <i class="pi pi-shop text-sm"></i>
+                        </span>
+                      }
+                    </div>
 
                     <div class="min-w-0 flex-1">
                       <div class="flex flex-wrap items-center gap-1.5">
@@ -331,6 +400,7 @@ export class QuickAddProductModalComponent {
   readonly linkingId = signal<string | null>(null);
   readonly mergingCode = signal<string | null>(null);
   readonly hasSearched = signal<boolean>(false);
+  readonly targetImageError = signal<boolean>(false);
 
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
 
@@ -338,6 +408,27 @@ export class QuickAddProductModalComponent {
 
   currentFamilyTitle(): string {
     return catalogFamilyTitle(this.family(), this.locale.locale());
+  }
+
+  targetImageUrl(): string | null {
+    if (this.targetImageError()) return null;
+    const fam = this.family();
+    if (!fam) return null;
+    return familyHeroImage(fam);
+  }
+
+  onTargetImageError(): void {
+    this.targetImageError.set(true);
+  }
+
+  onHitImageError(hit: PharmacyProductSearchHit): void {
+    hit.imageUrl = null;
+  }
+
+  currentOffersCount(): number {
+    const fam = this.family();
+    if (!fam?.packs) return 0;
+    return fam.packs.reduce((sum, p) => sum + (p.offers ? p.offers.length : 0), 0);
   }
 
   pharmacyLogo(code: string | null | undefined): string | null {
@@ -485,6 +576,7 @@ export class QuickAddProductModalComponent {
 
   onClose(): void {
     this.clearSearch();
+    this.targetImageError.set(false);
     this.close.emit();
   }
 }
