@@ -52,7 +52,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
           return raw
             .map((x) => String(x ?? '').trim())
             .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            .sort((a, b) => a.localeCompare(b, 'ar', { sensitivity: 'base' }));
         })
       )
     );
