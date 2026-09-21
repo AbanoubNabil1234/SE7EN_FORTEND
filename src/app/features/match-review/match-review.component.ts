@@ -135,6 +135,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
             [value]="pageSize()"
             (change)="setPageSize(+$any($event.target).value)"
           >
+            <option [value]="10">10</option>
             <option [value]="15">15</option>
             <option [value]="25">25</option>
             <option [value]="50">50</option>
@@ -220,8 +221,19 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                         <input type="checkbox" [checked]="selectedIds().has(row.matchId)" (click)="$event.stopPropagation(); toggle(row.matchId)" />
                       </td>
                       <td class="px-3 py-3">
-                        <div class="font-semibold text-[#181A1D]">{{ row.name }}</div>
-                        <div class="text-xs text-[#8A735C] mt-0.5">{{ row.pharmacyName }} · {{ row.matchMethod }}</div>
+                        <div class="flex items-center gap-2.5">
+                          <div class="size-10 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center">
+                            @if (row.imageUrl) {
+                              <img [src]="row.imageUrl" [alt]="row.name" referrerpolicy="no-referrer" loading="lazy" class="size-full object-contain p-0.5" (error)="onImgError($event)" />
+                            } @else {
+                              <i class="pi pi-image text-[#C27938]/40 text-xs"></i>
+                            }
+                          </div>
+                          <div class="min-w-0">
+                            <div class="font-semibold text-[#181A1D] truncate">{{ row.name }}</div>
+                            <div class="text-xs text-[#8A735C] mt-0.5">{{ row.pharmacyName }} · {{ row.matchMethod }}</div>
+                          </div>
+                        </div>
                       </td>
                       <td class="px-3 py-3 tabular-nums">
                         <span
@@ -357,9 +369,23 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
     <ng-template #cardTpl let-card>
       <article class="mt-2 rounded-xl border border-[#EDE0D0] p-3 bg-white shadow-xs">
-        @if (card.imageUrl) {
-          <img [src]="card.imageUrl" [alt]="card.name" class="mb-2 h-24 w-full rounded-lg object-contain bg-[#FBF8F4] p-1 border border-[#EDE0D0]" />
-        }
+        <div class="mb-2 h-36 w-full rounded-lg overflow-hidden bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center relative">
+          @if (card.imageUrl) {
+            <img
+              [src]="card.imageUrl"
+              [alt]="card.name"
+              referrerpolicy="no-referrer"
+              loading="lazy"
+              class="size-full object-contain p-2"
+              (error)="onImgError($event)"
+            />
+          } @else {
+            <div class="flex flex-col items-center justify-center text-[#C27938]/40 gap-1 p-2">
+              <i class="pi pi-image text-2xl" aria-hidden="true"></i>
+              <span class="text-[10px] font-semibold text-[#A68B6D]">لا توجد صورة</span>
+            </div>
+          }
+        </div>
         <div class="font-semibold text-sm text-[#181A1D] leading-snug">{{ card.name }}</div>
         @if (card.englishName) {
           <div class="text-xs text-[#8A735C] mt-0.5">{{ card.englishName }}</div>
@@ -394,7 +420,7 @@ export class MatchReviewComponent implements OnInit {
   readonly items = signal<MatchReviewQueueItem[]>([]);
   readonly queueDepth = signal(0);
   readonly page = signal(1);
-  readonly pageSize = signal(25);
+  readonly pageSize = signal(10);
   readonly totalPages = signal(1);
   readonly loading = signal(false);
   readonly error = signal(false);
@@ -439,6 +465,19 @@ export class MatchReviewComponent implements OnInit {
     this.pageSize.set(size);
     this.page.set(1);
     this.reload();
+  }
+
+  onImgError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = 'none';
+      if (img.parentElement) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'flex flex-col items-center justify-center text-[#C27938]/40 gap-1 p-2 text-center';
+        placeholder.innerHTML = '<i class="pi pi-image text-2xl"></i><span class="text-[10px] font-semibold text-[#A68B6D]">تعذر تحميل الصورة</span>';
+        img.parentElement.appendChild(placeholder);
+      }
+    }
   }
 
   reload(): void {
