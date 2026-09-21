@@ -196,78 +196,83 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       } @else if (error()) {
         <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{{ 'matchReview.error' | t }}</div>
       } @else {
-        <div class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-          <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white">
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(19rem,0.75fr)] items-start">
+          <!-- Bounded Table Container with Internal Scroll -->
+          <div class="flex flex-col rounded-2xl border border-[#E8D5BE] bg-white max-h-[calc(100vh-14rem)] min-h-[460px] overflow-hidden shadow-xs">
             @if (items().length === 0) {
-              <div class="px-6 py-16 text-center text-sm text-[#8A735C]">{{ 'matchReview.empty' | t }}</div>
+              <div class="flex-1 flex items-center justify-center px-6 py-16 text-center text-sm text-[#8A735C]">{{ 'matchReview.empty' | t }}</div>
             } @else {
-              <table class="min-w-full text-sm">
-                <thead class="bg-[#FBF8F4] text-[11px] font-bold text-[#A68B6D]">
-                  <tr>
-                    <th class="px-3 py-3"></th>
-                    <th class="px-3 py-3 text-start">{{ 'matchReview.listing' | t }}</th>
-                    <th class="px-3 py-3 text-start">{{ 'matchReview.score' | t }}</th>
-                    <th class="px-3 py-3 text-start">{{ 'matchReview.reason' | t }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of items(); track row.matchId) {
-                    <tr
-                      class="cursor-pointer border-t border-[#EDE0D0] hover:bg-[#FBF8F4] transition-colors"
-                      [class.bg-review-selected]="selected()?.matchId === row.matchId"
-                      (click)="open(row)"
-                    >
-                      <td class="px-3 py-3">
-                        <input type="checkbox" [checked]="selectedIds().has(row.matchId)" (click)="$event.stopPropagation(); toggle(row.matchId)" />
-                      </td>
-                      <td class="px-3 py-3">
-                        <div class="flex items-center gap-2.5">
-                          <div class="size-10 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center relative">
-                            @if (row.imageUrl) {
-                              <img
-                                #rowImg
-                                [src]="row.imageUrl"
-                                [alt]="row.name"
-                                loading="lazy"
-                                class="size-full object-contain p-0.5 relative z-10 transition-opacity duration-200"
-                                [class.opacity-0]="rowImg.dataset['failed'] === 'true'"
-                                (load)="rowImg.dataset['failed'] = 'false'"
-                                (error)="rowImg.dataset['failed'] = 'true'"
-                              />
-                            }
-                            <i class="pi pi-image text-[#C27938]/40 text-xs absolute inset-0 m-auto flex items-center justify-center pointer-events-none"></i>
-                          </div>
-                          <div class="min-w-0">
-                            <div class="font-semibold text-[#181A1D] truncate">{{ row.name }}</div>
-                            <div class="text-xs text-[#8A735C] mt-0.5">{{ row.pharmacyName }} · {{ row.matchMethod }}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-3 py-3 tabular-nums">
-                        <span
-                          class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
-                          [class.bg-emerald-50]="row.confidence >= 0.9"
-                          [class.text-emerald-700]="row.confidence >= 0.9"
-                          [class.bg-amber-50]="row.confidence >= 0.8 && row.confidence < 0.9"
-                          [class.text-amber-700]="row.confidence >= 0.8 && row.confidence < 0.9"
-                          [class.bg-sky-50]="row.confidence < 0.8"
-                          [class.text-sky-700]="row.confidence < 0.8"
-                        >
-                          <i class="pi pi-sparkles text-[10px]"></i>
-                          {{ (row.confidence * 100) | number: '1.1-1' }}%
-                        </span>
-                      </td>
-                      <td class="px-3 py-3 text-xs text-[#8A735C]">{{ row.decisionReason || '—' }}</td>
+              <!-- Scrollable Table Body with Sticky Header -->
+              <div class="flex-1 overflow-auto min-h-0">
+                <table class="min-w-full text-sm">
+                  <thead class="sticky top-0 z-10 bg-[#FBF8F4] text-[11px] font-bold text-[#A68B6D] border-b border-[#EDE0D0] shadow-xs">
+                    <tr>
+                      <th class="px-3 py-2.5 bg-[#FBF8F4]"></th>
+                      <th class="px-3 py-2.5 text-start bg-[#FBF8F4]">{{ 'matchReview.listing' | t }}</th>
+                      <th class="px-3 py-2.5 text-start bg-[#FBF8F4]">{{ 'matchReview.score' | t }}</th>
+                      <th class="px-3 py-2.5 text-start bg-[#FBF8F4]">{{ 'matchReview.reason' | t }}</th>
                     </tr>
-                  }
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody class="divide-y divide-[#EDE0D0]">
+                    @for (row of items(); track row.matchId) {
+                      <tr
+                        class="cursor-pointer hover:bg-[#FBF8F4] transition-colors"
+                        [class.bg-review-selected]="selected()?.matchId === row.matchId"
+                        (click)="open(row)"
+                      >
+                        <td class="px-3 py-2">
+                          <input type="checkbox" [checked]="selectedIds().has(row.matchId)" (click)="$event.stopPropagation(); toggle(row.matchId)" />
+                        </td>
+                        <td class="px-3 py-2">
+                          <div class="flex items-center gap-2.5">
+                            <div class="size-9 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center relative">
+                              @if (row.imageUrl) {
+                                <img
+                                  #rowImg
+                                  [src]="row.imageUrl"
+                                  [alt]="row.name"
+                                  loading="lazy"
+                                  class="size-full object-contain p-0.5 relative z-10 transition-opacity duration-200"
+                                  [class.opacity-0]="rowImg.dataset['failed'] === 'true'"
+                                  (load)="rowImg.dataset['failed'] = 'false'"
+                                  (error)="rowImg.dataset['failed'] = 'true'"
+                                />
+                              }
+                              <i class="pi pi-image text-[#C27938]/40 text-xs absolute inset-0 m-auto flex items-center justify-center pointer-events-none"></i>
+                            </div>
+                            <div class="min-w-0 max-w-[280px] sm:max-w-md">
+                              <div class="font-semibold text-xs sm:text-sm text-[#181A1D] truncate">{{ row.name }}</div>
+                              <div class="text-[11px] text-[#8A735C] mt-0.5">{{ row.pharmacyName }} · {{ row.matchMethod }}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-3 py-2 tabular-nums whitespace-nowrap">
+                          <span
+                            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
+                            [class.bg-emerald-50]="row.confidence >= 0.9"
+                            [class.text-emerald-700]="row.confidence >= 0.9"
+                            [class.bg-amber-50]="row.confidence >= 0.8 && row.confidence < 0.9"
+                            [class.text-amber-700]="row.confidence >= 0.8 && row.confidence < 0.9"
+                            [class.bg-sky-50]="row.confidence < 0.8"
+                            [class.text-sky-700]="row.confidence < 0.8"
+                          >
+                            <i class="pi pi-sparkles text-[9px]"></i>
+                            {{ (row.confidence * 100) | number: '1.1-1' }}%
+                          </span>
+                        </td>
+                        <td class="px-3 py-2 text-xs text-[#8A735C] max-w-[180px] truncate">{{ row.decisionReason || '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             }
+            <!-- Fixed Pinned Pagination at Table Bottom -->
             @if (totalPages() > 1) {
-              <div class="flex flex-wrap items-center justify-center gap-1.5 border-t border-[#EDE0D0] bg-[#FBF8F4] p-3">
+              <div class="shrink-0 flex flex-wrap items-center justify-center gap-1.5 border-t border-[#EDE0D0] bg-[#FBF8F4] p-2">
                 <button
                   type="button"
-                  class="inline-flex min-h-9 items-center gap-1 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40 transition-colors cursor-pointer"
+                  class="inline-flex min-h-8 items-center gap-1 rounded-lg border border-[#E8D5BE] bg-white px-2.5 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40 transition-colors cursor-pointer"
                   [disabled]="page() <= 1 || loading()"
                   (click)="goToPage(page() - 1)"
                 >
@@ -280,7 +285,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                   } @else {
                     <button
                       type="button"
-                      class="inline-flex size-9 items-center justify-center rounded-xl text-xs font-bold tabular-nums transition-colors cursor-pointer"
+                      class="inline-flex size-8 items-center justify-center rounded-lg text-xs font-bold tabular-nums transition-colors cursor-pointer"
                       [ngClass]="
                         page() === p
                           ? 'bg-[#181A1D] text-white shadow-xs'
@@ -295,7 +300,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                 }
                 <button
                   type="button"
-                  class="inline-flex min-h-9 items-center gap-1 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40 transition-colors cursor-pointer"
+                  class="inline-flex min-h-8 items-center gap-1 rounded-lg border border-[#E8D5BE] bg-white px-2.5 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40 transition-colors cursor-pointer"
                   [disabled]="page() >= totalPages() || loading()"
                   (click)="goToPage(page() + 1)"
                 >
@@ -306,37 +311,42 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
             }
           </div>
 
-          <aside class="rounded-2xl border border-[#E8D5BE] bg-white p-4 space-y-4">
+          <!-- Bounded Detail Sidebar with Pinned Action Buttons -->
+          <aside class="flex flex-col rounded-2xl border border-[#E8D5BE] bg-white p-3.5 max-h-[calc(100vh-14rem)] min-h-[460px] overflow-hidden shadow-xs">
             @if (detail(); as d) {
-              <div>
-                <h2 class="text-xs font-bold text-[#A68B6D] uppercase tracking-wider">{{ 'matchReview.listing' | t }}</h2>
-                <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: d.listing }"></ng-container>
+              <!-- Scrollable Cards & Group Details -->
+              <div class="flex-1 overflow-y-auto space-y-3 pe-1 min-h-0">
+                <div>
+                  <h2 class="text-[11px] font-bold text-[#A68B6D] uppercase tracking-wider">{{ 'matchReview.listing' | t }}</h2>
+                  <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: d.listing }"></ng-container>
+                </div>
+
+                @if (d.candidate) {
+                  <div>
+                    <h2 class="text-[11px] font-bold text-[#C27938] uppercase tracking-wider">{{ 'matchReview.candidate' | t }}</h2>
+                    <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: d.candidate }"></ng-container>
+                  </div>
+                }
+
+                @if (d.groupMembers.length > 0) {
+                  <div>
+                    <h2 class="text-[11px] font-bold text-[#A68B6D] uppercase tracking-wider">{{ 'matchReview.group' | t }} ({{ groupCount() }})</h2>
+                    <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
+                      @for (member of d.groupMembers; track member.pharmacyProductId) {
+                        <div class="rounded-lg bg-[#FBF8F4] px-2.5 py-1 text-xs text-[#8A735C] border border-[#EDE0D0] flex items-center justify-between">
+                          <span class="font-medium text-[#181A1D] truncate">{{ member.name }}</span>
+                          <span class="text-[10px] font-bold text-[#A68B6D] shrink-0 ms-2">{{ member.pharmacyCode }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
               </div>
 
-              @if (d.candidate) {
-                <div>
-                  <h2 class="text-xs font-bold text-[#C27938] uppercase tracking-wider">{{ 'matchReview.candidate' | t }}</h2>
-                  <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: d.candidate }"></ng-container>
-                </div>
-              }
-
-              @if (d.groupMembers.length > 0) {
-                <div>
-                  <h2 class="text-xs font-bold text-[#A68B6D] uppercase tracking-wider">{{ 'matchReview.group' | t }} ({{ groupCount() }})</h2>
-                  <div class="mt-1.5 space-y-1.5 max-h-36 overflow-y-auto">
-                    @for (member of d.groupMembers; track member.pharmacyProductId) {
-                      <div class="rounded-lg bg-[#FBF8F4] px-2.5 py-1.5 text-xs text-[#8A735C] border border-[#EDE0D0] flex items-center justify-between">
-                        <span class="font-medium text-[#181A1D] truncate">{{ member.name }}</span>
-                        <span class="text-[10px] font-bold text-[#A68B6D] shrink-0 ms-2">{{ member.pharmacyCode }}</span>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-
-              <div class="pt-2 border-t border-[#EDE0D0] flex flex-col gap-2">
+              <!-- Pinned Actions Container -->
+              <div class="shrink-0 pt-2.5 border-t border-[#EDE0D0] flex flex-col gap-2 bg-white">
                 <input
-                  class="min-h-11 rounded-xl border border-[#E8D5BE] px-3 text-sm font-mono"
+                  class="min-h-9 rounded-xl border border-[#E8D5BE] px-3 text-xs font-mono"
                   [value]="forceMasterId()"
                   (input)="forceMasterId.set($any($event.target).value)"
                   [attr.placeholder]="'matchReview.masterId' | t"
@@ -344,7 +354,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                 <div class="flex gap-2">
                   <button
                     type="button"
-                    class="min-h-11 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-sm font-bold text-white shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                    class="min-h-10 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
                     (click)="accept(d.queueItem)"
                   >
                     <i class="pi pi-check text-xs"></i>
@@ -352,7 +362,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                   </button>
                   <button
                     type="button"
-                    class="min-h-11 flex-1 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                    class="min-h-10 flex-1 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
                     (click)="reject(d.queueItem)"
                   >
                     <i class="pi pi-times text-xs"></i>
@@ -361,7 +371,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                 </div>
                 <button
                   type="button"
-                  class="min-h-11 rounded-xl border border-[#E8D5BE] text-sm font-bold text-[#8A735C] hover:text-[#181A1D] hover:bg-[#FBF8F4] transition-colors"
+                  class="min-h-9 rounded-xl border border-[#E8D5BE] text-xs font-bold text-[#8A735C] hover:text-[#181A1D] hover:bg-[#FBF8F4] transition-colors"
                   (click)="forceMatch(d.queueItem)"
                 >
                   {{ 'matchReview.forceMatch' | t }}
@@ -376,48 +386,63 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
     </section>
 
     <ng-template #cardTpl let-card>
-      <article class="mt-2 rounded-xl border border-[#EDE0D0] p-3 bg-white shadow-xs">
-        <div class="mb-2 h-36 w-full rounded-lg overflow-hidden bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center relative">
+      <article class="mt-1.5 rounded-xl border border-[#EDE0D0] p-2.5 bg-white shadow-xs">
+        <div class="mb-1.5 h-28 w-full rounded-lg overflow-hidden bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center relative">
           @if (card.imageUrl) {
             <img
               #imgEl
               [src]="card.imageUrl"
               [alt]="card.name"
               loading="lazy"
-              class="size-full object-contain p-2 relative z-10 transition-opacity duration-200"
+              class="size-full object-contain p-1.5 relative z-10 transition-opacity duration-200"
               [class.opacity-0]="imgEl.dataset['failed'] === 'true'"
               (load)="imgEl.dataset['failed'] = 'false'"
               (error)="imgEl.dataset['failed'] = 'true'"
             />
           }
           <div class="absolute inset-0 flex flex-col items-center justify-center text-[#C27938]/40 gap-1 p-2 text-center pointer-events-none">
-            <i class="pi pi-image text-2xl" aria-hidden="true"></i>
+            <i class="pi pi-image text-xl" aria-hidden="true"></i>
             <span class="text-[10px] font-semibold text-[#A68B6D]">
               {{ card.imageUrl ? (card.pharmacyCode === 'aldawaa' ? 'صورة الدواء غير متاحة خارجياً' : 'تعذر تحميل الصورة') : 'لا توجد صورة' }}
             </span>
           </div>
         </div>
-        <div class="font-semibold text-sm text-[#181A1D] leading-snug">{{ card.name }}</div>
+        <div class="font-semibold text-xs sm:text-sm text-[#181A1D] leading-snug line-clamp-2">{{ card.name }}</div>
         @if (card.englishName) {
-          <div class="text-xs text-[#8A735C] mt-0.5">{{ card.englishName }}</div>
+          <div class="text-[11px] text-[#8A735C] mt-0.5 truncate">{{ card.englishName }}</div>
         }
-        <div class="mt-2 flex flex-wrap gap-1.5 text-xs text-[#8A735C]">
-          <span class="rounded bg-[#F8EEE2] px-2 py-0.5 font-bold text-[#C27938]">{{ card.pharmacyName }}</span>
+        <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-[#8A735C]">
+          <span class="rounded bg-[#F8EEE2] px-1.5 py-0.5 font-bold text-[#C27938] text-[10px] sm:text-[11px]">{{ card.pharmacyName }}</span>
           @if (card.barcode || card.gtinNorm) {
-            <span class="rounded bg-[#FBF8F4] px-2 py-0.5 border border-[#EDE0D0] font-mono text-[11px]">{{ card.gtinNorm || card.barcode }}</span>
+            <span class="rounded bg-[#FBF8F4] px-1.5 py-0.5 border border-[#EDE0D0] font-mono text-[10px]">{{ card.gtinNorm || card.barcode }}</span>
           }
           @if (card.brandName) {
-            <span class="rounded bg-[#FBF8F4] px-2 py-0.5 border border-[#EDE0D0]">{{ card.brandName }}</span>
+            <span class="rounded bg-[#FBF8F4] px-1.5 py-0.5 border border-[#EDE0D0] text-[10px] sm:text-[11px]">{{ card.brandName }}</span>
           }
         </div>
         @if (card.price != null) {
-          <div class="mt-2 text-base font-extrabold text-[#181A1D] tabular-nums">{{ card.price | number: '1.2-2' }} <span class="text-xs font-medium text-[#8A735C]">SAR</span></div>
+          <div class="mt-1.5 text-sm font-extrabold text-[#181A1D] tabular-nums">{{ card.price | number: '1.2-2' }} <span class="text-[10px] font-medium text-[#8A735C]">SAR</span></div>
         }
       </article>
     </ng-template>
   `,
   styles: `
     .bg-review-selected { background: #F8EEE2; }
+    /* Slim sleek scrollbars */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #E8D5BE;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #C27938;
+    }
   `
 })
 export class MatchReviewComponent implements OnInit {
