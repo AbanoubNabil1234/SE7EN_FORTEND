@@ -204,6 +204,14 @@ export interface GroupCodeLinkResult {
   overrideId: string;
 }
 
+export interface GroupCodeMergeResult {
+  targetCode: string;
+  sourceCode: string;
+  mergedCount: number;
+  success: boolean;
+  errorMessage?: string | null;
+}
+
 export interface PharmacyProductSearchHit {
   id: string;
   name: string;

@@ -1,6 +1,12 @@
 import { Observable } from 'rxjs';
 import { CategoryNode } from '../models/category.model';
-import { CatalogFamily, CatalogFamilyPage, GroupCodeLinkResult, PharmacyProductSearchHit } from '../models/catalog-family.model';
+import {
+  CatalogFamily,
+  CatalogFamilyPage,
+  GroupCodeLinkResult,
+  GroupCodeMergeResult,
+  PharmacyProductSearchHit
+} from '../models/catalog-family.model';
 
 export type CatalogFamilySort = 'nameAsc' | 'nameDesc';
 
@@ -18,6 +24,7 @@ export abstract class CatalogBrowseRepository {
   }): Observable<CatalogFamilyPage>;
   abstract getFamilyByKey(familyKey: string): Observable<CatalogFamily>;
   abstract linkByGroupCode(pharmacyProductId: string, code: string): Observable<GroupCodeLinkResult>;
+  abstract mergeGroups(sourceGroupCode: string, targetGroupCode: string): Observable<GroupCodeMergeResult>;
   abstract searchPharmacyProducts(query: string, take?: number): Observable<PharmacyProductSearchHit[]>;
   abstract setPriceSyncEnabled(masterProductId: string, enabled: boolean): Observable<{ id: string; enabled: boolean }>;
   abstract setMasterBarcode(

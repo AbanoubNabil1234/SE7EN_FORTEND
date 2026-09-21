@@ -35,6 +35,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
+import { MergeFamilyModalComponent } from './components/merge-family-modal/merge-family-modal.component';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -48,7 +49,16 @@ interface CategoryOption {
 @Component({
   selector: 'app-products-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, CurrencyPipe, DecimalPipe, QuickAddProductModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    TranslatePipe,
+    CurrencyPipe,
+    DecimalPipe,
+    QuickAddProductModalComponent,
+    MergeFamilyModalComponent
+  ],
   template: `
     <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
@@ -250,8 +260,18 @@ interface CategoryOption {
                       class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#181A1D] hover:bg-[#FBF8F4]"
                       (click)="copyCode(family.groupCode!)"
                       [attr.aria-label]="'productsAdmin.copyCode' | t"
+                      [title]="'productsAdmin.copyCode' | t"
                     >
                       <i class="pi pi-copy text-xs" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#C27938] hover:bg-[#F8EEE2]"
+                      (click)="openMergeModal(family)"
+                      [attr.aria-label]="'productsAdmin.mergeGroup' | t"
+                      [title]="'productsAdmin.mergeGroup' | t"
+                    >
+                      <i class="pi pi-link text-xs" aria-hidden="true"></i>
                     </button>
                   }
                 </div>
@@ -400,6 +420,16 @@ interface CategoryOption {
                         <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
                         <span>{{ 'quickAdd.addOffer' | t }}</span>
                       </button>
+                      @if (family.groupCode) {
+                        <button
+                          type="button"
+                          class="inline-flex min-h-7 items-center gap-1 rounded-lg border border-[#C27938]/30 bg-[#F8EEE2] px-2 py-0.5 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-colors"
+                          (click)="openMergeModal(family)"
+                        >
+                          <i class="pi pi-link text-[10px]" aria-hidden="true"></i>
+                          <span>{{ 'productsAdmin.mergeGroup' | t }}</span>
+                        </button>
+                      }
                     </div>
                     @if (selectedPack(family); as pack) {
                       <div class="text-xs font-bold tabular-nums text-[#181A1D]">
@@ -570,6 +600,13 @@ interface CategoryOption {
       (close)="closeQuickAdd()"
       (productAdded)="onQuickProductAdded()"
     />
+
+    <app-merge-family-modal
+      [sourceFamily]="mergeFamily()"
+      [isOpen]="isMergeOpen()"
+      (close)="closeMergeModal()"
+      (merged)="onFamilyMerged()"
+    />
   `
 })
 export class ProductsAdminComponent implements OnInit, OnDestroy {
@@ -604,6 +641,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   readonly quickAddFamily = signal<CatalogFamily | null>(null);
   readonly isQuickAddOpen = signal<boolean>(false);
+
+  readonly mergeFamily = signal<CatalogFamily | null>(null);
+  readonly isMergeOpen = signal<boolean>(false);
 
   private queryTimer: ReturnType<typeof setTimeout> | null = null;
   private fetchSub: Subscription | null = null;
@@ -782,6 +822,21 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   onQuickProductAdded(): void {
     this.closeQuickAdd();
+    this.reloadKeepingSelection();
+  }
+
+  openMergeModal(family: CatalogFamily): void {
+    this.mergeFamily.set(family);
+    this.isMergeOpen.set(true);
+  }
+
+  closeMergeModal(): void {
+    this.isMergeOpen.set(false);
+    this.mergeFamily.set(null);
+  }
+
+  onFamilyMerged(): void {
+    this.closeMergeModal();
     this.reloadKeepingSelection();
   }
 

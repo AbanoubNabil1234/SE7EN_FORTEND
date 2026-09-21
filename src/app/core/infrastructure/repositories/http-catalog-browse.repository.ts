@@ -10,6 +10,7 @@ import {
   CatalogOffer,
   CatalogPack,
   GroupCodeLinkResult,
+  GroupCodeMergeResult,
   PharmacyProductSearchHit
 } from '../../domain/models/catalog-family.model';
 import { API_ENDPOINTS } from '../http/api-endpoints.constants';
@@ -157,6 +158,27 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
           masterProductId: String(raw['masterProductId'] ?? raw['MasterProductId'] ?? ''),
           overrideId: String(raw['overrideId'] ?? raw['OverrideId'] ?? '')
         }))
+      );
+  }
+
+  mergeGroups(sourceGroupCode: string, targetGroupCode: string): Observable<GroupCodeMergeResult> {
+    return this.http
+      .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_GROUP_CODE_MERGE, {
+        sourceCode: sourceGroupCode,
+        targetCode: targetGroupCode
+      })
+      .pipe(
+        map((raw) => {
+          this.familiesCache.clear();
+          this.searchCache.clear();
+          return {
+            targetCode: String(raw['targetCode'] ?? raw['TargetCode'] ?? targetGroupCode),
+            sourceCode: String(raw['sourceCode'] ?? raw['SourceCode'] ?? sourceGroupCode),
+            mergedCount: Number(raw['mergedCount'] ?? raw['MergedCount'] ?? 0),
+            success: Boolean(raw['success'] ?? raw['Success'] ?? true),
+            errorMessage: (raw['errorMessage'] ?? raw['ErrorMessage'] ?? null) as string | null
+          };
+        })
       );
   }
 

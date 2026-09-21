@@ -521,7 +521,19 @@ export const messagesAr: MessageTree = {
     priceSyncOnMsg: 'هيتحدث سعر المنتج ده مع الصيدليات.',
     priceSyncOffMsg: 'اتوقفت مزامنة سعر المنتج ده.',
     aiMatchBadge: 'تطابق AI',
-    aiMatchTooltip: 'تم التطابق بواسطة نموذج الذكاء الاصطناعي (اسم مقابل اسم)'
+    aiMatchTooltip: 'تم التطابق بواسطة نموذج الذكاء الاصطناعي (اسم مقابل اسم)',
+    mergeGroup: 'دمج العائلة',
+    mergePrompt: 'دمج مع كود عائلة آخر',
+    confirmMerge: 'تأكيد الدمج',
+    mergedOk: 'تم دمج العائلة بنجاح',
+    mergeSameError: 'لا يمكن دمج العائلة مع نفسها',
+    mergeConflictError: 'توجد صيدلية مكررة في كلا العائلتين',
+    mergeFailed: 'تعذر دمج العائلة — تحقق من الكود',
+    targetCodePlaceholder: 'أدخل كود العائلة المستهدفة (مثال: G-123456)',
+    sourceFamily: 'العائلة الحالية',
+    targetFamily: 'العائلة المستهدفة',
+    merging: 'جاري الدمج...',
+    mergeWarning: 'سيتم نقل جميع عروض هذه العائلة إلى العائلة المستهدفة وحذف الكود القديم.'
   },
   quickAdd: {
     addOffer: 'إضافة منتج',
@@ -1199,7 +1211,19 @@ export const messagesEn: MessageTree = {
     priceSyncOnMsg: 'This product’s price will refresh with pharmacies.',
     priceSyncOffMsg: 'Price sync is paused for this product.',
     aiMatchBadge: 'AI Match',
-    aiMatchTooltip: 'Matched via AI model (name-to-name)'
+    aiMatchTooltip: 'Matched via AI model (name-to-name)',
+    mergeGroup: 'Merge Family',
+    mergePrompt: 'Merge into target family code',
+    confirmMerge: 'Confirm Merge',
+    mergedOk: 'Family merged successfully',
+    mergeSameError: 'Cannot merge family into itself',
+    mergeConflictError: 'Duplicate pharmacy exists in both families',
+    mergeFailed: 'Merge failed — check the code',
+    targetCodePlaceholder: 'Enter target family code (e.g. G-123456)',
+    sourceFamily: 'Current Family',
+    targetFamily: 'Target Family',
+    merging: 'Merging...',
+    mergeWarning: 'All offers from this family will be merged into the target family and the old code will be removed.'
   },
   quickAdd: {
     addOffer: 'Add Product',
