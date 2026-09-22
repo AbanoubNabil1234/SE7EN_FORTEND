@@ -16,14 +16,14 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
         <div>
           <div class="flex items-center gap-2">
             <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
-              أداء ومطابقة الصيدليات التنافسية
+              أداء ومطابقة الصيدليات
             </h3>
             <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-              تطابق حقيقي (2+ صيدليات)
+              الأرقام الحقيقية للكتالوج
             </span>
           </div>
           <p class="text-pretty text-xs font-medium text-slate-500 dark:text-neutral-400">
-            النسبة الدقيقة للمنتجات التي تمتلك منافساً مسجلاً في صيدلية أخرى
+            إجمالي المنتجات المطابقة في الكتالوج، جودة الباركود، والمقارنة التنافسية
           </p>
         </div>
 
@@ -31,11 +31,11 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
         <div class="flex items-center gap-3 text-xs font-semibold text-slate-500 dark:text-neutral-400">
           <div class="flex items-center gap-1.5">
             <span class="size-2 rounded-full bg-emerald-500"></span>
-            <span>تطابق منافس</span>
+            <span>مطابقة الكتالوج</span>
           </div>
           <div class="flex items-center gap-1.5">
-            <span class="size-2 rounded-full bg-slate-300 dark:bg-neutral-600"></span>
-            <span>في الكتالوج</span>
+            <span class="size-2 rounded-full bg-amber-500"></span>
+            <span>مقارنة تنافسية (2+)</span>
           </div>
         </div>
       </div>
@@ -50,8 +50,8 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
           @for (pharmacy of computedItems(); track pharmacy.pharmacyId) {
             <div class="py-3.5 px-2 transition-colors hover:bg-slate-50/60 dark:hover:bg-neutral-800/40 rounded-xl">
               <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-3">
-                <!-- Col 1: Pharmacy Name & Scraped Count (5 cols) -->
-                <div class="md:col-span-5 flex items-center gap-2.5 min-w-0">
+                <!-- Col 1: Pharmacy Name & Scraped Count (4 cols) -->
+                <div class="md:col-span-4 flex items-center gap-2.5 min-w-0">
                   <span
                     class="size-2.5 rounded-full shrink-0"
                     [ngClass]="pharmacy.isEnabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-neutral-600'"
@@ -67,7 +67,7 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
                       </span>
                     </div>
                     <div class="text-[10px] text-slate-400 dark:text-neutral-400 tabular-nums">
-                      {{ pharmacy.productCount | number }} مسحوب &bull; {{ pharmacy.catalogTotal | number }} بالكتالوج
+                      {{ pharmacy.productCount | number }} منتج مسحوب
                     </div>
                   </div>
                 </div>
@@ -90,35 +90,34 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
                   </span>
                 </div>
 
-                <!-- Col 3: True Cross Match & Slim Progress Meter (5 cols) -->
-                <div class="md:col-span-5 space-y-1.5">
+                <!-- Col 3: Real In-Catalog Match & Progress Bar (4 cols) -->
+                <div class="md:col-span-4 space-y-1.5">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="text-[11px] font-extrabold text-slate-700 dark:text-neutral-300">
-                      {{ pharmacy.trueCrossMatchRate | number: '1.1-1' }}% مطابقة
+                    <span class="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400">
+                      {{ pharmacy.matchRate | number: '1.1-1' }}% مطابقة
                     </span>
-                    <span class="text-[10px] font-semibold text-slate-400 dark:text-neutral-400 tabular-nums">
-                      {{ pharmacy.crossMatchedTotal | number }} منتج
+                    <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                      {{ pharmacy.catalogTotal | number }} منتج
                     </span>
                   </div>
 
-                  <!-- Slim 5px Dual-Progress Bar -->
+                  <!-- Real Matching Progress Bar -->
                   <div class="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
                     <div
-                      class="absolute start-0 top-0 h-full rounded-full bg-slate-300 dark:bg-neutral-700"
-                      [style.width.%]="pharmacy.catalogWidth"
-                    ></div>
-                    <div
-                      class="absolute start-0 top-0 h-full rounded-full"
-                      [ngClass]="
-                        pharmacy.trueCrossMatchRate >= 60
-                          ? 'bg-emerald-500'
-                          : pharmacy.trueCrossMatchRate >= 30
-                            ? 'bg-amber-500'
-                            : 'bg-slate-400'
-                      "
-                      [style.width.%]="pharmacy.crossMatchWidth"
+                      class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                      [style.width.%]="pharmacy.matchWidth"
                     ></div>
                   </div>
+                </div>
+
+                <!-- Col 4: Competitive Multi-Pharmacy Comparison (2 cols) -->
+                <div class="md:col-span-2 flex flex-col items-end justify-center text-right">
+                  <span class="text-[10px] font-bold text-slate-700 dark:text-neutral-300 tabular-nums">
+                    {{ pharmacy.crossMatchedTotal | number }} مقارنة
+                  </span>
+                  <span class="text-[9px] text-slate-400 font-medium tabular-nums">
+                    ({{ pharmacy.crossMatchRate | number: '1.0-0' }}% تنافسي)
+                  </span>
                 </div>
               </div>
             </div>
@@ -136,27 +135,27 @@ export class PharmacyBarChartComponent {
     if (list.length === 0) return [];
 
     return list.map((p) => {
-      const crossMatchedTotal = p.crossMatchedCount ?? p.matchedCount ?? 0;
       const catalogTotal = p.inCatalogCount ?? p.matchedCount ?? 0;
+      const crossMatchedTotal = p.crossMatchedCount ?? 0;
       const totalProducts = p.productCount > 0 ? p.productCount : 1;
 
-      const trueCrossMatchRate = p.crossMatchPercent ?? (crossMatchedTotal / totalProducts) * 100;
-      const catalogRate = (catalogTotal / totalProducts) * 100;
+      const matchRate = Math.min(100, Math.max(0, (catalogTotal / totalProducts) * 100));
+      const crossMatchRate = Math.min(100, Math.max(0, (crossMatchedTotal / totalProducts) * 100));
       const barcodeRate = p.barcodePercent ?? 0;
 
-      const crossMatchWidth = Math.min(100, Math.max(0, (crossMatchedTotal / totalProducts) * 100));
-      const catalogWidth = Math.min(100, Math.max(0, (catalogTotal / totalProducts) * 100));
+      const matchWidth = matchRate;
+      const crossMatchWidth = crossMatchRate;
 
       return {
         ...p,
-        crossMatchedTotal,
         catalogTotal,
-        trueCrossMatchRate,
-        catalogRate,
+        crossMatchedTotal,
+        matchRate,
+        crossMatchRate,
         barcodeRate,
-        crossMatchWidth,
-        catalogWidth
+        matchWidth,
+        crossMatchWidth
       };
-    });
+    }).sort((a, b) => b.catalogTotal - a.catalogTotal);
   });
 }
