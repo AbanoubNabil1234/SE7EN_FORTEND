@@ -673,7 +673,7 @@ interface CategoryOption {
         }
       }
       } @else {
-        <app-match-review [isEmbedded]="true"></app-match-review>
+        <app-match-review [isEmbedded]="true" [initialMode]="'auto_98_99'"></app-match-review>
       }
     </section>
 

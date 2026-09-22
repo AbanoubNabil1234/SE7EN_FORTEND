@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { MatchReviewRepository } from '../../core/domain/repositories/match-review.repository';
 import {
@@ -22,6 +23,55 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
   imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
     <section class="w-full space-y-4" [class.px-4]="!isEmbedded()" [class.py-4]="!isEmbedded()" [class.sm:px-5]="!isEmbedded()" [class.sm:py-5]="!isEmbedded()" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
+      
+      <!-- Top Mode Switcher Tabs Bar -->
+      <div class="flex items-center justify-between gap-3 p-1.5 rounded-2xl bg-white border border-[#E8D5BE] shadow-xs flex-wrap">
+        <div class="flex items-center gap-2">
+          <!-- Tab 1: Auto Catalog (98% - 99%) -->
+          <button
+            type="button"
+            (click)="switchMode('auto_98_99')"
+            [class]="selectedMode() === 'auto_98_99'
+              ? 'bg-gradient-to-r from-emerald-600 via-teal-700 to-emerald-700 text-white shadow-sm font-black'
+              : 'text-[#5C4936] hover:text-[#181A1D] hover:bg-[#F8EEE2]/60 font-bold'"
+            class="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 sm:px-4 py-1.5 text-xs sm:text-sm transition-all cursor-pointer"
+          >
+            <i class="pi pi-check-circle text-xs" [class.text-emerald-200]="selectedMode() === 'auto_98_99'"></i>
+            <span>{{ 'matchReview.tabAutoMatches' | t }}</span>
+            <span
+              [class]="selectedMode() === 'auto_98_99' ? 'bg-white/25 text-white' : 'bg-[#F0E4D5] text-[#2C231B]'"
+              class="rounded-full px-2.5 py-0.5 text-xs font-black tabular-nums transition-colors"
+            >
+              {{ autoMatchesCount() | number }}
+            </span>
+          </button>
+
+          <!-- Tab 2: Review Queue (<98%) -->
+          <button
+            type="button"
+            (click)="switchMode('review')"
+            [class]="selectedMode() === 'review'
+              ? 'bg-gradient-to-r from-amber-600 to-[#C27938] text-white shadow-sm font-black'
+              : 'text-[#5C4936] hover:text-[#181A1D] hover:bg-[#F8EEE2]/60 font-bold'"
+            class="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 sm:px-4 py-1.5 text-xs sm:text-sm transition-all cursor-pointer"
+          >
+            <i class="pi pi-clock text-xs"></i>
+            <span>{{ 'matchReview.tabPendingReview' | t }}</span>
+            <span
+              [class]="selectedMode() === 'review' ? 'bg-white/25 text-white' : 'bg-[#F0E4D5] text-[#2C231B]'"
+              class="rounded-full px-2.5 py-0.5 text-xs font-black tabular-nums transition-colors"
+            >
+              {{ reviewQueueCount() | number }}
+            </span>
+          </button>
+        </div>
+
+        <div class="px-3 py-1 rounded-xl bg-[#F8EEE2] text-[#C27938] text-xs font-bold flex items-center gap-1.5 border border-[#E8D5BE]">
+          <i class="pi pi-sparkles text-amber-600 animate-pulse"></i>
+          <span>AI Model v4</span>
+        </div>
+      </div>
+
       @if (!isEmbedded()) {
         <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
           <div class="h-1.5 bg-[#C27938]"></div>
@@ -29,21 +79,29 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
             <div class="inline-flex items-center gap-2 rounded-full bg-[#F8EEE2] px-3 py-1 text-[11px] font-bold text-[#C27938]">
               {{ 'matchReview.badge' | t }}
             </div>
-            <h1 class="mt-3 text-3xl font-extrabold text-[#181A1D]">{{ 'matchReview.title' | t }}</h1>
-            <p class="mt-1.5 max-w-2xl text-sm font-medium text-[#8A735C]">{{ 'matchReview.subtitle' | t }}</p>
+            <h1 class="mt-3 text-3xl font-extrabold text-[#181A1D]">
+              {{ (selectedMode() === 'auto_98_99' ? 'matchReview.tabAutoMatches' : 'matchReview.title') | t }}
+            </h1>
+            <p class="mt-1.5 max-w-2xl text-sm font-medium text-[#8A735C]">
+              {{ selectedMode() === 'auto_98_99' 
+                ? 'استعرض جميع المنتجات التي تم ربطها وإضافتها للكتالوج تلقائياً بدقة 98% و 99%، مع إمكانية فصلها أو نقلها لعائلة أخرى.'
+                : ('matchReview.subtitle' | t) }}
+            </p>
           </div>
           <div class="grid grid-cols-3 border-t border-[#EDE0D0]">
             <div class="border-e border-[#EDE0D0] px-5 py-3.5">
-              <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'matchReview.queue' | t }}</div>
-              <div class="mt-1 text-2xl font-extrabold tabular-nums">{{ queueDepth() }}</div>
+              <div class="text-[11px] font-bold text-[#A68B6D]">
+                {{ (selectedMode() === 'auto_98_99' ? 'matchReview.statLinkedCatalog' : 'matchReview.queue') | t }}
+              </div>
+              <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">{{ queueDepth() | number }}</div>
             </div>
             <div class="border-e border-[#EDE0D0] px-5 py-3.5">
               <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'matchReview.selected' | t }}</div>
-              <div class="mt-1 text-2xl font-extrabold tabular-nums">{{ selectedIds().size }}</div>
+              <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">{{ selectedIds().size }}</div>
             </div>
             <div class="px-5 py-3.5">
-              <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'matchReview.group' | t }}</div>
-              <div class="mt-1 text-2xl font-extrabold tabular-nums">{{ groupCount() }}/8</div>
+              <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'matchReview.statFamilyMembers' | t }}</div>
+              <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#C27938]">{{ groupCount() }}/8</div>
             </div>
           </div>
         </div>
@@ -51,16 +109,27 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         <!-- Compact header metrics for embedded tab inside /products -->
         <div class="grid grid-cols-3 gap-3 rounded-2xl border border-[#E8D5BE] bg-white p-3 shadow-sm">
           <div class="rounded-xl bg-[#FBF8F4] px-4 py-3 text-center border border-[#EDE0D0]">
-            <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'matchReview.queue' | t }}</div>
-            <div class="mt-1 text-2xl font-extrabold text-[#181A1D] tabular-nums">{{ queueDepth() }}</div>
+            <div class="text-[11px] font-bold text-[#A68B6D]">
+              {{ (selectedMode() === 'auto_98_99' ? 'matchReview.statLinkedCatalog' : 'matchReview.queue') | t }}
+            </div>
+            <div class="mt-1 text-2xl font-extrabold text-[#181A1D] tabular-nums">{{ queueDepth() | number }}</div>
+            <div class="text-[10px] font-medium text-[#8A735C] mt-0.5">
+              {{ selectedMode() === 'auto_98_99' ? '98% - 100% تطابق مؤكد' : 'تحت المراجعة والتأكيد' }}
+            </div>
           </div>
           <div class="rounded-xl bg-[#FBF8F4] px-4 py-3 text-center border border-[#EDE0D0]">
             <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'matchReview.selected' | t }}</div>
             <div class="mt-1 text-2xl font-extrabold text-[#181A1D] tabular-nums">{{ selectedIds().size }}</div>
+            <div class="text-[10px] font-medium text-[#8A735C] mt-0.5">
+              {{ selectedMode() === 'auto_98_99' ? 'محدد للفصل' : 'محدد للإجراء' }}
+            </div>
           </div>
           <div class="rounded-xl bg-[#FBF8F4] px-4 py-3 text-center border border-[#EDE0D0]">
-            <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'matchReview.group' | t }}</div>
+            <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'matchReview.statFamilyMembers' | t }}</div>
             <div class="mt-1 text-2xl font-extrabold text-[#C27938] tabular-nums">{{ groupCount() }}/8</div>
+            <div class="text-[10px] font-medium text-[#8A735C] mt-0.5">
+              صيدليات مرتبطة بنفس الماستر
+            </div>
           </div>
         </div>
       }
@@ -106,15 +175,31 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
           (change)="minScore.set($any($event.target).value); onFilterChange()"
           [attr.placeholder]="'matchReview.minScore' | t"
         />
+
         <div class="flex flex-wrap gap-2">
-          <button type="button" class="min-h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 text-sm font-bold text-white transition-colors cursor-pointer" (click)="bulk('accept')">
-            <i class="pi pi-check me-1"></i>
-            {{ 'matchReview.bulkAccept' | t }}
-          </button>
-          <button type="button" class="min-h-11 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 text-sm font-bold transition-colors cursor-pointer" (click)="bulk('reject')">
-            <i class="pi pi-times me-1"></i>
-            {{ 'matchReview.bulkReject' | t }}
-          </button>
+          @if (selectedMode() === 'auto_98_99') {
+            <button
+              type="button"
+              class="min-h-11 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 text-sm font-bold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+              [disabled]="selectedIds().size === 0"
+              (click)="bulkUnlink()"
+            >
+              <i class="pi pi-unlink"></i>
+              <span>{{ 'matchReview.bulkUnlink' | t }}</span>
+              @if (selectedIds().size > 0) {
+                <span class="rounded-full bg-rose-200/80 px-2 py-0.5 text-xs font-black">{{ selectedIds().size }}</span>
+              }
+            </button>
+          } @else {
+            <button type="button" class="min-h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 text-sm font-bold text-white transition-colors cursor-pointer" (click)="bulk('accept')">
+              <i class="pi pi-check me-1"></i>
+              {{ 'matchReview.bulkAccept' | t }}
+            </button>
+            <button type="button" class="min-h-11 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 px-4 text-sm font-bold transition-colors cursor-pointer" (click)="bulk('reject')">
+              <i class="pi pi-times me-1"></i>
+              {{ 'matchReview.bulkReject' | t }}
+            </button>
+          }
         </div>
       </div>
 
@@ -125,7 +210,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
             {{ 'matchReview.showing' | t }}:
             <span class="font-bold text-[#181A1D]">{{ rangeStart() }}–{{ rangeEnd() }}</span>
             {{ 'matchReview.pageOf' | t }}
-            <span class="font-bold text-[#181A1D]">{{ queueDepth() }}</span>
+            <span class="font-bold text-[#181A1D]">{{ queueDepth() | number }}</span>
           </span>
         </div>
         <div class="flex items-center gap-2">
@@ -242,7 +327,17 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                             </div>
                             <div class="min-w-0 max-w-[280px] sm:max-w-md">
                               <div class="font-semibold text-xs sm:text-sm text-[#181A1D] truncate">{{ row.name }}</div>
-                              <div class="text-[11px] text-[#8A735C] mt-0.5">{{ row.pharmacyName }} · {{ row.matchMethod }}</div>
+                              <div class="flex items-center gap-1.5 text-[11px] text-[#8A735C] mt-0.5 flex-wrap">
+                                <span class="font-medium text-[#181A1D]">{{ row.pharmacyName }}</span>
+                                @if (selectedMode() === 'auto_98_99') {
+                                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 text-[9px] font-extrabold">
+                                    <i class="pi pi-check text-[7px]"></i>
+                                    {{ 'matchReview.autoMatchesBadge' | t }}
+                                  </span>
+                                } @else {
+                                  <span>· {{ row.matchMethod }}</span>
+                                }
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -251,6 +346,8 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                             class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
                             [class.bg-emerald-50]="row.confidence >= 0.9"
                             [class.text-emerald-700]="row.confidence >= 0.9"
+                            [class.border]="row.confidence >= 0.9"
+                            [class.border-emerald-200]="row.confidence >= 0.9"
                             [class.bg-amber-50]="row.confidence >= 0.8 && row.confidence < 0.9"
                             [class.text-amber-700]="row.confidence >= 0.8 && row.confidence < 0.9"
                             [class.bg-sky-50]="row.confidence < 0.8"
@@ -260,7 +357,13 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                             {{ (row.confidence * 100) | number: '1.1-1' }}%
                           </span>
                         </td>
-                        <td class="px-3 py-2 text-xs text-[#8A735C] max-w-[180px] truncate">{{ row.decisionReason || '—' }}</td>
+                        <td class="px-3 py-2 text-xs text-[#8A735C] max-w-[200px] truncate">
+                          @if (selectedMode() === 'auto_98_99') {
+                            <span class="text-emerald-800 font-medium">تطابق عالي آلي (AI Model v4)</span>
+                          } @else {
+                            <span>{{ row.decisionReason || '—' }}</span>
+                          }
+                        </td>
                       </tr>
                     }
                   </tbody>
@@ -316,26 +419,81 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
             @if (detail(); as d) {
               <!-- Scrollable Cards & Group Details -->
               <div class="flex-1 overflow-y-auto space-y-3 pe-1 min-h-0">
+                <!-- Listing Card -->
                 <div>
-                  <h2 class="text-[11px] font-bold text-[#A68B6D] uppercase tracking-wider">{{ 'matchReview.listing' | t }}</h2>
+                  <div class="flex items-center justify-between">
+                    <h2 class="text-[11px] font-bold text-[#A68B6D] uppercase tracking-wider">{{ 'matchReview.listing' | t }}</h2>
+                    <span class="rounded bg-[#F8EEE2] px-2 py-0.5 text-[10px] font-bold text-[#C27938]">{{ d.listing.pharmacyName }}</span>
+                  </div>
                   <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: d.listing }"></ng-container>
                 </div>
 
-                @if (d.candidate) {
-                  <div>
-                    <h2 class="text-[11px] font-bold text-[#C27938] uppercase tracking-wider">{{ 'matchReview.candidate' | t }}</h2>
-                    <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: d.candidate }"></ng-container>
-                  </div>
-                }
+                <!-- Linked Master / Candidate Card -->
+                <div>
+                  @if (selectedMode() === 'auto_98_99') {
+                    <div class="flex items-center justify-between">
+                      <h2 class="text-[11px] font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="pi pi-check-circle text-emerald-600"></i>
+                        {{ 'matchReview.linkedMaster' | t }}
+                      </h2>
+                      <span class="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-black">مربوط بالماستر</span>
+                    </div>
 
+                    @if (d.masterTitle) {
+                      <div class="mt-1.5 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50/60 border border-emerald-200 p-2.5 shadow-2xs">
+                        <div class="text-[10px] font-bold text-emerald-700">اسم عائلة الكتالوج (Master Family)</div>
+                        <div class="text-xs font-black text-[#181A1D] mt-0.5 leading-snug">{{ d.masterTitle }}</div>
+                        @if (d.familyKey) {
+                          <div class="text-[10px] font-mono text-emerald-800 mt-1 truncate">{{ 'matchReview.familyKey' | t }}: {{ d.familyKey }}</div>
+                        }
+                      </div>
+                    }
+
+                    @if (d.candidate) {
+                      <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: d.candidate }"></ng-container>
+                    }
+                  } @else {
+                    @if (d.candidate) {
+                      <div>
+                        <h2 class="text-[11px] font-bold text-[#C27938] uppercase tracking-wider">{{ 'matchReview.candidate' | t }}</h2>
+                        <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: d.candidate }"></ng-container>
+                      </div>
+                    }
+                  }
+                </div>
+
+                <!-- Group Members -->
                 @if (d.groupMembers.length > 0) {
                   <div>
-                    <h2 class="text-[11px] font-bold text-[#A68B6D] uppercase tracking-wider">{{ 'matchReview.group' | t }} ({{ groupCount() }})</h2>
-                    <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
+                    <div class="flex items-center justify-between">
+                      <h2 class="text-[11px] font-bold text-[#A68B6D] uppercase tracking-wider">
+                        {{ 'matchReview.group' | t }} ({{ d.groupMembers.length }})
+                      </h2>
+                      <span class="text-[10px] font-bold text-[#C27938]">{{ groupCount() }} صيدليات</span>
+                    </div>
+                    <div class="mt-1 space-y-1.5 max-h-36 overflow-y-auto">
                       @for (member of d.groupMembers; track member.pharmacyProductId) {
-                        <div class="rounded-lg bg-[#FBF8F4] px-2.5 py-1 text-xs text-[#8A735C] border border-[#EDE0D0] flex items-center justify-between">
-                          <span class="font-medium text-[#181A1D] truncate">{{ member.name }}</span>
-                          <span class="text-[10px] font-bold text-[#A68B6D] shrink-0 ms-2">{{ member.pharmacyCode }}</span>
+                        <div
+                          class="rounded-xl p-2 text-xs border flex items-center justify-between gap-2"
+                          [class.bg-emerald-50/50]="member.pharmacyProductId === d.listing.pharmacyProductId"
+                          [class.border-emerald-300]="member.pharmacyProductId === d.listing.pharmacyProductId"
+                          [class.bg-[#FBF8F4]]="member.pharmacyProductId !== d.listing.pharmacyProductId"
+                          [class.border-[#EDE0D0]]="member.pharmacyProductId !== d.listing.pharmacyProductId"
+                        >
+                          <div class="min-w-0 flex-1">
+                            <div class="font-medium text-[#181A1D] truncate">{{ member.name }}</div>
+                            <div class="text-[10px] text-[#8A735C] flex items-center gap-1.5 mt-0.5">
+                              <span class="font-bold text-[#A68B6D]">{{ member.pharmacyName || member.pharmacyCode }}</span>
+                              @if (member.pharmacyProductId === d.listing.pharmacyProductId) {
+                                <span class="rounded bg-emerald-100 text-emerald-800 px-1 text-[9px] font-extrabold">العرض الحالي</span>
+                              }
+                            </div>
+                          </div>
+                          @if (member.price != null) {
+                            <div class="text-xs font-black text-[#181A1D] shrink-0 tabular-nums">
+                              {{ member.price | number: '1.2-2' }} <span class="text-[9px] font-normal text-[#8A735C]">SAR</span>
+                            </div>
+                          }
                         </div>
                       }
                     </div>
@@ -345,37 +503,66 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
               <!-- Pinned Actions Container -->
               <div class="shrink-0 pt-2.5 border-t border-[#EDE0D0] flex flex-col gap-2 bg-white">
-                <input
-                  class="min-h-9 rounded-xl border border-[#E8D5BE] px-3 text-xs font-mono"
-                  [value]="forceMasterId()"
-                  (input)="forceMasterId.set($any($event.target).value)"
-                  [attr.placeholder]="'matchReview.masterId' | t"
-                />
-                <div class="flex gap-2">
+                @if (selectedMode() === 'auto_98_99') {
+                  <!-- Unlink Button for Auto-Linked items -->
                   <button
                     type="button"
-                    class="min-h-10 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                    (click)="accept(d.queueItem)"
+                    class="min-h-10 w-full rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
+                    (click)="unlink(d.queueItem)"
                   >
-                    <i class="pi pi-check text-xs"></i>
-                    {{ 'matchReview.acceptMatch' | t }}
+                    <i class="pi pi-unlink text-sm"></i>
+                    <span>{{ 'matchReview.unlink' | t }}</span>
                   </button>
+
+                  <!-- Reassign / Change Master -->
+                  <div class="flex items-center gap-1.5 pt-0.5">
+                    <input
+                      class="min-h-9 flex-1 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-2.5 text-xs font-mono"
+                      [value]="forceMasterId()"
+                      (input)="forceMasterId.set($any($event.target).value)"
+                      [placeholder]="'matchReview.reassignMaster' | t"
+                    />
+                    <button
+                      type="button"
+                      class="min-h-9 shrink-0 rounded-xl bg-[#181A1D] hover:bg-black px-3 text-xs font-bold text-white transition-colors cursor-pointer"
+                      (click)="forceMatch(d.queueItem)"
+                    >
+                      {{ 'matchReview.reassign' | t }}
+                    </button>
+                  </div>
+                } @else {
+                  <input
+                    class="min-h-9 rounded-xl border border-[#E8D5BE] px-3 text-xs font-mono"
+                    [value]="forceMasterId()"
+                    (input)="forceMasterId.set($any($event.target).value)"
+                    [attr.placeholder]="'matchReview.masterId' | t"
+                  />
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      class="min-h-10 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                      (click)="accept(d.queueItem)"
+                    >
+                      <i class="pi pi-check text-xs"></i>
+                      {{ 'matchReview.acceptMatch' | t }}
+                    </button>
+                    <button
+                      type="button"
+                      class="min-h-10 flex-1 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                      (click)="reject(d.queueItem)"
+                    >
+                      <i class="pi pi-times text-xs"></i>
+                      {{ 'matchReview.rejectMatch' | t }}
+                    </button>
+                  </div>
                   <button
                     type="button"
-                    class="min-h-10 flex-1 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                    (click)="reject(d.queueItem)"
+                    class="min-h-9 rounded-xl border border-[#E8D5BE] text-xs font-bold text-[#8A735C] hover:text-[#181A1D] hover:bg-[#FBF8F4] transition-colors"
+                    (click)="forceMatch(d.queueItem)"
                   >
-                    <i class="pi pi-times text-xs"></i>
-                    {{ 'matchReview.rejectMatch' | t }}
+                    {{ 'matchReview.forceMatch' | t }}
                   </button>
-                </div>
-                <button
-                  type="button"
-                  class="min-h-9 rounded-xl border border-[#E8D5BE] text-xs font-bold text-[#8A735C] hover:text-[#181A1D] hover:bg-[#FBF8F4] transition-colors"
-                  (click)="forceMatch(d.queueItem)"
-                >
-                  {{ 'matchReview.forceMatch' | t }}
-                </button>
+                }
               </div>
             } @else {
               <p class="text-sm text-[#8A735C] py-8 text-center">{{ 'matchReview.empty' | t }}</p>
@@ -412,7 +599,15 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
           <div class="text-[11px] text-[#8A735C] mt-0.5 truncate">{{ card.englishName }}</div>
         }
         <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-[#8A735C]">
-          <span class="rounded bg-[#F8EEE2] px-1.5 py-0.5 font-bold text-[#C27938] text-[10px] sm:text-[11px]">{{ card.pharmacyName }}</span>
+          <span 
+            class="rounded px-1.5 py-0.5 font-bold text-[10px] sm:text-[11px]"
+            [class.bg-emerald-100]="card.pharmacyCode === 'master'"
+            [class.text-emerald-800]="card.pharmacyCode === 'master'"
+            [class.bg-[#F8EEE2]]="card.pharmacyCode !== 'master'"
+            [class.text-[#C27938]]="card.pharmacyCode !== 'master'"
+          >
+            {{ card.pharmacyCode === 'master' ? 'كتالوج المنصة الرئيسي' : card.pharmacyName }}
+          </span>
           @if (card.barcode || card.gtinNorm) {
             <span class="rounded bg-[#FBF8F4] px-1.5 py-0.5 border border-[#EDE0D0] font-mono text-[10px]">{{ card.gtinNorm || card.barcode }}</span>
           }
@@ -447,11 +642,19 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 })
 export class MatchReviewComponent implements OnInit {
   readonly isEmbedded = input<boolean>(false);
+  readonly initialMode = input<'auto_98_99' | 'review'>('auto_98_99');
+
   readonly locale = inject(LocaleService);
   private readonly i18n = inject(I18nService);
   private readonly repo = inject(MatchReviewRepository);
   private readonly notify = inject(NotificationService);
+  private readonly route = inject(ActivatedRoute, { optional: true });
+
   readonly pharmacies = PHARMACY_BRANDS;
+
+  readonly selectedMode = signal<'auto_98_99' | 'review'>('auto_98_99');
+  readonly autoMatchesCount = signal<number>(2312);
+  readonly reviewQueueCount = signal<number>(3712);
 
   readonly items = signal<MatchReviewQueueItem[]>([]);
   readonly queueDepth = signal(0);
@@ -481,7 +684,32 @@ export class MatchReviewComponent implements OnInit {
   readonly pageButtons = computed(() => this.buildPageButtons(this.page(), this.totalPages()));
 
   ngOnInit(): void {
+    const routeMode = this.route?.snapshot?.queryParamMap?.get('mode');
+    if (routeMode === 'review' || routeMode === 'auto_98_99') {
+      this.selectedMode.set(routeMode);
+    } else if (this.initialMode()) {
+      this.selectedMode.set(this.initialMode());
+    }
+
     this.reload();
+    this.fetchCounts();
+  }
+
+  switchMode(mode: 'auto_98_99' | 'review'): void {
+    if (this.selectedMode() === mode) return;
+    this.selectedMode.set(mode);
+    this.page.set(1);
+    this.selectedIds.set(new Set());
+    this.reload();
+  }
+
+  fetchCounts(): void {
+    this.repo.listQueue({ take: 1, mode: 'auto_98_99' }).subscribe({
+      next: (res) => this.autoMatchesCount.set(res.queueDepth)
+    });
+    this.repo.listQueue({ take: 1 }).subscribe({
+      next: (res) => this.reviewQueueCount.set(res.queueDepth)
+    });
   }
 
   onFilterChange(): void {
@@ -515,13 +743,19 @@ export class MatchReviewComponent implements OnInit {
         reason: this.reasonFilter() || null,
         search: this.searchFilter() || null,
         minScore: this.minScore() ? Number(this.minScore()) : null,
-        minAgeHours: this.minAgeHours() ? Number(this.minAgeHours()) : null
+        minAgeHours: this.minAgeHours() ? Number(this.minAgeHours()) : null,
+        mode: this.selectedMode()
       })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (page) => {
           this.items.set(page.items);
           this.queueDepth.set(page.queueDepth);
+          if (this.selectedMode() === 'auto_98_99') {
+            this.autoMatchesCount.set(page.queueDepth);
+          } else {
+            this.reviewQueueCount.set(page.queueDepth);
+          }
           this.totalPages.set(page.totalPages ?? 1);
           if (page.page) this.page.set(page.page);
           if (page.items[0]) {
@@ -582,6 +816,14 @@ export class MatchReviewComponent implements OnInit {
     });
   }
 
+  unlink(row: MatchReviewQueueItem): void {
+    if (!window.confirm(this.i18n.t('matchReview.confirmUnlink'))) return;
+    this.repo.reject(row.matchId, 'Unlinked by admin from catalog').subscribe({
+      next: (result) => this.afterAction(result),
+      error: () => this.notify.showError(this.i18n.t('matchReview.stale'))
+    });
+  }
+
   forceMatch(row: MatchReviewQueueItem): void {
     const masterId = this.forceMasterId().trim() || row.proposedMasterProductId;
     if (!masterId) {
@@ -607,6 +849,26 @@ export class MatchReviewComponent implements OnInit {
         this.notify.showSuccess(`${results.length - failed} ok / ${failed} failed`);
         this.selectedIds.set(new Set());
         this.reload();
+        this.fetchCounts();
+      },
+      error: () => this.notify.showError(this.i18n.t('matchReview.error'))
+    });
+  }
+
+  bulkUnlink(): void {
+    const ids = [...this.selectedIds()];
+    if (!ids.length) return;
+    if (!window.confirm(`${this.i18n.t('matchReview.confirmUnlink')} (${ids.length})`)) return;
+    const items = this.items()
+      .filter((row) => ids.includes(row.matchId))
+      .map((row) => ({ matchId: row.matchId, action: 'reject' as const }));
+    this.repo.bulk(items).subscribe({
+      next: (results) => {
+        const failed = results.filter((r) => !r.ok).length;
+        this.notify.showSuccess(`${results.length - failed} ok / ${failed} failed`);
+        this.selectedIds.set(new Set());
+        this.reload();
+        this.fetchCounts();
       },
       error: () => this.notify.showError(this.i18n.t('matchReview.error'))
     });
@@ -619,5 +881,6 @@ export class MatchReviewComponent implements OnInit {
     }
     this.notify.showSuccess(result.message);
     this.reload();
+    this.fetchCounts();
   }
 }

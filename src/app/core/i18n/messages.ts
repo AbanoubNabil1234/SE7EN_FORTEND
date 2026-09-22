@@ -111,7 +111,20 @@ export const messagesAr: MessageTree = {
     pageNext: 'التالي',
     pageOf: 'من',
     showing: 'عرض',
-    perPage: 'لكل صفحة'
+    perPage: 'لكل صفحة',
+    tabAutoMatches: 'المنتجات المربوطة بالموديل (98% - 99%)',
+    tabPendingReview: 'طابور المراجعة المعلق (< 98%)',
+    autoMatchesBadge: 'مربوط بالكتالوج آلياً',
+    linkedMaster: 'الماستر المربوط به في الكتالوج',
+    familyKey: 'مفتاح العائلة',
+    unlink: 'فصل وإلغاء الربط',
+    bulkUnlink: 'فصل وإلغاء ربط المحدد',
+    confirmUnlink: 'هل أنت متأكد من فصل هذا المنتج وإلغاء ربطه من الكتالوج؟',
+    reassignMaster: 'تغيير الماستر / نقل لعائلة أخرى',
+    reassign: 'نقل للماستر',
+    statLinkedCatalog: 'المربوط بالكتالوج',
+    statSelected: 'المحدد',
+    statFamilyMembers: 'أعضاء العائلة'
   },
   searchPharmacies: {
     badge: 'تطبيق العميل',
@@ -876,7 +889,20 @@ export const messagesEn: MessageTree = {
     pageNext: 'Next',
     pageOf: 'of',
     showing: 'Showing',
-    perPage: 'per page'
+    perPage: 'per page',
+    tabAutoMatches: 'Auto-Matched to Catalog (98% - 99%)',
+    tabPendingReview: 'Pending Review Queue (< 98%)',
+    autoMatchesBadge: 'Auto-Linked to Catalog',
+    linkedMaster: 'Linked Catalog Master',
+    familyKey: 'Family Key',
+    unlink: 'Unlink from Catalog',
+    bulkUnlink: 'Unlink Selected',
+    confirmUnlink: 'Are you sure you want to unlink this product from the catalog?',
+    reassignMaster: 'Reassign Master / Transfer Family',
+    reassign: 'Transfer to Master',
+    statLinkedCatalog: 'Linked in Catalog',
+    statSelected: 'Selected',
+    statFamilyMembers: 'Family Members'
   },
   searchPharmacies: {
     badge: 'Customer app',
