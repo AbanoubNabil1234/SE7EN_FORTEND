@@ -75,6 +75,7 @@ export interface MatchReviewQuery {
   minAgeHours?: number | null;
   pharmacyCode?: string | null;
   search?: string | null;
+  mode?: string | null;
 }
 
 export function distinctPharmacyCount(members: MatchReviewListingCard[]): number {

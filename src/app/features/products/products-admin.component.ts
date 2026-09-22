@@ -127,13 +127,13 @@ interface CategoryOption {
             <button
               type="button"
               (click)="openAiReviewModal()"
-              class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 via-[#C27938] to-violet-600 px-4 py-2 text-sm font-extrabold text-white shadow-md shadow-amber-500/20 hover:opacity-95 hover:shadow-lg transition-all cursor-pointer"
-              [title]="locale.isRtl() ? 'فتح نافذة مراجعة تطابق الذكاء الاصطناعي التفاعلية' : 'Open Interactive AI Match Review Modal'"
+              class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-700 to-amber-600 px-4 py-2 text-sm font-extrabold text-white shadow-md shadow-emerald-600/20 hover:opacity-95 hover:shadow-lg transition-all cursor-pointer"
+              [title]="locale.isRtl() ? 'فتح نافذة تدقيق ومراجعة تطابقات الذكاء الاصطناعي' : 'Open AI Match Review Modal'"
             >
               <i class="pi pi-sparkles text-sm animate-pulse"></i>
-              <span>{{ locale.isRtl() ? 'نافذة مراجعة AI السريعة' : 'AI Match Review Modal' }}</span>
+              <span>{{ locale.isRtl() ? 'مراجعة تطابقات AI (98%+)' : 'AI Match Review (98%+)' }}</span>
               <span class="rounded-full bg-white/25 px-2 py-0.5 text-xs font-black tabular-nums">
-                {{ modelReviewCount() > 0 ? (modelReviewCount() | number) : '3,712' }}
+                {{ autoCatalogMatchCount() > 0 ? (autoCatalogMatchCount() | number) : '2,312' }}
               </span>
             </button>
           </div>
@@ -703,7 +703,8 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly locale = inject(LocaleService);
 
   readonly activeTab = signal<'catalog' | 'model-review'>('catalog');
-  readonly modelReviewCount = signal<number>(2731);
+  readonly modelReviewCount = signal<number>(3712);
+  readonly autoCatalogMatchCount = signal<number>(2312);
 
   readonly isAiReviewModalOpen = signal<boolean>(false);
   readonly selectedAiMatchId = signal<string | null>(null);
@@ -758,6 +759,11 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
     this.matchReviews.listQueue({ take: 1 }).subscribe({
       next: (res) => this.modelReviewCount.set(res.queueDepth),
+      error: () => {}
+    });
+
+    this.matchReviews.listQueue({ take: 1, mode: 'auto_98_99' }).subscribe({
+      next: (res) => this.autoCatalogMatchCount.set(res.queueDepth),
       error: () => {}
     });
 
