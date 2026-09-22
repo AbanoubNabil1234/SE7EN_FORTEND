@@ -937,6 +937,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => this.unlinkingId.set(null)))
       .subscribe({
         next: () => {
+          this.removeOfferLocally(id);
           this.notifications.showSuccess(
             this.i18n.t('productsAdmin.unlinkedOk'),
             this.pharmacyLabel(offer)
@@ -950,6 +951,22 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
           );
         }
       });
+  }
+
+  private removeOfferLocally(pharmacyProductId: string): void {
+    this.families.update((current) =>
+      current.map((fam) => ({
+        ...fam,
+        packs: fam.packs.map((pack) => {
+          const remainingOffers = pack.offers.filter((o) => o.pharmacyProductId !== pharmacyProductId);
+          return {
+            ...pack,
+            offers: remainingOffers,
+            pharmacyCount: remainingOffers.length
+          };
+        })
+      }))
+    );
   }
 
   openQuickAdd(family: CatalogFamily): void {
