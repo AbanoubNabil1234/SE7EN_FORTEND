@@ -45,12 +45,11 @@ const PAGE_SIZE = 24;
   template: `
     <section class="w-full space-y-6 px-4 py-4 sm:px-6 sm:py-6" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       <!-- Executive Header Banner -->
-      <div class="relative overflow-hidden rounded-3xl border border-[#E8D5BE] bg-gradient-to-br from-white via-[#FBF8F4] to-[#F8EEE2] p-6 shadow-sm dark:border-neutral-800 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 sm:p-8">
-        <div class="absolute -end-16 -top-16 size-64 rounded-full bg-[#C27938]/10 blur-3xl"></div>
+      <div class="relative overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-[#14171C] sm:p-8">
         <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div class="space-y-2">
             <div class="flex flex-wrap items-center gap-2.5">
-              <span class="inline-flex items-center gap-2 rounded-full bg-[#C27938]/15 px-3 py-1 text-xs font-bold text-[#C27938] dark:bg-[#C27938]/20">
+              <span class="inline-flex items-center gap-2 rounded-full bg-[#C27938]/10 px-3 py-1 text-xs font-bold text-[#C27938] dark:bg-[#C27938]/20">
                 <span class="relative flex size-2">
                   <span class="absolute inline-flex size-full animate-ping rounded-full bg-[#C27938] opacity-75"></span>
                   <span class="relative inline-flex size-2 rounded-full bg-[#C27938]"></span>
@@ -66,10 +65,10 @@ const PAGE_SIZE = 24;
               }
             </div>
 
-            <h1 class="text-balance text-3xl font-black tracking-tight text-[#181A1D] dark:text-white sm:text-4xl">
+            <h1 class="text-balance text-3xl font-black text-[#181A1D] dark:text-white sm:text-4xl">
               {{ 'dashboard.title' | t }}
             </h1>
-            <p class="max-w-2xl text-sm font-medium text-[#8A735C] dark:text-neutral-400">
+            <p class="max-w-2xl text-pretty text-sm font-medium text-[#8A735C] dark:text-neutral-400">
               {{ 'dashboard.subtitle' | t }}
             </p>
           </div>
@@ -78,7 +77,8 @@ const PAGE_SIZE = 24;
           <div class="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[#E8D5BE] bg-white px-4 text-xs font-bold text-[#181A1D] shadow-sm hover:border-[#C27938] hover:bg-[#FBF8F4] active:scale-95 disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-800 dark:text-white"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-bold text-[#181A1D] shadow-xs hover:border-[#C27938] hover:bg-[#FBF8F4] active:scale-95 disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-800 dark:text-white"
+              aria-label="تحديث الإحصائيات الفوري"
               [disabled]="snapshotLoading()"
               (click)="loadStats(true)"
             >
@@ -86,13 +86,13 @@ const PAGE_SIZE = 24;
               <span>{{ 'dashboard.refreshStats' | t }}</span>
             </button>
 
-            <div class="inline-flex rounded-2xl border border-[#E8D5BE] bg-[#FBF8F4] p-1.5 dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="inline-flex rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] p-1.5 dark:border-neutral-800 dark:bg-neutral-900">
               <button
                 type="button"
-                class="rounded-xl px-4 py-2 text-xs font-extrabold transition-all"
+                class="rounded-lg px-4 py-2 text-xs font-extrabold transition-opacity duration-150"
                 [ngClass]="
                   activeTab() === 'analytics'
-                    ? 'bg-[#181A1D] text-white shadow-md dark:bg-white dark:text-black'
+                    ? 'bg-[#181A1D] text-white shadow-xs dark:bg-white dark:text-black'
                     : 'text-[#8A735C] hover:text-[#181A1D] dark:text-neutral-400 dark:hover:text-white'
                 "
                 (click)="activeTab.set('analytics')"
@@ -101,10 +101,10 @@ const PAGE_SIZE = 24;
               </button>
               <button
                 type="button"
-                class="rounded-xl px-4 py-2 text-xs font-extrabold transition-all"
+                class="rounded-lg px-4 py-2 text-xs font-extrabold transition-opacity duration-150"
                 [ngClass]="
                   activeTab() === 'catalog'
-                    ? 'bg-[#181A1D] text-white shadow-md dark:bg-white dark:text-black'
+                    ? 'bg-[#181A1D] text-white shadow-xs dark:bg-white dark:text-black'
                     : 'text-[#8A735C] hover:text-[#181A1D] dark:text-neutral-400 dark:hover:text-white'
                 "
                 (click)="openCatalogTab()"
