@@ -7,12 +7,15 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
   selector: 'app-matching-breakdown-chart',
   standalone: true,
   imports: [CommonModule, DecimalPipe, RouterModule],
+  host: {
+    class: 'block w-full'
+  },
   template: `
-    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 space-y-6">
       <!-- Header -->
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-neutral-800">
-        <div>
-          <div class="flex items-center gap-2">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5 dark:border-neutral-800">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2.5">
             <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
               محرك المطابقة والذكاء الاصطناعي
             </h3>
@@ -27,7 +30,7 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
 
         <a
           routerLink="/matches"
-          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+          class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 self-start sm:self-auto"
         >
           <i class="pi pi-check-square text-xs" aria-hidden="true"></i>
           <span>فتح طابور المراجعة</span>
@@ -35,8 +38,8 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
       </div>
 
       <!-- Segmented Bar & Micro Legend -->
-      <div class="space-y-2.5 pt-4">
-        <div class="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
+      <div class="space-y-3.5">
+        <div class="flex h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
           <!-- Exact Barcode Confirmed -->
           <div
             class="h-full bg-emerald-500"
@@ -63,38 +66,38 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
           ></div>
         </div>
 
-        <!-- Legend Items (No RTL parenthesis conflicts) -->
-        <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-medium text-slate-500 dark:text-neutral-400">
-          <div class="flex items-center gap-1.5">
-            <span class="size-2 rounded-full bg-emerald-500"></span>
+        <!-- Legend Items -->
+        <div class="flex flex-wrap items-center justify-between gap-4 text-xs font-medium text-slate-500 dark:text-neutral-400 pt-1">
+          <div class="flex items-center gap-2">
+            <span class="size-2.5 rounded-full bg-emerald-500"></span>
             <span class="text-slate-700 dark:text-neutral-200 font-bold">باركود مؤكد</span>
-            <span class="tabular-nums text-slate-400">{{ exactPercent() | number: '1.0-1' }}%</span>
+            <span class="tabular-nums text-slate-400">({{ exactPercent() | number: '1.0-1' }}%)</span>
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <span class="size-2 rounded-full bg-teal-500"></span>
+          <div class="flex items-center gap-2">
+            <span class="size-2.5 rounded-full bg-teal-500"></span>
             <span class="text-slate-700 dark:text-neutral-200 font-bold">ذكاء آلي (Auto)</span>
-            <span class="tabular-nums text-slate-400">{{ aiAutoPercent() | number: '1.0-1' }}%</span>
+            <span class="tabular-nums text-slate-400">({{ aiAutoPercent() | number: '1.0-1' }}%)</span>
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <span class="size-2 rounded-full bg-amber-500"></span>
+          <div class="flex items-center gap-2">
+            <span class="size-2.5 rounded-full bg-amber-500"></span>
             <span class="text-slate-700 dark:text-neutral-200 font-bold">طابور المراجعة</span>
-            <span class="tabular-nums text-slate-400">{{ reviewPercent() | number: '1.0-1' }}%</span>
+            <span class="tabular-nums text-slate-400">({{ reviewPercent() | number: '1.0-1' }}%)</span>
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <span class="size-2 rounded-full bg-slate-400"></span>
+          <div class="flex items-center gap-2">
+            <span class="size-2.5 rounded-full bg-slate-400"></span>
             <span class="text-slate-700 dark:text-neutral-200 font-bold">كتالوج مفرد</span>
-            <span class="tabular-nums text-slate-400">{{ singlePercent() | number: '1.0-1' }}%</span>
+            <span class="tabular-nums text-slate-400">({{ singlePercent() | number: '1.0-1' }}%)</span>
           </div>
         </div>
       </div>
 
-      <!-- 4 Compact Detail Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
+      <!-- 4 Balanced Detail Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Exact Barcode Confirmed -->
-        <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/40">
+        <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-2 dark:border-neutral-800 dark:bg-neutral-800/40">
           <div class="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-400">
             <span>باركود قطعي (GTIN)</span>
             <i class="pi pi-check-circle text-xs" aria-hidden="true"></i>
@@ -102,13 +105,13 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
           <div class="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
             {{ (data()?.exactBarcodeConfirmed ?? 0) | number }}
           </div>
-          <div class="text-[11px] font-medium text-slate-500">
+          <div class="text-xs font-medium text-slate-500">
             مطابقة قطعية 100% بدون شك
           </div>
         </div>
 
         <!-- Card 2: AI Model Auto -->
-        <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/40">
+        <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-2 dark:border-neutral-800 dark:bg-neutral-800/40">
           <div class="flex items-center justify-between text-xs font-bold text-teal-700 dark:text-teal-400">
             <span>ذكاء اصطناعي (Auto V4)</span>
             <i class="pi pi-bolt text-xs" aria-hidden="true"></i>
@@ -116,13 +119,13 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
           <div class="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
             {{ (data()?.aiModelAutoMatched ?? 0) | number }}
           </div>
-          <div class="text-[11px] font-medium text-slate-500">
+          <div class="text-xs font-medium text-slate-500">
             تطابق فائق الدقة معتمد تلقائياً
           </div>
         </div>
 
         <!-- Card 3: Review Queue -->
-        <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/40">
+        <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-2 dark:border-neutral-800 dark:bg-neutral-800/40">
           <div class="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400">
             <span>طابور المراجعة</span>
             <i class="pi pi-clock text-xs" aria-hidden="true"></i>
@@ -130,21 +133,21 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
           <div class="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
             {{ reviewTotal() | number }}
           </div>
-          <div class="flex items-center gap-1 text-[10px] font-bold tabular-nums">
-            <span class="rounded bg-emerald-100/70 px-1 py-0.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+          <div class="flex items-center gap-1.5 text-[10px] font-bold tabular-nums">
+            <span class="rounded bg-emerald-100/80 px-1.5 py-0.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
               {{ (data()?.reviewPendingHighConf ?? 0) | number }} عالي
             </span>
-            <span class="rounded bg-amber-100/70 px-1 py-0.5 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+            <span class="rounded bg-amber-100/80 px-1.5 py-0.5 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
               {{ (data()?.reviewPendingMidConf ?? 0) | number }} متوسط
             </span>
-            <span class="rounded bg-rose-100/70 px-1 py-0.5 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+            <span class="rounded bg-rose-100/80 px-1.5 py-0.5 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
               {{ (data()?.reviewPendingLowConf ?? 0) | number }} تدقيق
             </span>
           </div>
         </div>
 
         <!-- Card 4: Solo Catalog -->
-        <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/40">
+        <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-2 dark:border-neutral-800 dark:bg-neutral-800/40">
           <div class="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-neutral-400">
             <span>كتالوج مفرد</span>
             <i class="pi pi-box text-xs" aria-hidden="true"></i>
@@ -152,7 +155,7 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
           <div class="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
             {{ (data()?.singleCatalogProducts ?? 0) | number }}
           </div>
-          <div class="text-[11px] font-medium text-slate-500">
+          <div class="text-xs font-medium text-slate-500">
             منتجات مسجلة بدون منافس حالياً
           </div>
         </div>

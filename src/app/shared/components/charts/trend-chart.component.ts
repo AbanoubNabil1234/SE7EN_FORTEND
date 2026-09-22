@@ -6,10 +6,13 @@ import { DashboardTrendPoint } from '../../../core/domain/models/dashboard.model
   selector: 'app-trend-chart',
   standalone: true,
   imports: [CommonModule, DecimalPipe],
+  host: {
+    class: 'block w-full'
+  },
   template: `
-    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4 dark:border-neutral-800">
-        <div>
+    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-5 dark:border-neutral-800">
+        <div class="space-y-1">
           <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
             {{ title() }}
           </h3>
@@ -111,7 +114,7 @@ import { DashboardTrendPoint } from '../../../core/domain/models/dashboard.model
         <!-- Active Tooltip -->
         @if (activePoint(); as pt) {
           <div
-            class="pointer-events-none absolute top-2 start-1/2 -translate-x-1/2 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-xs shadow-md backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/95"
+            class="pointer-events-none absolute top-2 start-1/2 -translate-x-1/2 rounded-xl border border-slate-200 bg-white/95 px-3.5 py-2 text-xs shadow-md backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/95"
           >
             <div class="flex items-center gap-2 border-b border-slate-100 pb-1 font-bold text-slate-800 dark:border-neutral-700 dark:text-white">
               <span>{{ pt.dateLabel }}</span>

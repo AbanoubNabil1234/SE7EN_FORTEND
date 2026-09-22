@@ -16,9 +16,12 @@ const COLORS = [
   selector: 'app-category-donut-chart',
   standalone: true,
   imports: [CommonModule, DecimalPipe],
+  host: {
+    class: 'block w-full'
+  },
   template: `
-    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
-      <div class="border-b border-slate-100 pb-4 dark:border-neutral-800">
+    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+      <div class="border-b border-slate-100 pb-5 dark:border-neutral-800">
         <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
           توزيع الفئات الكبرى
         </h3>
@@ -27,7 +30,7 @@ const COLORS = [
         </p>
       </div>
 
-      <div class="flex flex-col items-center gap-6 pt-4 sm:flex-row sm:items-center">
+      <div class="flex flex-col items-center gap-6 pt-2 sm:flex-row sm:items-center">
         <!-- SVG Donut Chart -->
         <div class="relative flex size-40 shrink-0 items-center justify-center">
           @if (categories().length === 0) {
@@ -73,10 +76,10 @@ const COLORS = [
         </div>
 
         <!-- Legend List -->
-        <div class="w-full space-y-1.5">
+        <div class="w-full space-y-2">
           @for (item of computedItems(); track item.index) {
             <div
-              class="flex items-center justify-between gap-2 rounded-lg p-1.5 transition-colors cursor-pointer"
+              class="flex items-center justify-between gap-2 rounded-lg p-2 transition-colors cursor-pointer"
               [ngClass]="hoveredIndex() === item.index ? 'bg-slate-100 dark:bg-neutral-800' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/40'"
               (mouseenter)="hoveredIndex.set(item.index)"
               (mouseleave)="hoveredIndex.set(null)"

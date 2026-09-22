@@ -43,9 +43,9 @@ const PAGE_SIZE = 24;
     MarketSpreadWidgetComponent
   ],
   template: `
-    <section class="w-full space-y-5 px-4 py-4 sm:px-6 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
+    <section class="w-full space-y-6 px-4 py-4 sm:px-6 sm:py-6" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       <!-- Executive Header Toolbar -->
-      <div class="relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="relative rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div class="space-y-1.5">
             <div class="flex flex-wrap items-center gap-2">
@@ -117,14 +117,14 @@ const PAGE_SIZE = 24;
       @if (activeTab() === 'analytics') {
         @if (snapshotLoading() && !snapshot()) {
           <!-- Dashboard Skeletons -->
-          <div class="space-y-5 animate-pulse">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="space-y-6 animate-pulse">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               @for (kpi of [1, 2, 3, 4]; track kpi) {
                 <div class="h-28 rounded-2xl border border-slate-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"></div>
               }
             </div>
             <div class="h-32 rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"></div>
-            <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div class="h-72 rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"></div>
               <div class="h-72 rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"></div>
             </div>
@@ -135,7 +135,7 @@ const PAGE_SIZE = 24;
           </div>
         } @else if (snapshot(); as snap) {
           <!-- Core Catalog KPI Cards Grid -->
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <app-kpi-card
               [title]="'dashboard.totalProducts' | t"
               [value]="snap.totalPharmacyProducts"
@@ -187,7 +187,7 @@ const PAGE_SIZE = 24;
           <app-market-spread-widget [data]="snap.priceSpread" />
 
           <!-- Main Pharmacy & Market Overlap Depth Grid -->
-          <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <app-pharmacy-bar-chart
               [pharmacies]="snap.pharmacies"
             />
@@ -203,7 +203,7 @@ const PAGE_SIZE = 24;
           />
 
           <!-- Main Interactive Charts Grid: Trends & Categories -->
-          <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div class="lg:col-span-2">
               <app-trend-chart
                 [data]="snap.activityTrends"
@@ -219,37 +219,37 @@ const PAGE_SIZE = 24;
           </div>
 
           <!-- Platform Operations & Marketing Stats Bar -->
-          <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 divide-y sm:divide-y-0 sm:divide-x sm:divide-x-reverse divide-slate-100 dark:divide-neutral-800">
-              <div class="sm:px-3 pt-1 sm:pt-0 space-y-0.5">
-                <span class="text-[11px] font-bold text-slate-400">المستخدمون المسجلون</span>
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 divide-y sm:divide-y-0 sm:divide-x sm:divide-x-reverse divide-slate-100 dark:divide-neutral-800">
+              <div class="sm:px-4 pt-2 sm:pt-0 space-y-1">
+                <span class="text-xs font-bold text-slate-400">المستخدمون المسجلون</span>
                 <div class="flex items-baseline gap-1.5">
                   <span class="text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ snap.totalUsers | number }}</span>
-                  <span class="text-[10px] text-emerald-600 font-bold">({{ snap.activeUsers }} نشط)</span>
+                  <span class="text-[11px] text-emerald-600 font-bold">({{ snap.activeUsers }} نشط)</span>
                 </div>
               </div>
 
-              <div class="sm:px-3 pt-1 sm:pt-0 space-y-0.5">
-                <span class="text-[11px] font-bold text-slate-400">البانرات الإعلانية</span>
+              <div class="sm:px-4 pt-2 sm:pt-0 space-y-1">
+                <span class="text-xs font-bold text-slate-400">البانرات الإعلانية</span>
                 <div class="flex items-baseline gap-1.5">
                   <span class="text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ snap.totalBillboards | number }}</span>
-                  <span class="text-[10px] text-slate-500 font-semibold">{{ snap.activeBillboards }} نشط</span>
+                  <span class="text-[11px] text-slate-500 font-semibold">{{ snap.activeBillboards }} نشط</span>
                 </div>
               </div>
 
-              <div class="sm:px-3 pt-1 sm:pt-0 space-y-0.5">
-                <span class="text-[11px] font-bold text-slate-400">المجلات والعروض</span>
+              <div class="sm:px-4 pt-2 sm:pt-0 space-y-1">
+                <span class="text-xs font-bold text-slate-400">المجلات والعروض</span>
                 <div class="flex items-baseline gap-1.5">
                   <span class="text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ snap.totalMagazines | number }}</span>
-                  <span class="text-[10px] text-slate-500 font-semibold">{{ snap.activeMagazines }} مفعل</span>
+                  <span class="text-[11px] text-slate-500 font-semibold">{{ snap.activeMagazines }} مفعل</span>
                 </div>
               </div>
 
-              <div class="sm:px-3 pt-1 sm:pt-0 space-y-0.5">
-                <span class="text-[11px] font-bold text-slate-400">الكوبونات النشطة</span>
+              <div class="sm:px-4 pt-2 sm:pt-0 space-y-1">
+                <span class="text-xs font-bold text-slate-400">الكوبونات النشطة</span>
                 <div class="flex items-baseline gap-1.5">
                   <span class="text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ snap.activeCoupons | number }}</span>
-                  <span class="text-[10px] text-slate-500 font-semibold">{{ snap.totalCouponRedemptions }} استخدام</span>
+                  <span class="text-[11px] text-slate-500 font-semibold">{{ snap.totalCouponRedemptions }} استخدام</span>
                 </div>
               </div>
             </div>
@@ -266,8 +266,8 @@ const PAGE_SIZE = 24;
           }
 
           <!-- Real-Time System Alert & Health Bar -->
-          <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div class="flex items-center gap-3">
                 <div class="flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950">
                   <i class="pi pi-shield text-base" aria-hidden="true"></i>

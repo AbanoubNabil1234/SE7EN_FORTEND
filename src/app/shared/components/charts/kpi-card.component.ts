@@ -5,9 +5,12 @@ import { CommonModule, DecimalPipe } from '@angular/common';
   selector: 'app-kpi-card',
   standalone: true,
   imports: [CommonModule, DecimalPipe],
+  host: {
+    class: 'block h-full w-full'
+  },
   template: `
     <div
-      class="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs transition-shadow hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+      class="group relative flex h-full flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
     >
       <!-- Top Row: Title & Icon -->
       <div class="flex items-center justify-between gap-2">
@@ -24,7 +27,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
       </div>
 
       <!-- Center: Big Clean Number -->
-      <div class="my-2 flex items-baseline gap-1.5">
+      <div class="my-3 flex items-baseline gap-1.5">
         <span class="text-2xl sm:text-3xl font-black tabular-nums text-slate-900 dark:text-white">
           @if (isPercent()) {
             {{ value() | number: '1.0-1' }}%
@@ -40,13 +43,13 @@ import { CommonModule, DecimalPipe } from '@angular/common';
       </div>
 
       <!-- Bottom Row: Subtitle & Status Badge -->
-      <div class="flex items-center justify-between gap-2 text-xs pt-1 border-t border-slate-50 dark:border-neutral-800/60">
+      <div class="flex items-center justify-between gap-2 text-xs pt-2 border-t border-slate-50 dark:border-neutral-800/60">
         <span class="truncate text-[11px] font-medium text-slate-400" [title]="subtitle()">
           {{ subtitle() }}
         </span>
         @if (badge()) {
           <span
-            class="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
+            class="shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold tabular-nums"
             [ngClass]="badgeClass()"
           >
             {{ badge() }}

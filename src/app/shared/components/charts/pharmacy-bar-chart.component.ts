@@ -6,10 +6,13 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
   selector: 'app-pharmacy-bar-chart',
   standalone: true,
   imports: [CommonModule, DecimalPipe],
+  host: {
+    class: 'block w-full'
+  },
   template: `
-    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
       <!-- Header -->
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-neutral-800">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5 dark:border-neutral-800">
         <div>
           <div class="flex items-center gap-2">
             <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
@@ -45,12 +48,12 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
           </div>
         } @else {
           @for (pharmacy of computedItems(); track pharmacy.pharmacyId) {
-            <div class="py-3 px-2 transition-colors hover:bg-slate-50/60 dark:hover:bg-neutral-800/40 rounded-xl">
+            <div class="py-3.5 px-2 transition-colors hover:bg-slate-50/60 dark:hover:bg-neutral-800/40 rounded-xl">
               <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-3">
                 <!-- Col 1: Pharmacy Name & Scraped Count (5 cols) -->
                 <div class="md:col-span-5 flex items-center gap-2.5 min-w-0">
                   <span
-                    class="size-2 rounded-full shrink-0"
+                    class="size-2.5 rounded-full shrink-0"
                     [ngClass]="pharmacy.isEnabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-neutral-600'"
                     [title]="pharmacy.isEnabled ? 'نشطة ومفعلة' : 'معطلة'"
                   ></span>
@@ -88,7 +91,7 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
                 </div>
 
                 <!-- Col 3: True Cross Match & Slim Progress Meter (5 cols) -->
-                <div class="md:col-span-5 space-y-1">
+                <div class="md:col-span-5 space-y-1.5">
                   <div class="flex items-center justify-between text-xs">
                     <span class="text-[11px] font-extrabold text-slate-700 dark:text-neutral-300">
                       {{ pharmacy.trueCrossMatchRate | number: '1.1-1' }}% مطابقة
@@ -98,7 +101,7 @@ import { PharmacyOpsRow } from '../../../core/domain/models/dashboard.model';
                     </span>
                   </div>
 
-                  <!-- Slim 4px Dual-Progress Bar -->
+                  <!-- Slim 5px Dual-Progress Bar -->
                   <div class="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
                     <div
                       class="absolute start-0 top-0 h-full rounded-full bg-slate-300 dark:bg-neutral-700"

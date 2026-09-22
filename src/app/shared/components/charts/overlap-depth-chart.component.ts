@@ -6,10 +6,13 @@ import { MultiPharmacyDepthPoint } from '../../../core/domain/models/dashboard.m
   selector: 'app-overlap-depth-chart',
   standalone: true,
   imports: [CommonModule, DecimalPipe],
+  host: {
+    class: 'block w-full'
+  },
   template: `
-    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
       <!-- Header -->
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-neutral-800">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5 dark:border-neutral-800">
         <div>
           <div class="flex items-center gap-2">
             <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
@@ -34,10 +37,10 @@ import { MultiPharmacyDepthPoint } from '../../../core/domain/models/dashboard.m
       </div>
 
       <!-- Clean Distribution Rows -->
-      <div class="space-y-3 pt-3">
+      <div class="space-y-3 pt-1">
         @for (item of computedItems(); track item.pharmacyCount) {
-          <div class="group rounded-xl p-2 transition-colors hover:bg-slate-50/70 dark:hover:bg-neutral-800/40">
-            <div class="flex items-center justify-between gap-3 text-xs mb-1.5">
+          <div class="group rounded-xl p-2.5 transition-colors hover:bg-slate-50/70 dark:hover:bg-neutral-800/40">
+            <div class="flex items-center justify-between gap-3 text-xs mb-2">
               <!-- Label (Right in RTL) -->
               <div class="flex items-center gap-2 min-w-0">
                 <span
