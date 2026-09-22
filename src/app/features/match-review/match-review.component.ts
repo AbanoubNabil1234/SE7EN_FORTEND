@@ -14,6 +14,7 @@ import {
 import { PHARMACY_BRANDS } from '../../core/domain/pharmacy-brands';
 import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
@@ -648,6 +649,7 @@ export class MatchReviewComponent implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly repo = inject(MatchReviewRepository);
   private readonly notify = inject(NotificationService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly route = inject(ActivatedRoute, { optional: true });
 
   readonly pharmacies = PHARMACY_BRANDS;
@@ -796,41 +798,65 @@ export class MatchReviewComponent implements OnInit {
     this.selectedIds.set(next);
   }
 
-  accept(row: MatchReviewQueueItem): void {
+  async accept(row: MatchReviewQueueItem): Promise<void> {
     if (!canAccept(row) && !row.proposedMasterProductId) {
       this.notify.showError(this.i18n.t('matchReview.needsMaster'));
       return;
     }
-    if (!window.confirm(this.i18n.t('matchReview.confirmAccept'))) return;
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('matchReview.accept'),
+      message: this.i18n.t('matchReview.confirmAccept'),
+      type: 'info',
+      confirmText: this.i18n.t('matchReview.accept'),
+    });
+    if (!confirmed) return;
     this.repo.accept(row.matchId, row.proposedMasterProductId).subscribe({
       next: (result) => this.afterAction(result),
       error: () => this.notify.showError(this.i18n.t('matchReview.stale'))
     });
   }
 
-  reject(row: MatchReviewQueueItem): void {
-    if (!window.confirm(this.i18n.t('matchReview.confirmReject'))) return;
+  async reject(row: MatchReviewQueueItem): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('matchReview.reject'),
+      message: this.i18n.t('matchReview.confirmReject'),
+      type: 'danger',
+      confirmText: this.i18n.t('matchReview.reject'),
+    });
+    if (!confirmed) return;
     this.repo.reject(row.matchId).subscribe({
       next: (result) => this.afterAction(result),
       error: () => this.notify.showError(this.i18n.t('matchReview.stale'))
     });
   }
 
-  unlink(row: MatchReviewQueueItem): void {
-    if (!window.confirm(this.i18n.t('matchReview.confirmUnlink'))) return;
+  async unlink(row: MatchReviewQueueItem): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('matchReview.unlink'),
+      message: this.i18n.t('matchReview.confirmUnlink'),
+      type: 'danger',
+      confirmText: this.i18n.t('matchReview.unlink'),
+    });
+    if (!confirmed) return;
     this.repo.reject(row.matchId, 'Unlinked by admin from catalog').subscribe({
       next: (result) => this.afterAction(result),
       error: () => this.notify.showError(this.i18n.t('matchReview.stale'))
     });
   }
 
-  forceMatch(row: MatchReviewQueueItem): void {
+  async forceMatch(row: MatchReviewQueueItem): Promise<void> {
     const masterId = this.forceMasterId().trim() || row.proposedMasterProductId;
     if (!masterId) {
       this.notify.showError(this.i18n.t('matchReview.needsMaster'));
       return;
     }
-    if (!window.confirm(this.i18n.t('matchReview.confirmForce'))) return;
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('matchReview.forceMatch'),
+      message: this.i18n.t('matchReview.confirmForce'),
+      type: 'warning',
+      confirmText: this.i18n.t('matchReview.forceMatch'),
+    });
+    if (!confirmed) return;
     this.repo.forceMatch(row.matchId, masterId).subscribe({
       next: (result) => this.afterAction(result),
       error: () => this.notify.showError(this.i18n.t('matchReview.stale'))
@@ -855,10 +881,16 @@ export class MatchReviewComponent implements OnInit {
     });
   }
 
-  bulkUnlink(): void {
+  async bulkUnlink(): Promise<void> {
     const ids = [...this.selectedIds()];
     if (!ids.length) return;
-    if (!window.confirm(`${this.i18n.t('matchReview.confirmUnlink')} (${ids.length})`)) return;
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('matchReview.unlink'),
+      message: `${this.i18n.t('matchReview.confirmUnlink')} (${ids.length})`,
+      type: 'danger',
+      confirmText: this.i18n.t('matchReview.unlink'),
+    });
+    if (!confirmed) return;
     const items = this.items()
       .filter((row) => ids.includes(row.matchId))
       .map((row) => ({ matchId: row.matchId, action: 'reject' as const }));

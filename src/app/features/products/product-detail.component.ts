@@ -12,6 +12,7 @@ import {
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import {
   displayPackSize as formatPackSize,
@@ -436,6 +437,7 @@ export class ProductDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   readonly locale = inject(LocaleService);
 
   readonly family = signal<CatalogFamily | null>(null);
@@ -571,10 +573,15 @@ export class ProductDetailComponent implements OnInit {
       });
   }
 
-  unlinkOffer(offer: CatalogOffer): void {
+  async unlinkOffer(offer: CatalogOffer): Promise<void> {
     const id = offer.pharmacyProductId;
     if (!id) return;
-    const confirmed = window.confirm(this.i18n.t('productDetail.unlinkConfirm'));
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('productDetail.unlink'),
+      message: this.i18n.t('productDetail.unlinkConfirm'),
+      type: 'danger',
+      confirmText: this.i18n.t('productDetail.unlink'),
+    });
     if (!confirmed) return;
 
     this.unlinkingId.set(id);

@@ -34,6 +34,7 @@ import {
 import { I18nService } from '../../core/i18n/i18n.service';
 import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
 import { MatchReviewComponent } from '../match-review/match-review.component';
 import { MatchReviewRepository } from '../../core/domain/repositories/match-review.repository';
@@ -686,6 +687,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   readonly locale = inject(LocaleService);
 
   readonly activeTab = signal<'catalog' | 'model-review'>('catalog');
@@ -918,10 +920,15 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       });
   }
 
-  unlinkOffer(offer: CatalogOffer): void {
+  async unlinkOffer(offer: CatalogOffer): Promise<void> {
     const id = offer.pharmacyProductId;
     if (!id) return;
-    const confirmed = window.confirm(this.i18n.t('productsAdmin.unlinkConfirm'));
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('productsAdmin.unlink'),
+      message: this.i18n.t('productsAdmin.unlinkConfirm'),
+      type: 'danger',
+      confirmText: this.i18n.t('productsAdmin.unlink'),
+    });
     if (!confirmed) return;
 
     this.unlinkingId.set(id);

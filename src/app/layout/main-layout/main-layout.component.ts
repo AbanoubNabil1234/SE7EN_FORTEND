@@ -12,6 +12,8 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { AuthRepository } from '../../core/domain/repositories/auth.repository';
 import { User } from '../../core/domain/models/user.model';
 
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+
 const ROUTE_KEYS: Record<string, { eyebrow: string; title: string }> = {
   dashboard: { eyebrow: 'page.dashboardEyebrow', title: 'page.dashboardTitle' },
   categories: { eyebrow: 'page.categoriesEyebrow', title: 'page.categoriesTitle' },
@@ -30,7 +32,7 @@ const ROUTE_KEYS: Record<string, { eyebrow: string; title: string }> = {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, SidebarComponent, TranslatePipe],
+  imports: [CommonModule, RouterOutlet, RouterLink, SidebarComponent, TranslatePipe, ConfirmDialogComponent],
   template: `
     <div
       class="h-dvh bg-[#FAF7F2] p-3 text-[#181A1D] sm:p-4"
