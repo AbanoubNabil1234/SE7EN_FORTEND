@@ -9,6 +9,7 @@ import {
   distinctPharmacyCount,
   MatchReviewActionResult,
   MatchReviewDetail,
+  MatchReviewListingCard,
   MatchReviewQueueItem
 } from '../../core/domain/models/match-review.model';
 import { PHARMACY_BRANDS } from '../../core/domain/pharmacy-brands';
@@ -465,16 +466,16 @@ import { ProxyImgPipe } from '../../shared/pipes/proxy-img.pipe';
                 </div>
 
                 <!-- Group Members -->
-                @if (d.groupMembers.length > 0) {
+                @if (deduplicatedGroup().length > 0) {
                   <div>
                     <div class="flex items-center justify-between">
                       <h2 class="text-[11px] font-bold text-[#A68B6D] uppercase tracking-wider">
-                        {{ 'matchReview.group' | t }} ({{ d.groupMembers.length }})
+                        {{ 'matchReview.group' | t }} ({{ deduplicatedGroup().length }})
                       </h2>
                       <span class="text-[10px] font-bold text-[#C27938]">{{ groupCount() }} صيدليات</span>
                     </div>
                     <div class="mt-1 space-y-1.5 max-h-36 overflow-y-auto">
-                      @for (member of d.groupMembers; track member.pharmacyProductId) {
+                      @for (member of deduplicatedGroup(); track member.pharmacyProductId) {
                         <div
                           class="rounded-xl p-2 text-xs border flex items-center justify-between gap-2"
                           [class.bg-emerald-50/50]="member.pharmacyProductId === d.listing.pharmacyProductId"
@@ -498,6 +499,18 @@ import { ProxyImgPipe } from '../../shared/pipes/proxy-img.pipe';
                           }
                         </div>
                       }
+                    </div>
+                  </div>
+                }
+
+                @if (hasPharmacyConflict()) {
+                  <div class="rounded-xl border border-amber-300 bg-amber-50/90 p-2.5 text-xs text-amber-900 flex items-start gap-2 shadow-2xs">
+                    <i class="pi pi-exclamation-triangle text-amber-600 mt-0.5 shrink-0 text-sm"></i>
+                    <div>
+                      <div class="font-bold">تعارض صيدلية (Pharmacy Conflict)</div>
+                      <div class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                        صيدلية <strong>{{ d.listing.pharmacyName }}</strong> تمتلك عرضاً بالفعل في هذه المجموعة. لا يمكن تكرار الصيدلية في نفس العائلة.
+                      </div>
                     </div>
                   </div>
                 }
@@ -542,7 +555,9 @@ import { ProxyImgPipe } from '../../shared/pipes/proxy-img.pipe';
                   <div class="flex gap-2">
                     <button
                       type="button"
-                      class="min-h-10 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                      class="min-h-10 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      [disabled]="hasPharmacyConflict()"
+                      [title]="hasPharmacyConflict() ? 'لا يمكن قبول المطابقة - الصيدلية موجودة بالفعل في المجموعة' : ''"
                       (click)="accept(d.queueItem)"
                     >
                       <i class="pi pi-check text-xs"></i>
@@ -678,6 +693,29 @@ export class MatchReviewComponent implements OnInit {
   readonly selectedIds = signal(new Set<string>());
 
   readonly groupCount = computed(() => distinctPharmacyCount(this.detail()?.groupMembers ?? []));
+  readonly deduplicatedGroup = computed(() => {
+    const members = this.detail()?.groupMembers ?? [];
+    const seen = new Set<string>();
+    const res: MatchReviewListingCard[] = [];
+    for (const m of members) {
+      const code = (m.pharmacyCode || '').toLowerCase().trim();
+      if (!seen.has(code)) {
+        seen.add(code);
+        res.push(m);
+      }
+    }
+    return res;
+  });
+  readonly hasPharmacyConflict = computed(() => {
+    const d = this.detail();
+    if (!d) return false;
+    const listingCode = (d.listing.pharmacyCode || '').toLowerCase().trim();
+    return (d.groupMembers || []).some(
+      (m) =>
+        (m.pharmacyCode || '').toLowerCase().trim() === listingCode &&
+        m.pharmacyProductId !== d.listing.pharmacyProductId
+    );
+  });
   readonly rangeStart = computed(() =>
     this.queueDepth() === 0 ? 0 : (this.page() - 1) * this.pageSize() + 1
   );
@@ -800,6 +838,14 @@ export class MatchReviewComponent implements OnInit {
   }
 
   async accept(row: MatchReviewQueueItem): Promise<void> {
+    if (this.hasPharmacyConflict()) {
+      this.notify.showError(
+        this.locale.isRtl()
+          ? 'لا يمكن قبول المطابقة: هذه الصيدلية موجودة بالفعل في المجموعة'
+          : 'Cannot accept match: This pharmacy already exists in the group'
+      );
+      return;
+    }
     if (!canAccept(row) && !row.proposedMasterProductId) {
       this.notify.showError(this.i18n.t('matchReview.needsMaster'));
       return;
