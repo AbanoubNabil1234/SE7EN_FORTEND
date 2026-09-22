@@ -8,6 +8,32 @@ export interface PharmacyOpsRow {
   lastSuccessfulSyncAtUtc?: string | null;
   lastRunStatus?: string | null;
   lastRunFinishedAtUtc?: string | null;
+  inCatalogCount?: number;
+  crossMatchedCount?: number;
+  crossMatchPercent?: number;
+  barcodePercent?: number;
+}
+
+export interface MultiPharmacyDepthPoint {
+  pharmacyCount: number;
+  masterProductCount: number;
+  percentage: number;
+}
+
+export interface MatchingModelBreakdown {
+  exactBarcodeConfirmed: number;
+  aiModelAutoMatched: number;
+  reviewPendingHighConf: number;
+  reviewPendingMidConf: number;
+  reviewPendingLowConf: number;
+  singleCatalogProducts: number;
+}
+
+export interface MarketPriceSpreadMetrics {
+  comparedProductsCount: number;
+  avgPriceDiff: number;
+  avgSpreadPercent: number;
+  maxPriceDiff: number;
 }
 
 export interface DashboardTrendPoint {
@@ -63,4 +89,7 @@ export interface OpsDashboardSnapshot {
   activeCoupons: number;
   totalCouponRedemptions: number;
   topCoupons: CouponStatRow[];
+  overlapDepth?: MultiPharmacyDepthPoint[];
+  matchingBreakdown?: MatchingModelBreakdown;
+  priceSpread?: MarketPriceSpreadMetrics;
 }

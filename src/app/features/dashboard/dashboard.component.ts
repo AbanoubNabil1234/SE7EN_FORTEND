@@ -17,6 +17,9 @@ import { TrendChartComponent } from '../../shared/components/charts/trend-chart.
 import { PharmacyBarChartComponent } from '../../shared/components/charts/pharmacy-bar-chart.component';
 import { CategoryDonutChartComponent } from '../../shared/components/charts/category-donut-chart.component';
 import { CouponStatsComponent } from '../../shared/components/charts/coupon-stats.component';
+import { OverlapDepthChartComponent } from '../../shared/components/charts/overlap-depth-chart.component';
+import { MatchingBreakdownChartComponent } from '../../shared/components/charts/matching-breakdown-chart.component';
+import { MarketSpreadWidgetComponent } from '../../shared/components/charts/market-spread-widget.component';
 
 const PAGE_SIZE = 24;
 
@@ -34,7 +37,10 @@ const PAGE_SIZE = 24;
     TrendChartComponent,
     PharmacyBarChartComponent,
     CategoryDonutChartComponent,
-    CouponStatsComponent
+    CouponStatsComponent,
+    OverlapDepthChartComponent,
+    MatchingBreakdownChartComponent,
+    MarketSpreadWidgetComponent
   ],
   template: `
     <section class="w-full space-y-6 px-4 py-4 sm:px-6 sm:py-6" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
@@ -74,7 +80,7 @@ const PAGE_SIZE = 24;
               type="button"
               class="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[#E8D5BE] bg-white px-4 text-xs font-bold text-[#181A1D] shadow-sm hover:border-[#C27938] hover:bg-[#FBF8F4] active:scale-95 disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-800 dark:text-white"
               [disabled]="snapshotLoading()"
-              (click)="loadStats()"
+              (click)="loadStats(true)"
             >
               <i class="pi pi-refresh text-xs" [ngClass]="{ 'animate-spin': snapshotLoading() }" aria-hidden="true"></i>
               <span>{{ 'dashboard.refreshStats' | t }}</span>
@@ -179,10 +185,10 @@ const PAGE_SIZE = 24;
             />
 
             <app-kpi-card
-              [title]="'dashboard.masterProducts' | t"
-              [value]="snap.masterProducts"
-              [subtitle]="'نسبة المطابقة: ' + (snap.matchingPercent | number: '1.0-1') + '%'"
-              [badge]="snap.matchedProducts + ' مطابقة'"
+              title="منتجات المقارنة (2+ صيدليات)"
+              [value]="snap.mastersWithTwoPlusPharmacies"
+              [subtitle]="'إجمالي الكتالوج: ' + (snap.masterProducts | number)"
+              badge="تنافس سوقي"
               icon="pi-sitemap"
               accentColor="bg-emerald-500"
               iconBgClass="bg-emerald-100 dark:bg-emerald-950"
@@ -212,6 +218,41 @@ const PAGE_SIZE = 24;
               iconBgClass="bg-blue-100 dark:bg-blue-950"
               iconColorClass="text-blue-600"
             />
+          </div>
+
+          <!-- Market Spread & Savings Disparity Widget -->
+          <app-market-spread-widget [data]="snap.priceSpread" />
+
+          <!-- Main Pharmacy & Market Overlap Depth Grid -->
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <app-pharmacy-bar-chart
+              [pharmacies]="snap.pharmacies"
+            />
+
+            <app-overlap-depth-chart
+              [data]="snap.overlapDepth ?? []"
+            />
+          </div>
+
+          <!-- AI Model & Matching Breakdown Full Width Chart -->
+          <app-matching-breakdown-chart
+            [data]="snap.matchingBreakdown"
+          />
+
+          <!-- Main Interactive Charts Grid: Trends & Categories -->
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div class="lg:col-span-2">
+              <app-trend-chart
+                [data]="snap.activityTrends"
+                [title]="'dashboard.activityTrends' | t"
+                subtitle="نشاط المزامنة اليومية وتحديثات الأسعار للأسبوع الحالي"
+              />
+            </div>
+            <div>
+              <app-category-donut-chart
+                [categories]="snap.topCategories"
+              />
+            </div>
           </div>
 
           <!-- User, Marketing & Coupons KPI Cards Grid -->
@@ -261,36 +302,12 @@ const PAGE_SIZE = 24;
             />
           </div>
 
-          <!-- Main Interactive Charts Grid -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div class="lg:col-span-2">
-              <app-trend-chart
-                [data]="snap.activityTrends"
-                [title]="'dashboard.activityTrends' | t"
-                subtitle="نشاط المزامنة اليومية وتحديثات الأسعار للأسبوع الحالي"
-              />
-            </div>
-            <div>
-              <app-category-donut-chart
-                [categories]="snap.topCategories"
-              />
-            </div>
-          </div>
-
-          <!-- Secondary Grid: Pharmacy Comparison & Coupon Redemptions -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div class="lg:col-span-2">
-              <app-pharmacy-bar-chart
-                [pharmacies]="snap.pharmacies"
-              />
-            </div>
-
-            <div>
-              <app-coupon-stats
-                [coupons]="snap.topCoupons"
-                [totalRedemptions]="snap.totalCouponRedemptions"
-              />
-            </div>
+          <!-- Coupons Section -->
+          <div>
+            <app-coupon-stats
+              [coupons]="snap.topCoupons"
+              [totalRedemptions]="snap.totalCouponRedemptions"
+            />
           </div>
 
           <!-- Real-Time System Alert & Health Bar -->
@@ -548,16 +565,22 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  loadStats(): void {
+  loadStats(forceRefresh = false): void {
     this.snapshotLoading.set(true);
     this.snapshotError.set(false);
-    this.dashboardRepo
-      .getSnapshot()
+    const req$ = forceRefresh
+      ? this.dashboardRepo.refreshSnapshot()
+      : this.dashboardRepo.getSnapshot();
+
+    req$
       .pipe(finalize(() => this.snapshotLoading.set(false)))
       .subscribe({
         next: (data) => {
           this.snapshot.set(data);
           this.prefetchProductsFirstPage();
+          if (forceRefresh) {
+            this.notifications.showSuccess('تم تحديث إحصائيات النظام وإعادة الحساب بنجاح');
+          }
         },
         error: () => {
           this.snapshotError.set(true);

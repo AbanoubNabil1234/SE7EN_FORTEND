@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { DashboardRepository } from '../../domain/repositories/dashboard.repository';
 import { OpsDashboardSnapshot } from '../../domain/models/dashboard.model';
 import { API_ENDPOINTS } from '../http/api-endpoints.constants';
@@ -20,6 +20,13 @@ export class HttpDashboardRepository implements DashboardRepository {
     return this.cache.staleWhileRevalidate(
       FRESH_MS,
       this.http.get<OpsDashboardSnapshot>(API_ENDPOINTS.ADMIN_DASHBOARD)
+    );
+  }
+
+  refreshSnapshot(): Observable<OpsDashboardSnapshot> {
+    this.cache.clear();
+    return this.http.post<OpsDashboardSnapshot>(`${API_ENDPOINTS.ADMIN_DASHBOARD}/refresh`, {}).pipe(
+      tap((snap) => this.cache.write(snap))
     );
   }
 }
