@@ -9,6 +9,7 @@ import {
   CatalogFamilyPage,
   CatalogOffer,
   CatalogPack,
+  FamilyAiSuggestion,
   GroupCodeLinkResult,
   GroupCodeMergeResult,
   PharmacyProductSearchHit
@@ -220,6 +221,34 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
             packSize: this.optionalText(r['packSize'] ?? r['PackSize']),
             manualGroupCode: this.optionalText(r['manualGroupCode'] ?? r['ManualGroupCode']),
             masterProductId: this.optionalText(r['masterProductId'] ?? r['MasterProductId'])
+          }))
+        )
+      );
+  }
+
+  getFamilyAiSuggestions(groupCode: string, take: number = 10): Observable<FamilyAiSuggestion[]> {
+    const params = new HttpParams().set('take', String(take));
+    return this.http
+      .get<Array<Record<string, unknown>>>(API_ENDPOINTS.ADMIN_GROUP_CODE_SUGGESTIONS(groupCode), { params })
+      .pipe(
+        map((list) =>
+          (Array.isArray(list) ? list : []).map((r) => ({
+            id: String(r['id'] ?? r['Id'] ?? ''),
+            name: String(r['name'] ?? r['Name'] ?? ''),
+            englishName: this.optionalText(r['englishName'] ?? r['EnglishName']),
+            pharmacyCode: String(r['pharmacyCode'] ?? r['PharmacyCode'] ?? ''),
+            pharmacyName: String(r['pharmacyName'] ?? r['PharmacyName'] ?? ''),
+            barcode: this.optionalText(r['barcode'] ?? r['Barcode']),
+            price: this.optionalNumber(r['price'] ?? r['Price']),
+            oldPrice: this.optionalNumber(r['oldPrice'] ?? r['OldPrice']),
+            currency: this.optionalText(r['currency'] ?? r['Currency']) ?? 'SAR',
+            imageUrl: this.optionalText(r['imageUrl'] ?? r['ImageUrl']),
+            productUrl: this.optionalText(r['productUrl'] ?? r['ProductUrl']),
+            packSize: this.optionalText(r['packSize'] ?? r['PackSize']),
+            manualGroupCode: this.optionalText(r['manualGroupCode'] ?? r['ManualGroupCode']),
+            confidence: this.optionalNumber(r['confidence'] ?? r['Confidence']) ?? 0,
+            matchMethod: String(r['matchMethod'] ?? r['MatchMethod'] ?? 'AI_MODEL_V4_REVIEW'),
+            decisionReason: this.optionalText(r['decisionReason'] ?? r['DecisionReason'])
           }))
         )
       );

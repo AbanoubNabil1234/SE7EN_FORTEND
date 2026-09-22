@@ -53,6 +53,25 @@ export interface CatalogFamilyPage {
   data: CatalogFamily[];
 }
 
+export interface FamilyAiSuggestion {
+  id: string;
+  name: string;
+  englishName?: string | null;
+  pharmacyCode: string;
+  pharmacyName: string;
+  barcode?: string | null;
+  price?: number | null;
+  oldPrice?: number | null;
+  currency: string;
+  imageUrl?: string | null;
+  productUrl?: string | null;
+  packSize?: string | null;
+  manualGroupCode?: string | null;
+  confidence: number;
+  matchMethod: string;
+  decisionReason?: string | null;
+}
+
 export function isAiMatch(methodOrOffer?: string | null | CatalogOffer): boolean {
   if (!methodOrOffer) return false;
   const method = typeof methodOrOffer === 'string' ? methodOrOffer : methodOrOffer.matchMethod;

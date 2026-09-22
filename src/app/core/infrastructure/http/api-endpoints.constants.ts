@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
   ADMIN_GROUP_CODE_LINK: '/admin/group-codes/link',
   ADMIN_GROUP_CODE_UNLINK: '/admin/group-codes/unlink',
   ADMIN_GROUP_CODE_MERGE: '/admin/group-codes/merge',
+  ADMIN_GROUP_CODE_SUGGESTIONS: (code: string) => `/admin/group-codes/${encodeURIComponent(code)}/suggestions`,
   ADMIN_PHARMACY_PRODUCT_SEARCH: '/admin/pharmacy-products/search',
   ADMIN_MASTER_PRICE_SYNC: (id: string) => `/admin/masters/${id}/price-sync`,
   ADMIN_MASTER_BARCODE: (id: string) => `/admin/masters/${id}/barcode`,

@@ -41,6 +41,8 @@ export interface MatchReviewListingCard {
   packSize: string;
   price: number | null;
   masterProductId: string | null;
+  url?: string | null;
+  sku?: string | null;
 }
 
 export interface MatchReviewDetail {
@@ -49,6 +51,8 @@ export interface MatchReviewDetail {
   candidate: MatchReviewListingCard | null;
   groupMembers: MatchReviewListingCard[];
   candidateSnapshotJson: string;
+  masterTitle?: string | null;
+  familyKey?: string | null;
 }
 
 export interface MatchReviewActionResult {

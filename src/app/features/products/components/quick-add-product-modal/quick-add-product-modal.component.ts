@@ -1,10 +1,11 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../../../core/domain/repositories/catalog-browse.repository';
 import {
   CatalogFamily,
+  FamilyAiSuggestion,
   GroupCodeMergeResult,
   PharmacyProductSearchHit,
   catalogFamilyTitle,
@@ -355,6 +356,137 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
                 <p class="text-sm font-bold text-[#181A1D]">{{ 'quickAdd.noResults' | t }}</p>
                 <p class="text-xs text-[#8A735C] mt-1">{{ 'quickAdd.modalSubtitle' | t }}</p>
               </div>
+            } @else if (!loading() && aiSuggestions().length > 0) {
+              <!-- AI Recommendations Header -->
+              <div class="rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/90 via-[#F8EEE2]/70 to-amber-50/90 p-3 mb-2 flex items-center justify-between gap-2 shadow-2xs">
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex size-7 items-center justify-center rounded-lg bg-[#C27938] text-white shadow-xs">
+                    <i class="pi pi-sparkles text-xs animate-pulse"></i>
+                  </span>
+                  <div>
+                    <h4 class="text-xs font-black text-[#181A1D]">
+                      {{ isRtl() ? 'مقترحات الذكاء الاصطناعي لهذه العائلة' : 'AI Suggestions for this Family' }}
+                    </h4>
+                    <p class="text-[11px] text-[#8A735C]">
+                      {{ isRtl() ? 'أصناف قريبة تم ترشيحها تلقائياً للانضمام إلى العائلة' : 'Candidates recommended to join this family' }}
+                    </p>
+                  </div>
+                </div>
+                <span class="rounded-full bg-white px-2.5 py-0.5 text-xs font-black text-[#C27938] border border-amber-200 shadow-2xs tabular-nums">
+                  {{ aiSuggestions().length }} {{ isRtl() ? 'مقترحات' : 'suggestions' }}
+                </span>
+              </div>
+
+              <!-- AI Suggestions List -->
+              @for (sug of aiSuggestions(); track sug.id) {
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border border-[#EDE0D0] bg-white hover:bg-[#FBF8F4] transition-colors shadow-2xs">
+                  <div class="flex items-start gap-3 min-w-0 flex-1">
+                    <!-- Image -->
+                    <div class="relative size-12 shrink-0 rounded-lg border border-[#E8D5BE] bg-[#FBF8F4] p-0.5 overflow-hidden flex items-center justify-center">
+                      @if (sug.imageUrl) {
+                        <img [src]="sug.imageUrl" [alt]="sug.name" class="size-full object-contain" loading="lazy" />
+                      } @else {
+                        <i class="pi pi-image text-sm text-[#A68B6D]/60"></i>
+                      }
+                    </div>
+
+                    <div class="min-w-0 flex-1 space-y-1">
+                      <!-- Pharmacy Brand + Confidence Badge -->
+                      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+                        <span class="inline-flex items-center gap-1 rounded-md border border-[#E8D5BE] bg-white px-2 py-0.5 text-xs font-bold text-[#4A4038]">
+                          @if (pharmacyLogo(sug.pharmacyCode); as logo) {
+                            <img [src]="logo" [alt]="sug.pharmacyName" class="size-3.5 object-contain" />
+                          }
+                          <span>{{ sug.pharmacyName }}</span>
+                        </span>
+
+                        <!-- AI Confidence Badge -->
+                        <span class="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 px-2 py-0.5 text-[11px] font-black text-emerald-800 shadow-2xs">
+                          <i class="pi pi-sparkles text-[10px] text-emerald-600"></i>
+                          <span>{{ formatConfidence(sug.confidence) }} {{ isRtl() ? 'تطابق ذكي' : 'AI match' }}</span>
+                        </span>
+
+                        @if (sug.packSize) {
+                          <span class="rounded bg-[#F8EEE2] px-1.5 py-0.5 text-[11px] font-semibold text-[#8A735C]">
+                            {{ sug.packSize }}
+                          </span>
+                        }
+                      </div>
+
+                      <!-- Name -->
+                      <div class="text-sm font-extrabold text-[#181A1D] leading-snug break-words">
+                        {{ sug.name }}
+                      </div>
+                      @if (sug.englishName && sug.englishName !== sug.name) {
+                        <div class="text-xs text-[#8A735C] truncate" dir="ltr">
+                          {{ sug.englishName }}
+                        </div>
+                      }
+
+                      <!-- Barcode / SKU / Reason -->
+                      <div class="flex flex-wrap items-center gap-2 pt-0.5 text-[11px] text-[#8A735C]">
+                        @if (sug.barcode) {
+                          <span class="font-mono text-[10px]" dir="ltr">
+                            <i class="pi pi-barcode me-0.5"></i>{{ sug.barcode }}
+                          </span>
+                        }
+                        @if (sug.decisionReason) {
+                          <span class="text-[#A68B6D] text-[10px]">
+                            • {{ sug.decisionReason }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Price & Action Button -->
+                  <div class="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#F0E4D5]">
+                    @if (sug.price != null) {
+                      <div class="text-end">
+                        <span class="text-sm font-black text-[#181A1D] tabular-nums block">
+                          {{ sug.price | currency: 'SAR':'symbol':'1.2-2' }}
+                        </span>
+                      </div>
+                    }
+
+                    <!-- Direct Store Link Button -->
+                    @if (sug.productUrl) {
+                      <a
+                        [href]="sug.productUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex size-9 items-center justify-center rounded-xl border border-[#E8D5BE] bg-white text-[#C27938] hover:bg-[#F8EEE2] hover:border-[#C27938] transition-colors"
+                        [title]="isRtl() ? 'فتح صفحة المنتج في متجر ' + sug.pharmacyName : 'Open in ' + sug.pharmacyName"
+                      >
+                        <i class="pi pi-external-link text-xs"></i>
+                      </a>
+                    }
+
+                    <!-- Quick Add Button -->
+                    <button
+                      type="button"
+                      class="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 px-3.5 text-xs font-black text-white shadow-xs hover:shadow-sm disabled:opacity-50 transition-all cursor-pointer"
+                      [disabled]="linkingId() === sug.id"
+                      (click)="addSuggestionToFamily(sug)"
+                    >
+                      @if (linkingId() === sug.id) {
+                        <i class="pi pi-spin pi-spinner text-xs"></i>
+                        <span>{{ isRtl() ? 'جاري الإضافة...' : 'Adding...' }}</span>
+                      } @else {
+                        <i class="pi pi-plus text-xs"></i>
+                        <span>{{ isRtl() ? 'إضافة للعائلة' : 'Add to Family' }}</span>
+                      }
+                    </button>
+                  </div>
+                </div>
+              }
+            } @else if (suggestionsLoading()) {
+              <div class="py-12 flex flex-col items-center justify-center gap-2 text-center">
+                <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]"></i>
+                <p class="text-xs font-bold text-[#8A735C]">
+                  {{ isRtl() ? 'جاري جلب مقترحات الذكاء الاصطناعي لهذه العائلة...' : 'Loading AI suggestions for this family...' }}
+                </p>
+              </div>
             } @else if (!loading()) {
               <div class="py-12 text-center text-slate-400">
                 <i class="pi pi-box text-3xl mb-2 text-[#A68B6D]/60"></i>
@@ -396,7 +528,9 @@ export class QuickAddProductModalComponent {
 
   readonly searchQuery = signal<string>('');
   readonly hits = signal<PharmacyProductSearchHit[]>([]);
+  readonly aiSuggestions = signal<FamilyAiSuggestion[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly suggestionsLoading = signal<boolean>(false);
   readonly linkingId = signal<string | null>(null);
   readonly mergingCode = signal<string | null>(null);
   readonly hasSearched = signal<boolean>(false);
@@ -405,6 +539,60 @@ export class QuickAddProductModalComponent {
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
 
   readonly isRtl = computed(() => this.locale.locale() === 'ar');
+
+  constructor() {
+    effect(() => {
+      const open = this.isOpen();
+      const fam = this.family();
+      if (open && fam?.groupCode) {
+        this.loadAiSuggestions(fam.groupCode);
+      } else {
+        this.aiSuggestions.set([]);
+        this.searchQuery.set('');
+        this.hits.set([]);
+        this.hasSearched.set(false);
+      }
+    });
+  }
+
+  loadAiSuggestions(groupCode: string): void {
+    this.suggestionsLoading.set(true);
+    this.catalog
+      .getFamilyAiSuggestions(groupCode, 8)
+      .pipe(finalize(() => this.suggestionsLoading.set(false)))
+      .subscribe({
+        next: (items) => this.aiSuggestions.set(items),
+        error: () => this.aiSuggestions.set([])
+      });
+  }
+
+  formatConfidence(conf: number): string {
+    if (conf == null) return '0%';
+    const pct = conf <= 1 ? Math.round(conf * 100) : Math.round(conf);
+    return `${pct}%`;
+  }
+
+  addSuggestionToFamily(sug: FamilyAiSuggestion): void {
+    const hit: PharmacyProductSearchHit = {
+      id: sug.id,
+      name: sug.name,
+      englishName: sug.englishName,
+      pharmacyCode: sug.pharmacyCode,
+      pharmacyName: sug.pharmacyName,
+      barcode: sug.barcode,
+      price: sug.price,
+      oldPrice: sug.oldPrice,
+      currency: sug.currency,
+      imageUrl: sug.imageUrl,
+      productUrl: sug.productUrl,
+      packSize: sug.packSize,
+      manualGroupCode: sug.manualGroupCode,
+      masterProductId: null
+    };
+    this.addHitToFamily(hit);
+    // Remove added item from local suggestions
+    this.aiSuggestions.update((list) => list.filter((s) => s.id !== sug.id));
+  }
 
   currentFamilyTitle(): string {
     return catalogFamilyTitle(this.family(), this.locale.locale());

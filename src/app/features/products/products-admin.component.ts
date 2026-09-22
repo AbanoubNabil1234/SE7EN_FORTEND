@@ -37,6 +37,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
 import { MatchReviewComponent } from '../match-review/match-review.component';
 import { MatchReviewRepository } from '../../core/domain/repositories/match-review.repository';
+import { AiMatchReviewModalComponent } from './components/ai-match-review-modal/ai-match-review-modal.component';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -58,7 +59,8 @@ interface CategoryOption {
     CurrencyPipe,
     DecimalPipe,
     QuickAddProductModalComponent,
-    MatchReviewComponent
+    MatchReviewComponent,
+    AiMatchReviewModalComponent
   ],
   template: `
     <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
@@ -88,34 +90,50 @@ interface CategoryOption {
           </div>
 
           <!-- Tabs Switcher -->
-          <div class="flex items-center gap-2 border-t border-[#EDE0D0] pt-4">
-            <button
-              type="button"
-              (click)="switchTab('catalog')"
-              [class]="activeTab() === 'catalog' 
-                ? 'bg-[#181A1D] text-white shadow-sm' 
-                : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
-              class="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all cursor-pointer"
-            >
-              <i class="pi pi-th-large text-xs"></i>
-              <span>{{ 'productsAdmin.tabCatalog' | t }}</span>
-            </button>
-
-            <button
-              type="button"
-              (click)="switchTab('model-review')"
-              [class]="activeTab() === 'model-review' 
-                ? 'bg-[#C27938] text-white shadow-sm' 
-                : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
-              class="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all cursor-pointer"
-            >
-              <i class="pi pi-sparkles text-xs"></i>
-              <span>{{ 'productsAdmin.tabModelReview' | t }}</span>
-              <span 
-                [class]="activeTab() === 'model-review' ? 'bg-white/20 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
-                class="rounded-full px-2.5 py-0.5 text-xs font-extrabold tabular-nums transition-colors"
+          <div class="flex items-center justify-between gap-2 border-t border-[#EDE0D0] pt-4 flex-wrap">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="switchTab('catalog')"
+                [class]="activeTab() === 'catalog' 
+                  ? 'bg-[#181A1D] text-white shadow-sm' 
+                  : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
+                class="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all cursor-pointer"
               >
-                {{ modelReviewCount() > 0 ? (modelReviewCount() | number) : '2,731' }}
+                <i class="pi pi-th-large text-xs"></i>
+                <span>{{ 'productsAdmin.tabCatalog' | t }}</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="switchTab('model-review')"
+                [class]="activeTab() === 'model-review' 
+                  ? 'bg-[#C27938] text-white shadow-sm' 
+                  : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
+                class="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all cursor-pointer"
+              >
+                <i class="pi pi-sparkles text-xs"></i>
+                <span>{{ 'productsAdmin.tabModelReview' | t }}</span>
+                <span 
+                  [class]="activeTab() === 'model-review' ? 'bg-white/20 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
+                  class="rounded-full px-2.5 py-0.5 text-xs font-extrabold tabular-nums transition-colors"
+                >
+                  {{ modelReviewCount() > 0 ? (modelReviewCount() | number) : '2,731' }}
+                </span>
+              </button>
+            </div>
+
+            <!-- Prominent Button to open the AI Match Review Modal -->
+            <button
+              type="button"
+              (click)="openAiReviewModal()"
+              class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 via-[#C27938] to-violet-600 px-4 py-2 text-sm font-extrabold text-white shadow-md shadow-amber-500/20 hover:opacity-95 hover:shadow-lg transition-all cursor-pointer"
+              [title]="locale.isRtl() ? 'فتح نافذة مراجعة تطابق الذكاء الاصطناعي التفاعلية' : 'Open Interactive AI Match Review Modal'"
+            >
+              <i class="pi pi-sparkles text-sm animate-pulse"></i>
+              <span>{{ locale.isRtl() ? 'نافذة مراجعة AI السريعة' : 'AI Match Review Modal' }}</span>
+              <span class="rounded-full bg-white/25 px-2 py-0.5 text-xs font-black tabular-nums">
+                {{ modelReviewCount() > 0 ? (modelReviewCount() | number) : '3,712' }}
               </span>
             </button>
           </div>
@@ -277,13 +295,15 @@ interface CategoryOption {
                   <div class="mt-1 flex flex-wrap items-center gap-1.5">
                     <span [class]="matchBadgeClass(family)">{{ matchLabelKey(family) | t }}</span>
                     @if (hasAiMatch(family)) {
-                      <span
-                        class="inline-flex items-center gap-1 rounded-full bg-violet-50 border border-violet-200 px-2 py-0.5 text-[11px] font-bold text-violet-700 shadow-xs"
+                      <button
+                        type="button"
+                        (click)="openAiReviewModal()"
+                        class="inline-flex items-center gap-1 rounded-full bg-violet-50 border border-violet-200 px-2 py-0.5 text-[11px] font-bold text-violet-700 hover:bg-violet-100 hover:border-violet-300 transition-colors shadow-xs cursor-pointer"
                         [title]="'productsAdmin.aiMatchTooltip' | t"
                       >
                         <i class="pi pi-sparkles text-[11px] text-violet-500" aria-hidden="true"></i>
                         <span>{{ 'productsAdmin.aiMatchBadge' | t }}</span>
-                      </span>
+                      </button>
                     }
                     <span class="text-[11px] font-semibold tabular-nums text-[#8A735C]">
                       {{ cardPharmacyCount(family) }} {{ 'productsAdmin.pharmacies' | t }}
@@ -664,6 +684,13 @@ interface CategoryOption {
       (productAdded)="onQuickProductAdded()"
       (familyMerged)="onFamilyMerged()"
     />
+
+    <app-ai-match-review-modal
+      [isOpen]="isAiReviewModalOpen()"
+      [initialMatchId]="selectedAiMatchId()"
+      (close)="closeAiReviewModal()"
+      (matchResolved)="onAiMatchResolved($event)"
+    />
   `
 })
 export class ProductsAdminComponent implements OnInit, OnDestroy {
@@ -677,6 +704,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   readonly activeTab = signal<'catalog' | 'model-review'>('catalog');
   readonly modelReviewCount = signal<number>(2731);
+
+  readonly isAiReviewModalOpen = signal<boolean>(false);
+  readonly selectedAiMatchId = signal<string | null>(null);
 
   readonly families = signal<CatalogFamily[]>([]);
   readonly brands = signal<string[]>([]);
@@ -945,6 +975,23 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   onFamilyMerged(): void {
     this.closeQuickAdd();
     this.reloadKeepingSelection();
+  }
+
+  openAiReviewModal(matchId?: string | null): void {
+    this.selectedAiMatchId.set(matchId ?? null);
+    this.isAiReviewModalOpen.set(true);
+  }
+
+  closeAiReviewModal(): void {
+    this.isAiReviewModalOpen.set(false);
+    this.selectedAiMatchId.set(null);
+  }
+
+  onAiMatchResolved(event: { matchId: string; action: 'accept' | 'reject' }): void {
+    this.modelReviewCount.update((c) => Math.max(0, c - 1));
+    if (event.action === 'accept') {
+      this.reloadKeepingSelection();
+    }
   }
 
   pharmacyLogo(code: string | null | undefined): string | null {

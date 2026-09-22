@@ -61,7 +61,9 @@ export function mapListingCard(raw: unknown): MatchReviewListingCard {
     dosageForm: text(r, 'dosageForm', 'DosageForm'),
     packSize: text(r, 'packSize', 'PackSize'),
     price: num(r, 'price', 'Price'),
-    masterProductId: guid(r, 'masterProductId', 'MasterProductId')
+    masterProductId: guid(r, 'masterProductId', 'MasterProductId'),
+    url: text(r, 'url', 'Url') || null,
+    sku: text(r, 'sku', 'Sku') || null
   };
 }
 
@@ -88,7 +90,9 @@ export function mapDetail(raw: unknown): MatchReviewDetail {
     listing: mapListingCard(r['listing'] ?? r['Listing'] ?? {}),
     candidate: r['candidate'] || r['Candidate'] ? mapListingCard(r['candidate'] ?? r['Candidate']) : null,
     groupMembers: Array.isArray(membersRaw) ? membersRaw.map(mapListingCard) : [],
-    candidateSnapshotJson: text(r, 'candidateSnapshotJson', 'CandidateSnapshotJson')
+    candidateSnapshotJson: text(r, 'candidateSnapshotJson', 'CandidateSnapshotJson'),
+    masterTitle: text(r, 'masterTitle', 'MasterTitle') || null,
+    familyKey: text(r, 'familyKey', 'FamilyKey') || null
   };
 }
 

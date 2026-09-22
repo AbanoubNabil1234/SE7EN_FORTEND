@@ -3,6 +3,7 @@ import { CategoryNode } from '../models/category.model';
 import {
   CatalogFamily,
   CatalogFamilyPage,
+  FamilyAiSuggestion,
   GroupCodeLinkResult,
   GroupCodeMergeResult,
   PharmacyProductSearchHit
@@ -27,6 +28,7 @@ export abstract class CatalogBrowseRepository {
   abstract unlinkOffer(pharmacyProductId: string): Observable<boolean>;
   abstract mergeGroups(sourceGroupCode: string, targetGroupCode: string): Observable<GroupCodeMergeResult>;
   abstract searchPharmacyProducts(query: string, take?: number): Observable<PharmacyProductSearchHit[]>;
+  abstract getFamilyAiSuggestions(groupCode: string, take?: number): Observable<FamilyAiSuggestion[]>;
   abstract setPriceSyncEnabled(masterProductId: string, enabled: boolean): Observable<{ id: string; enabled: boolean }>;
   abstract setMasterBarcode(
     masterProductId: string,
