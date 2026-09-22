@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, of, tap } from 'rxjs';
-import { CatalogBrowseRepository } from '../../domain/repositories/catalog-browse.repository';
+import { CatalogBrowseRepository, CatalogFamilySort } from '../../domain/repositories/catalog-browse.repository';
 import { CategoryNode } from '../../domain/models/category.model';
 import { categoryEnglishName } from '../../domain/category-display';
 import {
@@ -63,7 +63,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     categorySlug?: string;
     brand?: string;
     query?: string;
-    sort?: 'nameAsc' | 'nameDesc';
+    sort?: CatalogFamilySort;
     page?: number;
     pageSize?: number;
   }): Observable<CatalogFamilyPage> {
@@ -116,7 +116,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     categorySlug?: string;
     brand?: string;
     query?: string;
-    sort?: 'nameAsc' | 'nameDesc';
+    sort?: CatalogFamilySort;
     page?: number;
     pageSize?: number;
   }): boolean {
@@ -126,7 +126,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       !params.categorySlug?.trim() &&
       !params.brand?.trim() &&
       !params.query?.trim() &&
-      (params.sort ?? 'nameAsc') === 'nameAsc'
+      (!params.sort || params.sort === 'pharmaciesDesc')
     );
   }
 

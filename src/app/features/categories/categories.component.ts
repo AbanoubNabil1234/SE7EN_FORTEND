@@ -304,7 +304,7 @@ const DEFAULT_VISUAL: CategoryVisual = {
         </aside>
 
         <!-- ==================== MAIN CONTENT (Products Browser) ==================== -->
-        <main class="flex-1 min-w-0 space-y-4 w-full">
+        <main id="products-pane" class="flex-1 min-w-0 space-y-4 w-full">
 
           <!-- Active Category Header Card & Subcategory Chips -->
           @if (currentPrimaryNode(); as primary) {
@@ -432,6 +432,7 @@ const DEFAULT_VISUAL: CategoryVisual = {
                   [ngModel]="selectedSort()"
                   (ngModelChange)="onSortChange($event)"
                 >
+                  <option value="pharmaciesDesc">الأكثر توفراً (من 8 صيدليات إلى صيدلية)</option>
                   <option value="nameAsc">الاسم (أ - ي)</option>
                   <option value="nameDesc">الاسم (ي - أ)</option>
                 </select>
@@ -703,27 +704,85 @@ const DEFAULT_VISUAL: CategoryVisual = {
               </div>
             }
 
-            <!-- Load More Pagination -->
-            @if (hasMore()) {
-              <div class="flex flex-col items-center justify-center gap-2 pt-6">
-                <button
-                  type="button"
-                  class="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#181A1D] px-8 py-3 text-xs font-bold text-white shadow-sm hover:bg-[#C27938] hover:shadow-md transition-all disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-[#C27938] dark:hover:text-white"
-                  [disabled]="productsLoading()"
-                  (click)="loadMore()"
-                >
-                  @if (productsLoading()) {
-                    <i class="pi pi-spin pi-spinner text-xs"></i>
-                    <span>جاري التحميل...</span>
-                  } @else {
-                    <i class="pi pi-refresh text-xs"></i>
-                    <span>تحميل المزيد من المنتجات</span>
-                  }
-                </button>
+            <!-- Numbered Pagination Controls -->
+            @if (totalPages() > 1) {
+              <div class="mt-8 flex flex-col items-center justify-between gap-4 rounded-3xl border border-[#E8D5BE]/80 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 sm:flex-row">
+                <!-- Info: Current items count & total -->
+                <div class="text-xs font-bold text-[#8A735C] dark:text-neutral-400 tabular-nums">
+                  <span>{{ locale.isRtl() ? 'عرض' : 'Showing' }}</span>
+                  <span class="text-[#181A1D] dark:text-white font-black mx-1">
+                    {{ pageStartItem() | number }} - {{ pageEndItem() | number }}
+                  </span>
+                  <span>{{ locale.isRtl() ? 'من أصل' : 'of' }}</span>
+                  <span class="text-[#C27938] font-black mx-1">{{ total() | number }}</span>
+                  <span>{{ locale.isRtl() ? 'منتج' : 'products' }}</span>
+                  <span class="text-neutral-300 dark:text-neutral-700 mx-1.5">•</span>
+                  <span>{{ locale.isRtl() ? 'صفحة' : 'Page' }}</span>
+                  <span class="text-[#181A1D] dark:text-white font-black mx-1">{{ page() | number }}</span>
+                  <span>{{ locale.isRtl() ? 'من' : 'of' }}</span>
+                  <span class="font-black mx-1">{{ totalPages() | number }}</span>
+                </div>
 
-                <span class="text-[11px] font-semibold text-[#8A735C] dark:text-neutral-400 tabular-nums">
-                  عرض {{ products().length | number }} من أصل {{ total() | number }} منتج
-                </span>
+                <!-- Page Buttons -->
+                <div class="flex items-center gap-1.5 flex-wrap justify-center" aria-label="Pagination">
+                  <!-- Prev Button -->
+                  <button
+                    type="button"
+                    class="flex size-9 items-center justify-center rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] text-xs font-bold text-[#181A1D] transition-all hover:border-[#C27938] hover:bg-[#F8EEE2] disabled:pointer-events-none disabled:opacity-40 dark:border-neutral-800 dark:bg-neutral-950 dark:text-white dark:hover:bg-neutral-800 cursor-pointer"
+                    [disabled]="page() <= 1 || productsLoading()"
+                    (click)="prevPage()"
+                    [title]="locale.isRtl() ? 'الصفحة السابقة' : 'Previous page'"
+                  >
+                    <i class="pi pi-chevron-right text-xs" *ngIf="locale.isRtl()"></i>
+                    <i class="pi pi-chevron-left text-xs" *ngIf="!locale.isRtl()"></i>
+                  </button>
+
+                  <!-- Numbered Page Buttons & Ellipsis -->
+                  @for (p of visiblePages(); track $index) {
+                    @if (p === '...') {
+                      <span class="flex size-9 items-center justify-center text-xs font-bold text-[#A68B6D]">...</span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="flex size-9 items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        [class.bg-[#C27938]]="page() === p"
+                        [class.text-white]="page() === p"
+                        [class.shadow-xs]="page() === p"
+                        [class.border]="page() !== p"
+                        [class.border-[#E8D5BE]]="page() !== p"
+                        [class.bg-[#FBF8F4]]="page() !== p"
+                        [class.text-[#181A1D]]="page() !== p"
+                        [class.hover:border-[#C27938]]="page() !== p"
+                        [class.hover:bg-[#F8EEE2]]="page() !== p"
+                        [class.dark:border-neutral-800]="page() !== p"
+                        [class.dark:bg-neutral-950]="page() !== p"
+                        [class.dark:text-white]="page() !== p"
+                        [class.dark:hover:bg-neutral-800]="page() !== p"
+                        [disabled]="productsLoading()"
+                        (click)="goToPage(p)"
+                      >
+                        {{ p }}
+                      </button>
+                    }
+                  }
+
+                  <!-- Next Button -->
+                  <button
+                    type="button"
+                    class="flex size-9 items-center justify-center rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] text-xs font-bold text-[#181A1D] transition-all hover:border-[#C27938] hover:bg-[#F8EEE2] disabled:pointer-events-none disabled:opacity-40 dark:border-neutral-800 dark:bg-neutral-950 dark:text-white dark:hover:bg-neutral-800 cursor-pointer"
+                    [disabled]="page() >= totalPages() || productsLoading()"
+                    (click)="nextPage()"
+                    [title]="locale.isRtl() ? 'الصفحة التالية' : 'Next page'"
+                  >
+                    <i class="pi pi-chevron-left text-xs" *ngIf="locale.isRtl()"></i>
+                    <i class="pi pi-chevron-right text-xs" *ngIf="!locale.isRtl()"></i>
+                  </button>
+                </div>
+              </div>
+            } @else if (total() > 0) {
+              <!-- Single Page Count Summary -->
+              <div class="flex items-center justify-center pt-6 text-xs font-bold text-[#8A735C] dark:text-neutral-400">
+                <span>عرض جميع الـ {{ total() | number }} منتج</span>
               </div>
             }
           }
@@ -840,7 +899,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   readonly pageSize = signal<number>(24);
   readonly total = signal<number>(0);
   readonly productSearchQuery = signal<string>('');
-  readonly selectedSort = signal<CatalogFamilySort>('nameAsc');
+  readonly selectedSort = signal<CatalogFamilySort>('pharmaciesDesc');
   readonly viewMode = signal<'grid' | 'list'>('grid');
   readonly mobileSidebarOpen = signal<boolean>(false);
 
@@ -879,6 +938,50 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   });
 
   readonly hasMore = computed(() => this.products().length < this.total());
+
+  readonly totalPages = computed(() => {
+    const t = this.total();
+    const s = this.pageSize();
+    return t > 0 ? Math.ceil(t / s) : 1;
+  });
+
+  readonly pageStartItem = computed(() => {
+    const t = this.total();
+    if (t === 0) return 0;
+    return (this.page() - 1) * this.pageSize() + 1;
+  });
+
+  readonly pageEndItem = computed(() => {
+    return Math.min(this.page() * this.pageSize(), this.total());
+  });
+
+  readonly visiblePages = computed(() => {
+    const current = this.page();
+    const total = this.totalPages();
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const pages: (number | string)[] = [];
+    pages.push(1);
+
+    if (current > 4) {
+      pages.push('...');
+    }
+
+    const start = Math.max(2, current - 2);
+    const end = Math.min(total - 1, current + 2);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (current < total - 3) {
+      pages.push('...');
+    }
+
+    pages.push(total);
+    return pages;
+  });
 
   ngOnInit(): void {
     // Setup debounced product search
@@ -959,6 +1062,37 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   loadMore(): void {
     if (!this.hasMore() || this.productsLoading()) return;
     this.fetchProducts(this.page() + 1, true);
+  }
+
+  goToPage(p: number | string): void {
+    if (typeof p !== 'number') return;
+    if (p < 1 || p > this.totalPages() || p === this.page()) return;
+    this.page.set(p);
+    this.fetchProducts(p, false);
+    this.scrollToTop();
+  }
+
+  nextPage(): void {
+    if (this.page() < this.totalPages()) {
+      this.goToPage(this.page() + 1);
+    }
+  }
+
+  prevPage(): void {
+    if (this.page() > 1) {
+      this.goToPage(this.page() - 1);
+    }
+  }
+
+  private scrollToTop(): void {
+    if (typeof window !== 'undefined') {
+      const element = document.getElementById('products-pane');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
   }
 
   reloadProducts(): void {

@@ -9,7 +9,7 @@ import {
   PharmacyProductSearchHit
 } from '../models/catalog-family.model';
 
-export type CatalogFamilySort = 'nameAsc' | 'nameDesc';
+export type CatalogFamilySort = 'pharmaciesDesc' | 'nameAsc' | 'nameDesc';
 
 export abstract class CatalogBrowseRepository {
   abstract getCategoryStructure(): Observable<CategoryNode[]>;
