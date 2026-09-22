@@ -17,11 +17,12 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { ProxyImgPipe } from '../../shared/pipes/proxy-img.pipe';
 
 @Component({
   selector: 'app-match-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, ProxyImgPipe],
   template: `
     <section class="w-full space-y-4" [class.px-4]="!isEmbedded()" [class.py-4]="!isEmbedded()" [class.sm:px-5]="!isEmbedded()" [class.sm:py-5]="!isEmbedded()" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       
@@ -315,7 +316,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                               @if (row.imageUrl) {
                                 <img
                                   #rowImg
-                                  [src]="row.imageUrl"
+                                  [src]="row.imageUrl | proxyImg"
                                   [alt]="row.name"
                                   loading="lazy"
                                   class="size-full object-contain p-0.5 relative z-10 transition-opacity duration-200"
@@ -579,7 +580,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
           @if (card.imageUrl) {
             <img
               #imgEl
-              [src]="card.imageUrl"
+              [src]="card.imageUrl | proxyImg"
               [alt]="card.name"
               loading="lazy"
               class="size-full object-contain p-1.5 relative z-10 transition-opacity duration-200"

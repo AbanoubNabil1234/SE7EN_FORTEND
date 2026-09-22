@@ -22,11 +22,12 @@ import { pharmacyLogo as resolvePharmacyLogo } from '../../../../core/domain/pha
 import { LocaleService } from '../../../../core/services/locale.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { ProxyImgPipe } from '../../../../shared/pipes/proxy-img.pipe';
 
 @Component({
   selector: 'app-ai-match-review-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, DecimalPipe],
+  imports: [CommonModule, FormsModule, CurrencyPipe, DecimalPipe, ProxyImgPipe],
   template: `
     @if (isOpen()) {
       <div
@@ -243,7 +244,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     <div class="mt-3 flex gap-3.5 items-start">
                       <div class="size-24 sm:size-28 shrink-0 rounded-xl border border-[#EDE0D0] bg-[#FBF8F4] overflow-hidden p-1 flex items-center justify-center">
                         @if (detail.listing.imageUrl) {
-                          <img [src]="detail.listing.imageUrl" [alt]="detail.listing.name" class="size-full object-contain" loading="lazy" />
+                          <img [src]="detail.listing.imageUrl | proxyImg" [alt]="detail.listing.name" class="size-full object-contain" loading="lazy" />
                         } @else {
                           <i class="pi pi-image text-2xl text-[#C27938]/40"></i>
                         }

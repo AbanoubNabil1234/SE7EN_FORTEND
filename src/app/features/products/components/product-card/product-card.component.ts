@@ -6,6 +6,7 @@ import { BadgeComponent } from '../../../../shared/components/badge/badge.compon
 import { ButtonComponent } from '../../../../shared/components/button/button.component';
 import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
 import { ProductNamePipe } from '../../../../shared/pipes/product-name.pipe';
+import { ProxyImgPipe } from '../../../../shared/pipes/proxy-img.pipe';
 
 /**
  * Presentational (Dumb) Component:
@@ -14,7 +15,7 @@ import { ProductNamePipe } from '../../../../shared/pipes/product-name.pipe';
 @Component({
   selector: 'app-product-card',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeComponent, ButtonComponent, CurrencyFormatPipe, ProductNamePipe],
+  imports: [CommonModule, CardComponent, BadgeComponent, ButtonComponent, CurrencyFormatPipe, ProductNamePipe, ProxyImgPipe],
   template: `
     <app-card [hoverable]="true">
       <div class="relative flex flex-col h-full">
@@ -29,7 +30,7 @@ import { ProductNamePipe } from '../../../../shared/pipes/product-name.pipe';
         <!-- Product Image Container -->
         <div class="w-full h-44 rounded-xl bg-brand-50/50 dark:bg-carbon-950 overflow-hidden mb-4 flex items-center justify-center relative group border border-brand-200/40 dark:border-carbon-800">
           <img
-            [src]="product().imageUrl"
+            [src]="product().imageUrl | proxyImg"
             [alt]="product() | productName"
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

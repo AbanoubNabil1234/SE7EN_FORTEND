@@ -16,11 +16,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { ProxyImgPipe } from '../../../../shared/pipes/proxy-img.pipe';
 
 @Component({
   selector: 'app-quick-add-product-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, TranslatePipe],
+  imports: [CommonModule, FormsModule, CurrencyPipe, TranslatePipe, ProxyImgPipe],
   template: `
     @if (isOpen() && family()) {
       <div
@@ -219,7 +220,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
                     <div class="relative size-12 shrink-0 rounded-lg border border-[#E8D5BE] bg-white p-0.5 overflow-hidden flex items-center justify-center">
                       @if (hit.imageUrl) {
                         <img
-                          [src]="hit.imageUrl"
+                          [src]="hit.imageUrl | proxyImg"
                           [alt]="hit.name"
                           class="size-full object-contain"
                           loading="lazy"
@@ -384,7 +385,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
                     <!-- Image -->
                     <div class="relative size-12 shrink-0 rounded-lg border border-[#E8D5BE] bg-[#FBF8F4] p-0.5 overflow-hidden flex items-center justify-center">
                       @if (sug.imageUrl) {
-                        <img [src]="sug.imageUrl" [alt]="sug.name" class="size-full object-contain" loading="lazy" />
+                        <img [src]="sug.imageUrl | proxyImg" [alt]="sug.name" class="size-full object-contain" loading="lazy" />
                       } @else {
                         <i class="pi pi-image text-sm text-[#A68B6D]/60"></i>
                       }

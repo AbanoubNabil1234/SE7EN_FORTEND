@@ -15,13 +15,14 @@ import { pharmacyDisplayName, pharmacyLogo } from '../../core/domain/pharmacy-br
 import { LocaleService } from '../../core/services/locale.service';
 import { ListBestDealsUseCase } from '../../core/use-cases/deals/list-best-deals.use-case';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { ProxyImgPipe } from '../../shared/pipes/proxy-img.pipe';
 
 const PAGE_SIZE = 24;
 
 @Component({
   selector: 'app-best-deals',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, CurrencyPipe, DecimalPipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, CurrencyPipe, DecimalPipe, ProxyImgPipe],
   template: `
     <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
@@ -120,7 +121,7 @@ const PAGE_SIZE = 24;
               >
                 <div class="relative aspect-[4/3] bg-[#FBF8F4]">
                   @if (deal.imageUrl) {
-                    <img [src]="deal.imageUrl" [alt]="displayName(deal)" class="size-full object-contain p-4" loading="lazy" />
+                    <img [src]="deal.imageUrl | proxyImg" [alt]="displayName(deal)" class="size-full object-contain p-4" loading="lazy" />
                   } @else {
                     <div class="flex size-full items-center justify-center text-[#C27938]/40">
                       <i class="pi pi-image text-3xl" aria-hidden="true"></i>
