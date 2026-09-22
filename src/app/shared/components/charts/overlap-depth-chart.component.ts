@@ -7,64 +7,66 @@ import { MultiPharmacyDepthPoint } from '../../../core/domain/models/dashboard.m
   standalone: true,
   imports: [CommonModule, DecimalPipe],
   template: `
-    <div class="relative w-full space-y-4 rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-xs transition-opacity duration-150 dark:border-neutral-800 dark:bg-[#14171C]">
+    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
       <!-- Header -->
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-neutral-800">
         <div>
           <div class="flex items-center gap-2">
-            <h3 class="text-balance text-base font-black text-[#181A1D] dark:text-white">
-              عمق تغطية السوق (تطابق من 2 إلى 8 صيدليات)
+            <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
+              عمق تغطية وتنافس السوق
             </h3>
-            <span class="rounded-md bg-neutral-100 px-2 py-0.5 text-[11px] font-bold tabular-nums text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-              {{ totalMultiProducts() | number }} منتج منافس
+            <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-extrabold tabular-nums text-slate-700 dark:bg-neutral-800 dark:text-neutral-300">
+              {{ totalMultiProducts() | number }} منتج متنافس
             </span>
           </div>
-          <p class="text-pretty text-xs font-medium text-[#8A735C] dark:text-neutral-400">
-            توزيع المنتجات المشتركة بحسب عدد الصيدليات المتنافسة عليها في نفس الوقت
+          <p class="text-pretty text-xs font-medium text-slate-500 dark:text-neutral-400">
+            توزيع المنتجات المتطابقة بحسب عدد الصيدليات المتنافسة عليها في نفس الوقت
           </p>
         </div>
 
-        <!-- Highlight Badge for 8 Pharmacies (Full Market) -->
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-bold tabular-nums text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-            <i class="pi pi-star-fill text-amber-500 text-[9px]" aria-hidden="true"></i>
+        <!-- 8-Pharmacy Golden Highlight Badge -->
+        <div class="flex items-center">
+          <span class="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-black tabular-nums text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+            <i class="pi pi-star-fill text-amber-500 text-[10px]" aria-hidden="true"></i>
             {{ fullCoverageCount() | number }} منتج متاح بجميع الـ 8 صيدليات
           </span>
         </div>
       </div>
 
-      <!-- Histogram Bars -->
-      <div class="space-y-2.5 pt-1">
+      <!-- Clean Distribution Rows -->
+      <div class="space-y-3 pt-3">
         @for (item of computedItems(); track item.pharmacyCount) {
-          <div class="space-y-1.5 rounded-xl border border-neutral-100 bg-[#FBF8F4] p-3 transition-colors hover:border-[#E8D5BE] dark:border-neutral-800/80 dark:bg-neutral-800/40">
-            <div class="flex items-center justify-between gap-2 text-xs font-bold">
-              <div class="flex items-center gap-2">
+          <div class="group rounded-xl p-2 transition-colors hover:bg-slate-50/70 dark:hover:bg-neutral-800/40">
+            <div class="flex items-center justify-between gap-3 text-xs mb-1.5">
+              <!-- Label (Right in RTL) -->
+              <div class="flex items-center gap-2 min-w-0">
                 <span
-                  class="flex size-5 items-center justify-center rounded text-[11px] font-black tabular-nums"
+                  class="flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-black tabular-nums"
                   [ngClass]="item.badgeClass"
                 >
                   {{ item.pharmacyCount }}
                 </span>
-                <span class="font-extrabold text-[#181A1D] dark:text-white">
+                <span class="font-bold text-slate-800 dark:text-neutral-200 truncate">
                   {{ item.label }}
                 </span>
               </div>
 
-              <div class="flex items-center gap-3 tabular-nums">
-                <span class="text-xs font-black text-[#181A1D] dark:text-white">
+              <!-- Product Count & Percent (Left in RTL) -->
+              <div class="flex items-center gap-2 tabular-nums shrink-0">
+                <span class="font-black text-slate-900 dark:text-white">
                   {{ item.masterProductCount | number }}
-                  <span class="text-[11px] font-medium text-[#8A735C] dark:text-neutral-400">منتج</span>
                 </span>
-                <span class="min-w-10 text-end text-[11px] font-bold text-[#8A735C] dark:text-neutral-300">
+                <span class="text-[11px] text-slate-400">منتج</span>
+                <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-600 dark:bg-neutral-800 dark:text-neutral-300">
                   {{ item.percentage | number: '1.1-1' }}%
                 </span>
               </div>
             </div>
 
-            <!-- Bar Track -->
-            <div class="relative h-2 w-full overflow-hidden rounded-full bg-neutral-200/80 dark:bg-neutral-700/60">
+            <!-- Slim Progress Track -->
+            <div class="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
               <div
-                class="absolute start-0 top-0 h-full rounded-full"
+                class="absolute start-0 top-0 h-full rounded-full transition-all duration-300"
                 [ngClass]="item.barColor"
                 [style.width.%]="item.relativeWidth"
               ></div>
@@ -100,22 +102,22 @@ export class OverlapDepthChartComponent {
 
       const label =
         item.pharmacyCount === 2
-          ? 'متوفر في صيدليتين (مقارنة ثنائية)'
+          ? 'صيدليتان (تنافس ثنائي)'
           : item.pharmacyCount === 8
-            ? 'متوفر في جميع الـ 8 صيدليات (تغطية كاملة)'
-            : `متوفر في ${item.pharmacyCount} صيدليات`;
+            ? '8 صيدليات (تغطية السوق بالكامل)'
+            : `${item.pharmacyCount} صيدليات متنافسة`;
 
       const badgeClass = isFull
         ? 'bg-amber-500 text-white'
         : isHigh
-          ? 'bg-emerald-500/15 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-          : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300';
+          ? 'bg-emerald-500 text-white'
+          : 'bg-slate-200 text-slate-700 dark:bg-neutral-700 dark:text-neutral-300';
 
       const barColor = isFull
         ? 'bg-amber-500'
         : isHigh
-          ? 'bg-emerald-600 dark:bg-emerald-500'
-          : 'bg-[#C27938]/80';
+          ? 'bg-emerald-500'
+          : 'bg-[#C27938]';
 
       const relativeWidth = Math.max(3, Math.min(100, (item.masterProductCount / maxCount) * 100));
 

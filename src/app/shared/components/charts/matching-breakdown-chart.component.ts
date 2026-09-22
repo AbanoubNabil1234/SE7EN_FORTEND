@@ -8,44 +8,44 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
   standalone: true,
   imports: [CommonModule, DecimalPipe, RouterModule],
   template: `
-    <div class="relative w-full space-y-4 rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-xs transition-opacity duration-150 dark:border-neutral-800 dark:bg-[#14171C]">
+    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
       <!-- Header -->
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-neutral-800">
         <div>
           <div class="flex items-center gap-2">
-            <h3 class="text-balance text-base font-black text-[#181A1D] dark:text-white">
-              تفصيل أساليب التطابق والذكاء الاصطناعي
+            <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
+              محرك المطابقة والذكاء الاصطناعي
             </h3>
-            <span class="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold tabular-nums text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-              {{ confirmedTotal() | number }} تطابق مؤكد
+            <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+              {{ confirmedTotal() | number }} تطابق معتمد
             </span>
           </div>
-          <p class="text-pretty text-xs font-medium text-[#8A735C] dark:text-neutral-400">
-            توزيع المنتجات بحسب طريقة الربط (باركود دولي، ذكاء اصطناعي آلي، طابور المراجعة، منتجات مفردة)
+          <p class="text-pretty text-xs font-medium text-slate-500 dark:text-neutral-400">
+            توزيع أساليب الربط بين الباركود الدولي الصريح وخوارزميات الذكاء الاصطناعي
           </p>
         </div>
 
         <a
           routerLink="/matches"
-          class="inline-flex items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3.5 py-1.5 text-xs font-bold text-[#181A1D] transition-colors hover:border-[#C27938] hover:bg-[#F8EEE2] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
         >
-          <i class="pi pi-external-link text-[10px]" aria-hidden="true"></i>
+          <i class="pi pi-check-square text-xs" aria-hidden="true"></i>
           <span>فتح طابور المراجعة</span>
         </a>
       </div>
 
-      <!-- Segmented Bar -->
-      <div class="space-y-2">
-        <div class="flex h-3 w-full overflow-hidden rounded-full bg-neutral-200/80 dark:bg-neutral-700/60">
+      <!-- Segmented Bar & Micro Legend -->
+      <div class="space-y-2.5 pt-4">
+        <div class="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
           <!-- Exact Barcode Confirmed -->
           <div
-            class="h-full bg-emerald-600 dark:bg-emerald-500"
+            class="h-full bg-emerald-500"
             [style.width.%]="exactPercent()"
             [title]="'باركود مؤكد: ' + (data()?.exactBarcodeConfirmed | number)"
           ></div>
           <!-- AI Model V4 Auto -->
           <div
-            class="h-full bg-teal-600 dark:bg-teal-500"
+            class="h-full bg-teal-500"
             [style.width.%]="aiAutoPercent()"
             [title]="'ذكاء اصطناعي آلي: ' + (data()?.aiModelAutoMatched | number)"
           ></div>
@@ -53,99 +53,106 @@ import { MatchingModelBreakdown } from '../../../core/domain/models/dashboard.mo
           <div
             class="h-full bg-amber-500"
             [style.width.%]="reviewPercent()"
-            [title]="'طابور مراجعة الموديل: ' + reviewTotal()"
+            [title]="'طابور المراجعة: ' + reviewTotal()"
           ></div>
           <!-- Single Catalog Products -->
           <div
-            class="h-full bg-neutral-300 dark:bg-neutral-600"
+            class="h-full bg-slate-300 dark:bg-neutral-600"
             [style.width.%]="singlePercent()"
-            [title]="'كتالوج مفرد (بدون منافس): ' + (data()?.singleCatalogProducts | number)"
+            [title]="'كتالوج مفرد: ' + (data()?.singleCatalogProducts | number)"
           ></div>
         </div>
 
-        <!-- Legend Items -->
-        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium text-[#8A735C] dark:text-neutral-400">
-          <span class="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
-            <span class="size-2 rounded-full bg-emerald-600"></span>
-            باركود مؤكد (<strong class="tabular-nums">{{ exactPercent() | number: '1.0-1' }}%</strong>)
-          </span>
-          <span class="inline-flex items-center gap-1.5 text-teal-700 dark:text-teal-400">
-            <span class="size-2 rounded-full bg-teal-600"></span>
-            ذكاء اصطناعي آلي (<strong class="tabular-nums">{{ aiAutoPercent() | number: '1.0-1' }}%</strong>)
-          </span>
-          <span class="inline-flex items-center gap-1.5 text-amber-800 dark:text-amber-400">
+        <!-- Legend Items (No RTL parenthesis conflicts) -->
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-medium text-slate-500 dark:text-neutral-400">
+          <div class="flex items-center gap-1.5">
+            <span class="size-2 rounded-full bg-emerald-500"></span>
+            <span class="text-slate-700 dark:text-neutral-200 font-bold">باركود مؤكد</span>
+            <span class="tabular-nums text-slate-400">{{ exactPercent() | number: '1.0-1' }}%</span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <span class="size-2 rounded-full bg-teal-500"></span>
+            <span class="text-slate-700 dark:text-neutral-200 font-bold">ذكاء آلي (Auto)</span>
+            <span class="tabular-nums text-slate-400">{{ aiAutoPercent() | number: '1.0-1' }}%</span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
             <span class="size-2 rounded-full bg-amber-500"></span>
-            طابور مراجعة الذكاء (<strong class="tabular-nums">{{ reviewPercent() | number: '1.0-1' }}%</strong>)
-          </span>
-          <span class="inline-flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
-            <span class="size-2 rounded-full bg-neutral-400"></span>
-            كتالوج مفرد (<strong class="tabular-nums">{{ singlePercent() | number: '1.0-1' }}%</strong>)
-          </span>
+            <span class="text-slate-700 dark:text-neutral-200 font-bold">طابور المراجعة</span>
+            <span class="tabular-nums text-slate-400">{{ reviewPercent() | number: '1.0-1' }}%</span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <span class="size-2 rounded-full bg-slate-400"></span>
+            <span class="text-slate-700 dark:text-neutral-200 font-bold">كتالوج مفرد</span>
+            <span class="tabular-nums text-slate-400">{{ singlePercent() | number: '1.0-1' }}%</span>
+          </div>
         </div>
       </div>
 
-      <!-- Detail Segment Cards -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 pt-1">
+      <!-- 4 Compact Detail Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
         <!-- Card 1: Exact Barcode Confirmed -->
-        <div class="rounded-xl border border-emerald-500/20 bg-emerald-50/30 p-3.5 space-y-1 dark:border-emerald-950 dark:bg-emerald-950/20">
-          <div class="flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
-            <span>باركود قطعي (Exact/GTIN)</span>
+        <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/40">
+          <div class="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-400">
+            <span>باركود قطعي (GTIN)</span>
             <i class="pi pi-check-circle text-xs" aria-hidden="true"></i>
           </div>
-          <div class="text-xl font-black tabular-nums text-emerald-950 dark:text-emerald-100">
+          <div class="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
             {{ (data()?.exactBarcodeConfirmed ?? 0) | number }}
           </div>
-          <div class="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+          <div class="text-[11px] font-medium text-slate-500">
             مطابقة قطعية 100% بدون شك
           </div>
         </div>
 
-        <!-- Card 2: AI Model V4 Auto -->
-        <div class="rounded-xl border border-teal-500/20 bg-teal-50/30 p-3.5 space-y-1 dark:border-teal-950 dark:bg-teal-950/20">
-          <div class="flex items-center justify-between text-xs font-bold text-teal-800 dark:text-teal-300">
-            <span>ذكاء اصطناعي آلي (Auto V4)</span>
+        <!-- Card 2: AI Model Auto -->
+        <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/40">
+          <div class="flex items-center justify-between text-xs font-bold text-teal-700 dark:text-teal-400">
+            <span>ذكاء اصطناعي (Auto V4)</span>
             <i class="pi pi-bolt text-xs" aria-hidden="true"></i>
           </div>
-          <div class="text-xl font-black tabular-nums text-teal-950 dark:text-teal-100">
+          <div class="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
             {{ (data()?.aiModelAutoMatched ?? 0) | number }}
           </div>
-          <div class="text-[11px] font-medium text-teal-700 dark:text-teal-400">
+          <div class="text-[11px] font-medium text-slate-500">
             تطابق فائق الدقة معتمد تلقائياً
           </div>
         </div>
 
-        <!-- Card 3: AI Review Queue by Confidence -->
-        <div class="rounded-xl border border-amber-500/20 bg-amber-50/30 p-3.5 space-y-1 dark:border-amber-950 dark:bg-amber-950/20">
-          <div class="flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300">
-            <span>طابور مراجعة الذكاء</span>
+        <!-- Card 3: Review Queue -->
+        <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/40">
+          <div class="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400">
+            <span>طابور المراجعة</span>
             <i class="pi pi-clock text-xs" aria-hidden="true"></i>
           </div>
-          <div class="text-xl font-black tabular-nums text-amber-950 dark:text-amber-100">
+          <div class="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
             {{ reviewTotal() | number }}
           </div>
-          <div class="flex items-center gap-1.5 text-[10px] font-bold tabular-nums text-amber-800 dark:text-amber-400">
-            <span class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-800 dark:text-emerald-300">
+          <div class="flex items-center gap-1 text-[10px] font-bold tabular-nums">
+            <span class="rounded bg-emerald-100/70 px-1 py-0.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
               {{ (data()?.reviewPendingHighConf ?? 0) | number }} عالي
             </span>
-            <span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-800 dark:text-amber-300">
+            <span class="rounded bg-amber-100/70 px-1 py-0.5 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
               {{ (data()?.reviewPendingMidConf ?? 0) | number }} متوسط
             </span>
-            <span class="rounded bg-rose-500/15 px-1.5 py-0.5 text-rose-800 dark:text-rose-300">
+            <span class="rounded bg-rose-100/70 px-1 py-0.5 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
               {{ (data()?.reviewPendingLowConf ?? 0) | number }} تدقيق
             </span>
           </div>
         </div>
 
-        <!-- Card 4: Single/Solo Catalog Products -->
-        <div class="rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/30">
-          <div class="flex items-center justify-between text-xs font-bold text-neutral-700 dark:text-neutral-300">
-            <span>منتجات كتالوج مفردة</span>
+        <!-- Card 4: Solo Catalog -->
+        <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 space-y-1 dark:border-neutral-800 dark:bg-neutral-800/40">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-neutral-400">
+            <span>كتالوج مفرد</span>
             <i class="pi pi-box text-xs" aria-hidden="true"></i>
           </div>
-          <div class="text-xl font-black tabular-nums text-neutral-800 dark:text-neutral-200">
+          <div class="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
             {{ (data()?.singleCatalogProducts ?? 0) | number }}
           </div>
-          <div class="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+          <div class="text-[11px] font-medium text-slate-500">
             منتجات مسجلة بدون منافس حالياً
           </div>
         </div>

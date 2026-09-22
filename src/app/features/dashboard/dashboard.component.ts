@@ -43,41 +43,38 @@ const PAGE_SIZE = 24;
     MarketSpreadWidgetComponent
   ],
   template: `
-    <section class="w-full space-y-6 px-4 py-4 sm:px-6 sm:py-6" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
-      <!-- Executive Header Banner -->
-      <div class="relative overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-[#14171C] sm:p-8">
-        <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div class="space-y-2">
-            <div class="flex flex-wrap items-center gap-2.5">
-              <span class="inline-flex items-center gap-2 rounded-full bg-[#C27938]/10 px-3 py-1 text-xs font-bold text-[#C27938] dark:bg-[#C27938]/20">
+    <section class="w-full space-y-5 px-4 py-4 sm:px-6 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
+      <!-- Executive Header Toolbar -->
+      <div class="relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-extrabold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
                 <span class="relative flex size-2">
-                  <span class="absolute inline-flex size-full animate-ping rounded-full bg-[#C27938] opacity-75"></span>
-                  <span class="relative inline-flex size-2 rounded-full bg-[#C27938]"></span>
+                  <span class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
+                  <span class="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
                 </span>
-                {{ 'dashboard.eyebrow' | t }}
+                النظام المباشر نشط
               </span>
 
-              @if (snapshot(); as snap) {
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-extrabold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                  <i class="pi pi-check-circle text-xs" aria-hidden="true"></i>
-                  النظام المباشر نشط
-                </span>
-              }
+              <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-neutral-800 dark:text-neutral-400">
+                {{ 'dashboard.eyebrow' | t }}
+              </span>
             </div>
 
-            <h1 class="text-balance text-3xl font-black text-[#181A1D] dark:text-white sm:text-4xl">
+            <h1 class="text-balance text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
               {{ 'dashboard.title' | t }}
             </h1>
-            <p class="max-w-2xl text-pretty text-sm font-medium text-[#8A735C] dark:text-neutral-400">
+            <p class="max-w-2xl text-pretty text-xs sm:text-sm font-medium text-slate-500 dark:text-neutral-400">
               {{ 'dashboard.subtitle' | t }}
             </p>
           </div>
 
           <!-- Controls & View Switcher Tabs -->
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-bold text-[#181A1D] shadow-xs hover:border-[#C27938] hover:bg-[#FBF8F4] active:scale-95 disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-800 dark:text-white"
+              class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 active:scale-95 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
               aria-label="تحديث الإحصائيات الفوري"
               [disabled]="snapshotLoading()"
               (click)="loadStats(true)"
@@ -86,14 +83,14 @@ const PAGE_SIZE = 24;
               <span>{{ 'dashboard.refreshStats' | t }}</span>
             </button>
 
-            <div class="inline-flex rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] p-1.5 dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="inline-flex rounded-xl border border-slate-200/80 bg-slate-100/70 p-1 dark:border-neutral-800 dark:bg-neutral-800/80">
               <button
                 type="button"
-                class="rounded-lg px-4 py-2 text-xs font-extrabold transition-opacity duration-150"
+                class="rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-colors duration-150"
                 [ngClass]="
                   activeTab() === 'analytics'
-                    ? 'bg-[#181A1D] text-white shadow-xs dark:bg-white dark:text-black'
-                    : 'text-[#8A735C] hover:text-[#181A1D] dark:text-neutral-400 dark:hover:text-white'
+                    ? 'bg-white text-slate-900 shadow-xs dark:bg-neutral-900 dark:text-white'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white'
                 "
                 (click)="activeTab.set('analytics')"
               >
@@ -101,11 +98,11 @@ const PAGE_SIZE = 24;
               </button>
               <button
                 type="button"
-                class="rounded-lg px-4 py-2 text-xs font-extrabold transition-opacity duration-150"
+                class="rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-colors duration-150"
                 [ngClass]="
                   activeTab() === 'catalog'
-                    ? 'bg-[#181A1D] text-white shadow-xs dark:bg-white dark:text-black'
-                    : 'text-[#8A735C] hover:text-[#181A1D] dark:text-neutral-400 dark:hover:text-white'
+                    ? 'bg-white text-slate-900 shadow-xs dark:bg-neutral-900 dark:text-white'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white'
                 "
                 (click)="openCatalogTab()"
               >
@@ -120,55 +117,21 @@ const PAGE_SIZE = 24;
       @if (activeTab() === 'analytics') {
         @if (snapshotLoading() && !snapshot()) {
           <!-- Dashboard Skeletons -->
-          <div class="space-y-6 animate-pulse">
-            <!-- 4 KPI Cards Skeletons -->
+          <div class="space-y-5 animate-pulse">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               @for (kpi of [1, 2, 3, 4]; track kpi) {
-                <div class="rounded-3xl border border-[#E8D5BE] bg-white p-5 space-y-3 dark:border-neutral-800 dark:bg-neutral-900 shadow-sm">
-                  <div class="flex items-center justify-between">
-                    <div class="size-10 rounded-2xl bg-[#F8EEE2] dark:bg-neutral-800"></div>
-                    <div class="h-5 w-16 rounded-full bg-[#F3E7D8] dark:bg-neutral-800"></div>
-                  </div>
-                  <div class="space-y-2 pt-1">
-                    <div class="h-4 w-28 rounded bg-[#F3E7D8] dark:bg-neutral-800"></div>
-                    <div class="h-8 w-24 rounded-lg bg-[#E8D5BE] dark:bg-neutral-700"></div>
-                    <div class="h-3.5 w-32 rounded bg-[#F3E7D8]/70 dark:bg-neutral-800/70"></div>
-                  </div>
-                </div>
+                <div class="h-28 rounded-2xl border border-slate-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"></div>
               }
             </div>
-
-            <!-- 2 Analytics Chart Skeletons -->
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div class="rounded-3xl border border-[#E8D5BE] bg-white p-6 space-y-5 dark:border-neutral-800 dark:bg-neutral-900 shadow-sm">
-                <div class="flex items-center justify-between">
-                  <div class="h-5 w-44 rounded bg-[#E8D5BE] dark:bg-neutral-700"></div>
-                  <div class="h-4 w-20 rounded bg-[#F3E7D8] dark:bg-neutral-800"></div>
-                </div>
-                <div class="h-64 rounded-2xl bg-[#FBF8F4] dark:bg-neutral-800/50 p-4 flex items-end justify-between gap-3">
-                  <div class="w-full h-1/3 rounded-t-lg bg-[#E8D5BE]/60"></div>
-                  <div class="w-full h-2/3 rounded-t-lg bg-[#E8D5BE]"></div>
-                  <div class="w-full h-1/2 rounded-t-lg bg-[#E8D5BE]/70"></div>
-                  <div class="w-full h-4/5 rounded-t-lg bg-[#C27938]/60"></div>
-                  <div class="w-full h-3/5 rounded-t-lg bg-[#E8D5BE]/80"></div>
-                  <div class="w-full h-2/5 rounded-t-lg bg-[#E8D5BE]/50"></div>
-                </div>
-              </div>
-
-              <div class="rounded-3xl border border-[#E8D5BE] bg-white p-6 space-y-5 dark:border-neutral-800 dark:bg-neutral-900 shadow-sm">
-                <div class="flex items-center justify-between">
-                  <div class="h-5 w-48 rounded bg-[#E8D5BE] dark:bg-neutral-700"></div>
-                  <div class="h-4 w-20 rounded bg-[#F3E7D8] dark:bg-neutral-800"></div>
-                </div>
-                <div class="h-64 rounded-2xl bg-[#FBF8F4] dark:bg-neutral-800/50 p-6 flex items-center justify-center">
-                  <div class="size-48 rounded-full border-8 border-[#E8D5BE] border-t-[#C27938]/70"></div>
-                </div>
-              </div>
+            <div class="h-32 rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"></div>
+            <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <div class="h-72 rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"></div>
+              <div class="h-72 rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"></div>
             </div>
           </div>
         } @else if (snapshotError()) {
-          <div class="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-sm font-bold text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200">
-            تعذر تحميل بيانات التحليلات الحية من السيرفر. تأكد من تشغيل الباك إند (.NET API).
+          <div class="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm font-bold text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200">
+            تعذر تحميل بيانات التحليلات الحية من السيرفر. تأكد من اتصال السيرفر.
           </div>
         } @else if (snapshot(); as snap) {
           <!-- Core Catalog KPI Cards Grid -->
@@ -177,11 +140,11 @@ const PAGE_SIZE = 24;
               [title]="'dashboard.totalProducts' | t"
               [value]="snap.totalPharmacyProducts"
               subtitle="منتجات مسعّرة ومسحوبة"
-              badge="نشط"
+              badge="نشط بالسوق"
               icon="pi-database"
-              accentColor="bg-[#C27938]"
-              iconBgClass="bg-[#F8EEE2] dark:bg-neutral-800"
-              iconColorClass="text-[#C27938]"
+              accentColor="bg-slate-800"
+              iconBgClass="bg-slate-100 dark:bg-neutral-800"
+              iconColorClass="text-slate-800 dark:text-white"
             />
 
             <app-kpi-card
@@ -191,7 +154,7 @@ const PAGE_SIZE = 24;
               badge="تنافس سوقي"
               icon="pi-sitemap"
               accentColor="bg-emerald-500"
-              iconBgClass="bg-emerald-100 dark:bg-emerald-950"
+              iconBgClass="bg-emerald-50 dark:bg-emerald-950"
               iconColorClass="text-emerald-600"
             />
 
@@ -203,7 +166,7 @@ const PAGE_SIZE = 24;
               [badge]="snap.pricesUpdated24h + ' سعر محدّث'"
               icon="pi-bolt"
               accentColor="bg-amber-500"
-              iconBgClass="bg-amber-100 dark:bg-amber-950"
+              iconBgClass="bg-amber-50 dark:bg-amber-950"
               iconColorClass="text-amber-600"
             />
 
@@ -215,7 +178,7 @@ const PAGE_SIZE = 24;
               [badge]="(snap.identityMatchPercent | number: '1.0-1') + '% هوية'"
               icon="pi-barcode"
               accentColor="bg-blue-500"
-              iconBgClass="bg-blue-100 dark:bg-blue-950"
+              iconBgClass="bg-blue-50 dark:bg-blue-950"
               iconColorClass="text-blue-600"
             />
           </div>
@@ -224,7 +187,7 @@ const PAGE_SIZE = 24;
           <app-market-spread-widget [data]="snap.priceSpread" />
 
           <!-- Main Pharmacy & Market Overlap Depth Grid -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <app-pharmacy-bar-chart
               [pharmacies]="snap.pharmacies"
             />
@@ -240,7 +203,7 @@ const PAGE_SIZE = 24;
           />
 
           <!-- Main Interactive Charts Grid: Trends & Categories -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
             <div class="lg:col-span-2">
               <app-trend-chart
                 [data]="snap.activityTrends"
@@ -255,93 +218,79 @@ const PAGE_SIZE = 24;
             </div>
           </div>
 
-          <!-- User, Marketing & Coupons KPI Cards Grid -->
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <app-kpi-card
-              [title]="'dashboard.totalUsers' | t"
-              [value]="snap.totalUsers"
-              [subtitle]="'المستخدمون النشطون: ' + (snap.activeUsers | number)"
-              badge="حسابات مسجلة"
-              icon="pi-users"
-              accentColor="bg-indigo-500"
-              iconBgClass="bg-indigo-100 dark:bg-indigo-950"
-              iconColorClass="text-indigo-600"
-            />
+          <!-- Platform Operations & Marketing Stats Bar -->
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 divide-y sm:divide-y-0 sm:divide-x sm:divide-x-reverse divide-slate-100 dark:divide-neutral-800">
+              <div class="sm:px-3 pt-1 sm:pt-0 space-y-0.5">
+                <span class="text-[11px] font-bold text-slate-400">المستخدمون المسجلون</span>
+                <div class="flex items-baseline gap-1.5">
+                  <span class="text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ snap.totalUsers | number }}</span>
+                  <span class="text-[10px] text-emerald-600 font-bold">({{ snap.activeUsers }} نشط)</span>
+                </div>
+              </div>
 
-            <app-kpi-card
-              [title]="'dashboard.totalCoupons' | t"
-              [value]="snap.totalCoupons"
-              [subtitle]="'نشط حالياً: ' + snap.activeCoupons"
-              badge="خصومات الصيدليات"
-              icon="pi-ticket"
-              accentColor="bg-purple-500"
-              iconBgClass="bg-purple-100 dark:bg-purple-950"
-              iconColorClass="text-purple-600"
-            />
+              <div class="sm:px-3 pt-1 sm:pt-0 space-y-0.5">
+                <span class="text-[11px] font-bold text-slate-400">البانرات الإعلانية</span>
+                <div class="flex items-baseline gap-1.5">
+                  <span class="text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ snap.totalBillboards | number }}</span>
+                  <span class="text-[10px] text-slate-500 font-semibold">{{ snap.activeBillboards }} نشط</span>
+                </div>
+              </div>
 
-            <app-kpi-card
-              [title]="'dashboard.totalCouponRedemptions' | t"
-              [value]="snap.totalCouponRedemptions"
-              subtitle="استخدامات ونسخ الأكواد"
-              badge="تفاعل قوي"
-              icon="pi-shopping-bag"
-              accentColor="bg-[#C27938]"
-              iconBgClass="bg-[#F8EEE2] dark:bg-neutral-800"
-              iconColorClass="text-[#C27938]"
-            />
+              <div class="sm:px-3 pt-1 sm:pt-0 space-y-0.5">
+                <span class="text-[11px] font-bold text-slate-400">المجلات والعروض</span>
+                <div class="flex items-baseline gap-1.5">
+                  <span class="text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ snap.totalMagazines | number }}</span>
+                  <span class="text-[10px] text-slate-500 font-semibold">{{ snap.activeMagazines }} مفعل</span>
+                </div>
+              </div>
 
-            <app-kpi-card
-              [title]="'dashboard.totalBillboards' | t"
-              [value]="snap.totalBillboards"
-              [subtitle]="'المجلات والعروض: ' + snap.totalMagazines"
-              [badge]="snap.activeBillboards + ' بنر نشط'"
-              icon="pi-images"
-              accentColor="bg-teal-500"
-              iconBgClass="bg-teal-100 dark:bg-teal-950"
-              iconColorClass="text-teal-600"
-            />
+              <div class="sm:px-3 pt-1 sm:pt-0 space-y-0.5">
+                <span class="text-[11px] font-bold text-slate-400">الكوبونات النشطة</span>
+                <div class="flex items-baseline gap-1.5">
+                  <span class="text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ snap.activeCoupons | number }}</span>
+                  <span class="text-[10px] text-slate-500 font-semibold">{{ snap.totalCouponRedemptions }} استخدام</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Coupons Section -->
-          <div>
-            <app-coupon-stats
-              [coupons]="snap.topCoupons"
-              [totalRedemptions]="snap.totalCouponRedemptions"
-            />
-          </div>
+          <!-- Coupons Section: Only render if coupons exist -->
+          @if (snap.totalCoupons > 0 || (snap.topCoupons && snap.topCoupons.length > 0)) {
+            <div>
+              <app-coupon-stats
+                [coupons]="snap.topCoupons"
+                [totalRedemptions]="snap.totalCouponRedemptions"
+              />
+            </div>
+          }
 
           <!-- Real-Time System Alert & Health Bar -->
-          <div class="rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div class="flex items-center gap-3">
-                <div class="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950">
-                  <i class="pi pi-shield text-lg" aria-hidden="true"></i>
+                <div class="flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950">
+                  <i class="pi pi-shield text-base" aria-hidden="true"></i>
                 </div>
                 <div>
-                  <h3 class="text-sm font-extrabold text-[#181A1D] dark:text-white">
+                  <h3 class="text-xs font-black text-slate-900 dark:text-white">
                     {{ 'dashboard.systemStatus' | t }}
                   </h3>
-                  <p class="text-xs font-medium text-[#8A735C] dark:text-neutral-400">
+                  <p class="text-[11px] font-medium text-slate-400">
                     مراقبة تنبيهات وحوادث النظام الحية
                   </p>
                 </div>
               </div>
 
-              <div class="flex flex-wrap items-center gap-4 text-xs font-bold">
-                <div class="flex items-center gap-2 rounded-xl bg-[#FBF8F4] px-3.5 py-2 dark:bg-neutral-800">
+              <div class="flex flex-wrap items-center gap-3 text-xs font-bold">
+                <div class="flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 dark:bg-neutral-800">
                   <i class="pi pi-bell text-amber-500" aria-hidden="true"></i>
-                  <span class="text-[#8A735C] dark:text-neutral-400">التنبيهات:</span>
-                  <span class="text-[#181A1D] dark:text-white font-black">{{ snap.openAlerts }}</span>
+                  <span class="text-slate-500">التنبيهات:</span>
+                  <span class="text-slate-900 dark:text-white font-black tabular-nums">{{ snap.openAlerts }}</span>
                 </div>
 
-                <div class="flex items-center gap-2 rounded-xl bg-[#FBF8F4] px-3.5 py-2 dark:bg-neutral-800">
+                <div class="flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 dark:bg-neutral-800">
                   <i class="pi pi-exclamation-triangle text-rose-500" aria-hidden="true"></i>
-                  <span class="text-[#8A735C] dark:text-neutral-400">حرجة:</span>
-                  <span class="text-rose-600 font-black">{{ snap.criticalAlerts }}</span>
-                </div>
-
-                <div class="flex items-center gap-2 rounded-xl bg-[#FBF8F4] px-3.5 py-2 dark:bg-neutral-800">
-                  <i class="pi pi-tag text-[#C27938]" aria-hidden="true"></i>
                   <span class="text-[#8A735C] dark:text-neutral-400">أسعار غريبة:</span>
                   <span class="text-[#C27938] font-black">{{ snap.suspiciousPrices }}</span>
                 </div>
