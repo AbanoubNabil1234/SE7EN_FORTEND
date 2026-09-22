@@ -470,7 +470,7 @@ export class ProductDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
-      const key = params.get('key')?.trim() || '';
+      const key = params.get('key')?.trim() || this.route.snapshot.paramMap.get('key')?.trim() || '';
       if (!key) {
         this.error.set(true);
         this.family.set(null);

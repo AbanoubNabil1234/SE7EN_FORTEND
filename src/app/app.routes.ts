@@ -34,6 +34,11 @@ export const routes: Routes = [
           import('./features/products/product-detail.component').then((m) => m.ProductDetailComponent)
       },
       {
+        path: 'products/:key',
+        loadComponent: () =>
+          import('./features/products/product-detail.component').then((m) => m.ProductDetailComponent)
+      },
+      {
         path: 'products',
         loadComponent: () =>
           import('./features/products/products-admin.component').then((m) => m.ProductsAdminComponent)

@@ -576,12 +576,14 @@ const DEFAULT_VISUAL: CategoryVisual = {
                       </div>
 
                       <!-- Product Title -->
-                      <h3
-                        class="line-clamp-2 text-xs font-bold leading-snug text-[#181A1D] group-hover:text-[#C27938] transition-colors dark:text-white"
+                      <a
+                        [routerLink]="['/products/detail']"
+                        [queryParams]="{ key: family.familyKey }"
+                        class="line-clamp-2 text-xs font-bold leading-snug text-[#181A1D] hover:text-[#C27938] transition-colors dark:text-white cursor-pointer"
                         [title]="familyTitle(family)"
                       >
                         {{ familyTitle(family) }}
-                      </h3>
+                      </a>
 
                       <!-- Strength / Size details if present -->
                       @if (family.strength) {
@@ -612,7 +614,8 @@ const DEFAULT_VISUAL: CategoryVisual = {
 
                       <!-- Action: Compare Prices -->
                       <a
-                        [routerLink]="['/products', family.familyKey]"
+                        [routerLink]="['/products/detail']"
+                        [queryParams]="{ key: family.familyKey }"
                         class="mt-2 flex items-center justify-center gap-2 rounded-2xl bg-[#181A1D] py-2 text-xs font-bold text-white transition-colors hover:bg-[#C27938] dark:bg-white dark:text-black dark:hover:bg-[#C27938] dark:hover:text-white"
                       >
                         <i class="pi pi-sliders-h text-xs"></i>
@@ -658,9 +661,14 @@ const DEFAULT_VISUAL: CategoryVisual = {
                         }
                       </div>
 
-                      <h3 class="text-sm font-bold text-[#181A1D] dark:text-white truncate" [title]="familyTitle(family)">
+                      <a
+                        [routerLink]="['/products/detail']"
+                        [queryParams]="{ key: family.familyKey }"
+                        class="text-sm font-bold text-[#181A1D] hover:text-[#C27938] transition-colors dark:text-white truncate block cursor-pointer"
+                        [title]="familyTitle(family)"
+                      >
                         {{ familyTitle(family) }}
-                      </h3>
+                      </a>
 
                       <div class="text-[11px] text-[#8A735C] dark:text-neutral-400">
                         {{ family.strength || 'معياري' }}
@@ -682,7 +690,8 @@ const DEFAULT_VISUAL: CategoryVisual = {
 
                     <!-- Action Button -->
                     <a
-                      [routerLink]="['/products', family.familyKey]"
+                      [routerLink]="['/products/detail']"
+                      [queryParams]="{ key: family.familyKey }"
                       class="shrink-0 flex items-center justify-center gap-2 rounded-2xl bg-[#181A1D] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#C27938] transition-colors dark:bg-white dark:text-black dark:hover:bg-[#C27938] dark:hover:text-white"
                     >
                       <span>مقارنة الأسعار</span>
