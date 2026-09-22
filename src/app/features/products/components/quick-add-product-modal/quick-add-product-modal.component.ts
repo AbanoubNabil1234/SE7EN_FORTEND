@@ -540,13 +540,20 @@ export class QuickAddProductModalComponent {
 
   readonly isRtl = computed(() => this.locale.locale() === 'ar');
 
+  private lastLoadedGroupCode: string | null = null;
+
   constructor() {
     effect(() => {
       const open = this.isOpen();
       const fam = this.family();
-      if (open && fam?.groupCode) {
-        this.loadAiSuggestions(fam.groupCode);
+      const code = fam?.groupCode;
+      if (open && code) {
+        if (this.lastLoadedGroupCode !== code) {
+          this.lastLoadedGroupCode = code;
+          this.loadAiSuggestions(code);
+        }
       } else {
+        this.lastLoadedGroupCode = null;
         this.aiSuggestions.set([]);
         this.searchQuery.set('');
         this.hits.set([]);
