@@ -585,7 +585,7 @@ interface CategoryOption {
                                 type="button"
                                 class="inline-flex min-h-9 items-center rounded-lg bg-[#181A1D] px-3 text-[11px] font-bold text-white hover:bg-black disabled:opacity-50"
                                 [disabled]="linkingId() === offer.pharmacyProductId || unlinkingId() === offer.pharmacyProductId"
-                                (click)="linkOffer(offer)"
+                                (click)="linkOffer(offer, family)"
                               >
                                 {{ 'productsAdmin.link' | t }}
                               </button>
@@ -595,7 +595,7 @@ interface CategoryOption {
                               class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/70 px-2.5 text-[11px] font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 disabled:opacity-50 transition-colors shadow-2xs"
                               [disabled]="unlinkingId() === offer.pharmacyProductId || linkingId() === offer.pharmacyProductId"
                               [title]="'productsAdmin.unlink' | t"
-                              (click)="unlinkOffer(offer)"
+                              (click)="unlinkOffer(offer, family)"
                             >
                               @if (unlinkingId() === offer.pharmacyProductId) {
                                 <i class="pi pi-spin pi-spinner text-xs"></i>
@@ -894,7 +894,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     this.linkDrafts.update((m) => ({ ...m, [id]: value }));
   }
 
-  linkOffer(offer: CatalogOffer): void {
+  linkOffer(offer: CatalogOffer, family?: CatalogFamily): void {
     const id = offer.pharmacyProductId;
     if (!id) return;
     const code = (this.linkDrafts()[id] || '').trim();
@@ -908,8 +908,13 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => this.linkingId.set(null)))
       .subscribe({
         next: (res) => {
+          this.removeOfferLocally(id);
           this.notifications.showSuccess(this.i18n.t('productsAdmin.linkedOk'), res.code);
-          this.reloadKeepingSelection();
+          if (family?.familyKey) {
+            this.refreshFamilyInPlace(family.familyKey);
+          } else {
+            this.reloadKeepingSelection();
+          }
         },
         error: () => {
           this.notifications.showError(
@@ -920,7 +925,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       });
   }
 
-  async unlinkOffer(offer: CatalogOffer): Promise<void> {
+  async unlinkOffer(offer: CatalogOffer, family?: CatalogFamily): Promise<void> {
     const id = offer.pharmacyProductId;
     if (!id) return;
     const confirmed = await this.confirmDialog.confirm({
@@ -942,7 +947,11 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
             this.i18n.t('productsAdmin.unlinkedOk'),
             this.pharmacyLabel(offer)
           );
-          this.reloadKeepingSelection();
+          if (family?.familyKey) {
+            this.refreshFamilyInPlace(family.familyKey);
+          } else {
+            this.reloadKeepingSelection();
+          }
         },
         error: () => {
           this.notifications.showError(
@@ -959,14 +968,32 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
         ...fam,
         packs: fam.packs.map((pack) => {
           const remainingOffers = pack.offers.filter((o) => o.pharmacyProductId !== pharmacyProductId);
+          const lowest = remainingOffers.length > 0 ? Math.min(...remainingOffers.map((o) => o.price)) : 0;
+          const highest = remainingOffers.length > 0 ? Math.max(...remainingOffers.map((o) => o.price)) : 0;
           return {
             ...pack,
             offers: remainingOffers,
-            pharmacyCount: remainingOffers.length
+            pharmacyCount: remainingOffers.length,
+            lowestPrice: lowest > 0 ? lowest : pack.lowestPrice,
+            highestPrice: highest > 0 ? highest : pack.highestPrice
           };
         })
       }))
     );
+  }
+
+  private refreshFamilyInPlace(familyKey: string): void {
+    if (!familyKey) return;
+    this.catalog.getFamilyByKey(familyKey).subscribe({
+      next: (freshFamily) => {
+        this.families.update((current) =>
+          current.map((f) => (f.familyKey === freshFamily.familyKey ? freshFamily : f))
+        );
+      },
+      error: () => {
+        this.reloadKeepingSelection();
+      }
+    });
   }
 
   openQuickAdd(family: CatalogFamily): void {
@@ -980,8 +1007,14 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   onQuickProductAdded(): void {
+    const fam = this.quickAddFamily();
     this.closeQuickAdd();
-    this.reloadKeepingSelection();
+    if (fam?.familyKey) {
+      this.openOfferKeys.update((keys) => new Set([...keys, fam.familyKey]));
+      this.refreshFamilyInPlace(fam.familyKey);
+    } else {
+      this.reloadKeepingSelection();
+    }
   }
 
   openMergeModal(family: CatalogFamily): void {

@@ -34,4 +34,5 @@ export abstract class CatalogBrowseRepository {
     masterProductId: string,
     barcode: string
   ): Observable<{ id: string; barcode: string }>;
+  abstract clearCache(): void;
 }

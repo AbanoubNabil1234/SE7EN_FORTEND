@@ -152,14 +152,23 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
         code
       })
       .pipe(
-        map((raw) => ({
-          code: String(raw['code'] ?? raw['Code'] ?? code),
-          familyKey: String(raw['familyKey'] ?? raw['FamilyKey'] ?? ''),
-          pharmacyProductId: String(raw['pharmacyProductId'] ?? raw['PharmacyProductId'] ?? pharmacyProductId),
-          masterProductId: String(raw['masterProductId'] ?? raw['MasterProductId'] ?? ''),
-          overrideId: String(raw['overrideId'] ?? raw['OverrideId'] ?? '')
-        }))
+        map((raw) => {
+          this.familiesCache.clear();
+          this.searchCache.clear();
+          return {
+            code: String(raw['code'] ?? raw['Code'] ?? code),
+            familyKey: String(raw['familyKey'] ?? raw['FamilyKey'] ?? ''),
+            pharmacyProductId: String(raw['pharmacyProductId'] ?? raw['PharmacyProductId'] ?? pharmacyProductId),
+            masterProductId: String(raw['masterProductId'] ?? raw['MasterProductId'] ?? ''),
+            overrideId: String(raw['overrideId'] ?? raw['OverrideId'] ?? '')
+          };
+        })
       );
+  }
+
+  clearCache(): void {
+    this.familiesCache.clear();
+    this.searchCache.clear();
   }
 
   unlinkOffer(pharmacyProductId: string): Observable<boolean> {
