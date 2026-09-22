@@ -71,6 +71,8 @@ const ROUTE_KEYS: Record<string, { eyebrow: string; title: string }> = {
         }
       </div>
 
+      <app-confirm-dialog />
+
       <div class="flex h-full gap-3 sm:gap-4">
         <app-sidebar [open]="sidebarOpen()" (closed)="sidebarOpen.set(false)" />
 

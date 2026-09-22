@@ -26,6 +26,7 @@ import { LocaleService } from '../../../core/services/locale.service';
         <div
           class="relative w-full max-w-md overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white p-6 shadow-2xl transition-all duration-200"
           [attr.dir]="isRtl() ? 'rtl' : 'ltr'"
+          [class.font-ar]="isRtl()"
         >
           <!-- Top Accent / Header with Icon -->
           <div class="flex items-start gap-4">
@@ -52,7 +53,7 @@ import { LocaleService } from '../../../core/services/locale.service';
           <div class="mt-6 flex items-center justify-end gap-3">
             <button
               type="button"
-              class="inline-flex h-10 items-center justify-center rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-semibold text-[#6B5A48] hover:bg-[#F8EEE2] hover:text-[#181A1D] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C27938]/30"
+              class="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-semibold text-[#6B5A48] hover:bg-[#F8EEE2] hover:text-[#181A1D] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C27938]/30"
               (click)="dialog.handleCancel()"
             >
               {{ options()?.cancelText || (isRtl() ? 'إلغاء' : 'Cancel') }}
@@ -60,7 +61,7 @@ import { LocaleService } from '../../../core/services/locale.service';
 
             <button
               type="button"
-              class="inline-flex h-10 items-center justify-center gap-2 rounded-xl px-5 text-xs font-bold text-white shadow-sm transition-all focus:outline-none focus:ring-2"
+              class="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-xs font-bold text-white shadow-sm transition-all focus:outline-none focus:ring-2"
               [ngClass]="confirmButtonClass()"
               (click)="dialog.handleConfirm()"
             >
@@ -69,6 +70,11 @@ import { LocaleService } from '../../../core/services/locale.service';
           </div>
         </div>
       </div>
+    }
+  `,
+  styles: `
+    .font-ar {
+      font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
     }
   `
 })
