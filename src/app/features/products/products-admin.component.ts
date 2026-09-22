@@ -122,20 +122,6 @@ interface CategoryOption {
                 </span>
               </button>
             </div>
-
-            <!-- Prominent Button to open the AI Match Review Modal -->
-            <button
-              type="button"
-              (click)="openAiReviewModal()"
-              class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-700 to-amber-600 px-4 py-2 text-sm font-extrabold text-white shadow-md shadow-emerald-600/20 hover:opacity-95 hover:shadow-lg transition-all cursor-pointer"
-              [title]="locale.isRtl() ? 'فتح نافذة تدقيق ومراجعة تطابقات الذكاء الاصطناعي' : 'Open AI Match Review Modal'"
-            >
-              <i class="pi pi-sparkles text-sm animate-pulse"></i>
-              <span>{{ locale.isRtl() ? 'مراجعة تطابقات AI (98%+)' : 'AI Match Review (98%+)' }}</span>
-              <span class="rounded-full bg-white/25 px-2 py-0.5 text-xs font-black tabular-nums">
-                {{ autoCatalogMatchCount() > 0 ? (autoCatalogMatchCount() | number) : '2,312' }}
-              </span>
-            </button>
           </div>
 
           @if (activeTab() === 'catalog') {
