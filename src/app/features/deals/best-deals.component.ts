@@ -508,19 +508,30 @@ export class BestDealsComponent implements OnInit {
   }
 
   saveSystemDefault(): void {
+    const val = Number(this.systemMinDiscount);
+    if (!Number.isFinite(val) || val < 0 || val > 80) {
+      this.notifications.showError(
+        this.locale.locale() === 'ar' ? 'يرجى إدخال نسبة خصم صحيحة بين 0% و 80%' : 'Please enter a valid discount between 0% and 80%'
+      );
+      return;
+    }
+
     this.savingSettings.set(true);
-    this.dealsRepo.updateSettings({ defaultMinDiscount: this.systemMinDiscount })
+    this.dealsRepo.updateSettings({ defaultMinDiscount: val })
       .pipe(finalize(() => this.savingSettings.set(false)))
       .subscribe({
         next: (res) => {
           this.settings.set(res);
+          this.systemMinDiscount = res.defaultMinDiscount;
           this.notifications.showSuccess(
-            this.locale.locale() === 'ar' ? 'تم حفظ نسبة الخصم الافتراضية للنظام بنجاح' : 'Default discount saved successfully'
+            this.locale.locale() === 'ar' ? `تم حفظ نسبة الخصم (${res.defaultMinDiscount}%) وتطبيقها على الموبايل والنظام بنجاح` : `Default discount (${res.defaultMinDiscount}%) saved and applied successfully`
           );
+          this.fetch(1, false);
         },
-        error: () => {
+        error: (err) => {
+          const msg = err?.error?.message || err?.message || '';
           this.notifications.showError(
-            this.locale.locale() === 'ar' ? 'تعذر حفظ الإعدادات' : 'Failed to save settings'
+            this.locale.locale() === 'ar' ? `تعذر حفظ الإعدادات: ${msg}` : `Failed to save settings: ${msg}`
           );
         }
       });
