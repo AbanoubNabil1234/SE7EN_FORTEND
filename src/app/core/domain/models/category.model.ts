@@ -7,5 +7,6 @@ export interface CategoryNode {
   parentId: string | null;
   sortOrder: number;
   productCount?: number;
+  imageUrl?: string | null;
   children: CategoryNode[];
 }

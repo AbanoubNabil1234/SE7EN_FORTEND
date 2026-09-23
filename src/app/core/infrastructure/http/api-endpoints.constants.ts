@@ -64,5 +64,6 @@ export const API_ENDPOINTS = {
   CUSTOMER_CONTENT_HELP: '/api/v1/content/help',
   CUSTOMER_CONTENT_TERMS: '/api/v1/content/terms',
   CUSTOMER_CONTENT_PRIVACY: '/api/v1/content/privacy',
-  DEALS_BEST: '/deals/best'
+  DEALS_BEST: '/deals/best',
+  ADMIN_CATEGORY_IMAGE: (id: string) => `/api/v1/admin/categories/${id}/image`
 } as const;

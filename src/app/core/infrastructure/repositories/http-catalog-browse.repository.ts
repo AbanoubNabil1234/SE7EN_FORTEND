@@ -288,6 +288,43 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       );
   }
 
+  uploadCategoryImage(
+    categoryId: string,
+    file: File
+  ): Observable<{ id: string; slug: string; imageUrl: string; message: string }> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.http
+      .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_CATEGORY_IMAGE(categoryId), formData)
+      .pipe(
+        map((raw) => {
+          this.structureCache.clear();
+          return {
+            id: String(raw['id'] ?? raw['Id'] ?? categoryId),
+            slug: String(raw['slug'] ?? raw['Slug'] ?? ''),
+            imageUrl: String(raw['imageUrl'] ?? raw['ImageUrl'] ?? ''),
+            message: String(raw['message'] ?? raw['Message'] ?? '')
+          };
+        })
+      );
+  }
+
+  deleteCategoryImage(categoryId: string): Observable<{ id: string; slug: string; imageUrl: string | null }> {
+    return this.http
+      .delete<Record<string, unknown>>(API_ENDPOINTS.ADMIN_CATEGORY_IMAGE(categoryId))
+      .pipe(
+        map((raw) => {
+          this.structureCache.clear();
+          return {
+            id: String(raw['id'] ?? raw['Id'] ?? categoryId),
+            slug: String(raw['slug'] ?? raw['Slug'] ?? ''),
+            imageUrl: null
+          };
+        })
+      );
+  }
+
   private normalizeNodes(rows: unknown[]): CategoryNode[] {
     return rows
       .map((row) => this.normalizeNode(row))
@@ -306,6 +343,8 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     const children = Array.isArray(childrenRaw) ? this.normalizeNodes(childrenRaw) : [];
     const nameEn = String(r['nameEn'] ?? r['NameEn'] ?? '').trim();
     const countRaw = r['productCount'] ?? r['ProductCount'];
+    const imageUrlRaw = r['imageUrl'] ?? r['ImageUrl'];
+    const imageUrl = imageUrlRaw ? String(imageUrlRaw) : null;
 
     return {
       id,
@@ -320,6 +359,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       parentId: (r['parentId'] ?? r['ParentId'] ?? null) as string | null,
       sortOrder: Number(r['sortOrder'] ?? r['SortOrder'] ?? 0),
       productCount: countRaw == null ? undefined : Number(countRaw),
+      imageUrl,
       children
     };
   }

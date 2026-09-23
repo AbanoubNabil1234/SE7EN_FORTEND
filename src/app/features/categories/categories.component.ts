@@ -213,10 +213,14 @@ const DEFAULT_VISUAL: CategoryVisual = {
                     >
                       <div class="flex items-center gap-2.5 min-w-0 flex-1">
                         <div
-                          class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-xs transition-transform group-hover:scale-105"
+                          class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-xs transition-transform group-hover:scale-105 overflow-hidden"
                           [ngClass]="getVisual(root.slug).gradient"
                         >
-                          <i [class]="getVisual(root.slug).icon" class="text-sm"></i>
+                          @if (root.imageUrl) {
+                            <img [src]="root.imageUrl" [alt]="root.name" class="size-full object-cover" />
+                          } @else {
+                            <i [class]="getVisual(root.slug).icon" class="text-sm"></i>
+                          }
                         </div>
                         <div class="min-w-0 flex-1">
                           <div class="truncate text-xs font-bold text-[#181A1D] dark:text-white">
@@ -314,10 +318,19 @@ const DEFAULT_VISUAL: CategoryVisual = {
               <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#EDE0D0]/80 pb-4 dark:border-neutral-800">
                 <div class="flex items-center gap-3.5">
                   <div
-                    class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm"
-                    [ngClass]="getVisual(primary.slug).gradient"
+                    class="relative group/avatar flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm overflow-hidden border border-[#E8D5BE] dark:border-neutral-700 cursor-pointer"
+                    [ngClass]="getVisual(activeCategoryNode()!.slug || primary.slug).gradient"
+                    (click)="openImageModal(activeCategoryNode())"
+                    title="انقر لتغيير صورة القسم"
                   >
-                    <i [class]="getVisual(primary.slug).icon" class="text-xl"></i>
+                    @if (activeCategoryNode()!.imageUrl) {
+                      <img [src]="activeCategoryNode()!.imageUrl" [alt]="activeCategoryTitle()" class="size-full object-cover transition-transform group-hover/avatar:scale-105" />
+                    } @else {
+                      <i [class]="getVisual(activeCategoryNode()!.slug || primary.slug).icon" class="text-2xl"></i>
+                    }
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity text-white">
+                      <i class="pi pi-camera text-base"></i>
+                    </div>
                   </div>
                   <div>
                     <!-- Breadcrumbs -->
@@ -339,10 +352,21 @@ const DEFAULT_VISUAL: CategoryVisual = {
                   </div>
                 </div>
 
-                <!-- Total Count Badge -->
-                <div class="flex items-center gap-2 self-start sm:self-auto rounded-2xl bg-[#F8EEE2] px-4 py-2 text-xs font-extrabold text-[#C27938] dark:bg-neutral-800">
-                  <i class="pi pi-box"></i>
-                  <span>{{ total() | number }} منتج مسعر متوفر</span>
+                <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    (click)="openImageModal(activeCategoryNode())"
+                    class="flex items-center gap-2 rounded-2xl border border-[#C27938]/30 bg-[#F8EEE2] px-3.5 py-2 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-all shadow-xs dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-[#C27938]"
+                  >
+                    <i class="pi pi-camera text-xs"></i>
+                    <span>تغيير صورة {{ currentSubNode() ? 'القسم الفرعي' : 'القسم' }}</span>
+                  </button>
+
+                  <!-- Total Count Badge -->
+                  <div class="flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2 text-xs font-extrabold text-slate-700 dark:bg-neutral-800 dark:text-neutral-300">
+                    <i class="pi pi-box"></i>
+                    <span>{{ total() | number }} منتج مسعر متوفر</span>
+                  </div>
                 </div>
               </div>
 
@@ -389,6 +413,9 @@ const DEFAULT_VISUAL: CategoryVisual = {
                         [class.dark:text-neutral-200]="selectedSubSlug() !== sub.slug"
                         (click)="onSelectSub(primary, sub)"
                       >
+                        @if (sub.imageUrl) {
+                          <img [src]="sub.imageUrl" [alt]="sub.name" class="size-4 rounded-md object-cover" />
+                        }
                         <span>{{ locale.isRtl() ? sub.name : (sub.nameEn || sub.name) }}</span>
                         <span
                           class="rounded-full px-1.5 py-0.2 text-[10px] font-bold"
@@ -848,6 +875,142 @@ const DEFAULT_VISUAL: CategoryVisual = {
         </div>
       }
 
+      <!-- Category Image Upload Modal -->
+      @if (imageModalOpen() && targetCategory(); as cat) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn" (click)="closeImageModal()">
+          <div
+            class="relative w-full max-w-md overflow-hidden rounded-3xl border border-[#E8D5BE] bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
+            (click)="$event.stopPropagation()"
+          >
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-[#EDE0D0]/80 pb-4 dark:border-neutral-800">
+              <div class="flex items-center gap-3">
+                <div class="flex size-10 items-center justify-center rounded-xl bg-[#F8EEE2] text-[#C27938] dark:bg-neutral-800">
+                  <i class="pi pi-image text-lg"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-black text-[#181A1D] dark:text-white">
+                    تغيير صورة القسم
+                  </h3>
+                  <p class="text-xs font-medium text-[#8A735C] dark:text-neutral-400">
+                    {{ locale.isRtl() ? cat.name : (cat.nameEn || cat.name) }}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="closeImageModal()"
+                [disabled]="uploadingImage()"
+                class="flex size-8 items-center justify-center rounded-full text-[#A68B6D] hover:bg-[#F8EEE2] hover:text-[#181A1D] transition-colors dark:hover:bg-neutral-800"
+              >
+                <i class="pi pi-times text-sm"></i>
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="py-5 space-y-4">
+              <!-- Image Preview Box -->
+              <div class="flex flex-col items-center justify-center">
+                <div class="relative size-36 overflow-hidden rounded-2xl border-2 border-dashed border-[#E8D5BE] bg-[#FBF8F4] dark:border-neutral-700 dark:bg-neutral-950 flex items-center justify-center group shadow-inner">
+                  @if (imagePreviewUrl()) {
+                    <img
+                      [src]="imagePreviewUrl()!"
+                      alt="Preview"
+                      class="size-full object-cover"
+                    />
+                  } @else {
+                    <div class="text-center p-3 text-[#A68B6D]">
+                      <i class="pi pi-image text-3xl mb-1 block opacity-50"></i>
+                      <span class="text-[11px] font-medium">لا توجد صورة حالياً</span>
+                    </div>
+                  }
+                </div>
+
+                @if (selectedImageFile()) {
+                  <span class="mt-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    ملف جديد مختار: {{ selectedImageFile()!.name }}
+                  </span>
+                }
+              </div>
+
+              <!-- File Input Trigger -->
+              <div class="space-y-1.5">
+                <label class="flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-750">
+                  <i class="pi pi-upload text-sm text-[#C27938]"></i>
+                  <span>{{ imagePreviewUrl() ? 'اختيار صورة بديلة من الجهاز' : 'رفع صورة من الجهاز' }}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    class="sr-only"
+                    [disabled]="uploadingImage()"
+                    (change)="onImagePicked($event)"
+                  />
+                </label>
+                <p class="text-center text-[10px] font-medium text-[#8A735C] dark:text-neutral-400">
+                  الصيغ المدعومة: PNG, JPG, WebP (سيتم تحويلها تلقائياً إلى WebP)
+                </p>
+              </div>
+
+              <!-- Success / Error Alerts -->
+              @if (uploadSuccessMessage()) {
+                <div class="rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-300 animate-fadeIn">
+                  <i class="pi pi-check-circle me-1.5"></i>
+                  {{ uploadSuccessMessage() }}
+                </div>
+              }
+              @if (uploadErrorMessage()) {
+                <div class="rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:border-rose-800 dark:text-rose-300 animate-fadeIn">
+                  <i class="pi pi-exclamation-circle me-1.5"></i>
+                  {{ uploadErrorMessage() }}
+                </div>
+              }
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-between border-t border-[#EDE0D0]/80 pt-4 dark:border-neutral-800">
+              <div>
+                @if (cat.imageUrl) {
+                  <button
+                    type="button"
+                    (click)="deleteCategoryImage(cat)"
+                    [disabled]="uploadingImage()"
+                    class="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline disabled:opacity-50"
+                  >
+                    <i class="pi pi-trash me-1"></i>
+                    حذف الصورة
+                  </button>
+                }
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="closeImageModal()"
+                  [disabled]="uploadingImage()"
+                  class="rounded-xl border border-[#E8D5BE] px-4 py-2 text-xs font-bold text-[#6B5A48] hover:bg-[#F8EEE2] transition-colors dark:border-neutral-700 dark:text-neutral-300"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  (click)="submitCategoryImage()"
+                  [disabled]="!selectedImageFile() || uploadingImage()"
+                  class="flex items-center gap-2 rounded-xl bg-[#C27938] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#A86428] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  @if (uploadingImage()) {
+                    <i class="pi pi-spin pi-spinner text-xs"></i>
+                    <span>جاري الحفظ...</span>
+                  } @else {
+                    <i class="pi pi-check text-xs"></i>
+                    <span>حفظ الصورة</span>
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
     </section>
   `,
   styles: [`
@@ -907,6 +1070,15 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   private searchSub?: Subscription;
   private routeSub?: Subscription;
 
+  // Category Image Upload State
+  readonly imageModalOpen = signal<boolean>(false);
+  readonly targetCategory = signal<CategoryNode | null>(null);
+  readonly selectedImageFile = signal<File | null>(null);
+  readonly imagePreviewUrl = signal<string | null>(null);
+  readonly uploadingImage = signal<boolean>(false);
+  readonly uploadSuccessMessage = signal<string | null>(null);
+  readonly uploadErrorMessage = signal<string | null>(null);
+
   // Computed Values
   readonly activeSlug = computed(() => this.selectedSubSlug() || this.selectedPrimarySlug());
 
@@ -928,6 +1100,8 @@ export class CategoriesComponent implements OnInit, OnDestroy {
     if (!primary || !subSlug || !primary.children) return null;
     return primary.children.find((c) => c.slug === subSlug) ?? null;
   });
+
+  readonly activeCategoryNode = computed(() => this.currentSubNode() ?? this.currentPrimaryNode());
 
   readonly activeCategoryTitle = computed(() => {
     const sub = this.currentSubNode();
@@ -1210,5 +1384,104 @@ export class CategoriesComponent implements OnInit, OnDestroy {
           if (!append) this.products.set([]);
         }
       });
+  }
+
+  openImageModal(category: CategoryNode | null): void {
+    if (!category) return;
+    this.targetCategory.set(category);
+    this.selectedImageFile.set(null);
+    this.imagePreviewUrl.set(category.imageUrl || null);
+    this.uploadSuccessMessage.set(null);
+    this.uploadErrorMessage.set(null);
+    this.imageModalOpen.set(true);
+  }
+
+  closeImageModal(): void {
+    if (this.uploadingImage()) return;
+    this.imageModalOpen.set(false);
+    this.targetCategory.set(null);
+    this.selectedImageFile.set(null);
+    this.imagePreviewUrl.set(null);
+  }
+
+  onImagePicked(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.uploadErrorMessage.set('يرجى اختيار ملف صورة صالح (PNG, JPG, WebP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.uploadErrorMessage.set('حجم الصورة كبير جداً، الحد الأقصى 5 ميجابايت.');
+      return;
+    }
+
+    this.uploadErrorMessage.set(null);
+    this.selectedImageFile.set(file);
+    const reader = new FileReader();
+    reader.onload = () => this.imagePreviewUrl.set(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  submitCategoryImage(): void {
+    const cat = this.targetCategory();
+    const file = this.selectedImageFile();
+    if (!cat || !file) return;
+
+    this.uploadingImage.set(true);
+    this.uploadErrorMessage.set(null);
+    this.uploadSuccessMessage.set(null);
+
+    this.catalog.uploadCategoryImage(cat.id, file).subscribe({
+      next: (res) => {
+        this.uploadingImage.set(false);
+        this.uploadSuccessMessage.set('تم حفظ وتحديث صورة القسم بنجاح!');
+        this.updateNodeImageUrlInTree(cat.id, res.imageUrl);
+        setTimeout(() => this.closeImageModal(), 1200);
+      },
+      error: (err) => {
+        this.uploadingImage.set(false);
+        const msg = err?.error?.message || 'حدث خطأ أثناء رفع الصورة.';
+        this.uploadErrorMessage.set(msg);
+      }
+    });
+  }
+
+  deleteCategoryImage(cat: CategoryNode | null): void {
+    if (!cat) return;
+    if (!confirm('هل أنت متأكد من حذف صورة هذا القسم؟')) return;
+
+    this.uploadingImage.set(true);
+    this.catalog.deleteCategoryImage(cat.id).subscribe({
+      next: () => {
+        this.uploadingImage.set(false);
+        this.updateNodeImageUrlInTree(cat.id, null);
+        this.imagePreviewUrl.set(null);
+        this.uploadSuccessMessage.set('تم حذف صورة القسم بنجاح.');
+        setTimeout(() => this.closeImageModal(), 1000);
+      },
+      error: (err) => {
+        this.uploadingImage.set(false);
+        this.uploadErrorMessage.set(err?.error?.message || 'فشل حذف الصورة.');
+      }
+    });
+  }
+
+  private updateNodeImageUrlInTree(id: string, imageUrl: string | null): void {
+    const updateNodes = (nodes: CategoryNode[]): CategoryNode[] => {
+      return nodes.map((n) => {
+        if (n.id === id) {
+          return { ...n, imageUrl };
+        }
+        if (n.children && n.children.length > 0) {
+          return { ...n, children: updateNodes(n.children) };
+        }
+        return n;
+      });
+    };
+    this.roots.update((current) => updateNodes(current));
   }
 }

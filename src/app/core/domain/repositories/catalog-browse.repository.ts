@@ -34,5 +34,10 @@ export abstract class CatalogBrowseRepository {
     masterProductId: string,
     barcode: string
   ): Observable<{ id: string; barcode: string }>;
+  abstract uploadCategoryImage(
+    categoryId: string,
+    file: File
+  ): Observable<{ id: string; slug: string; imageUrl: string; message: string }>;
+  abstract deleteCategoryImage(categoryId: string): Observable<{ id: string; slug: string; imageUrl: string | null }>;
   abstract clearCache(): void;
 }
