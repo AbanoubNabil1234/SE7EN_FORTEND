@@ -206,10 +206,18 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       );
   }
 
-  searchPharmacyProducts(query: string, take: number = 30): Observable<PharmacyProductSearchHit[]> {
-    const params = new HttpParams()
+  searchPharmacyProducts(
+    query: string,
+    pharmacyCode?: string | null,
+    take: number = 30
+  ): Observable<PharmacyProductSearchHit[]> {
+    let params = new HttpParams()
       .set('q', query.trim())
       .set('take', String(take));
+
+    if (pharmacyCode && pharmacyCode !== 'all') {
+      params = params.set('pharmacy', pharmacyCode.trim().toLowerCase());
+    }
 
     return this.http
       .get<Array<Record<string, unknown>>>(API_ENDPOINTS.ADMIN_PHARMACY_PRODUCT_SEARCH, { params })

@@ -11,7 +11,11 @@ import {
   catalogFamilyTitle,
   familyHeroImage
 } from '../../../../core/domain/models/catalog-family.model';
-import { pharmacyLogo as resolvePharmacyLogo } from '../../../../core/domain/pharmacy-brands';
+import {
+  PHARMACY_BRANDS,
+  PharmacyBrand,
+  pharmacyLogo as resolvePharmacyLogo
+} from '../../../../core/domain/pharmacy-brands';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -122,8 +126,84 @@ import { ProxyImgPipe } from '../../../../shared/pipes/proxy-img.pipe';
             </div>
           </div>
 
-          <!-- Search Input Section -->
-          <div class="p-4 border-b border-[#EDE0D0] bg-white space-y-2">
+          <!-- Search & Pharmacy Filter Section -->
+          <div class="p-4 border-b border-[#EDE0D0] bg-white space-y-3">
+            <!-- Pharmacy Selection Row (Only shows pharmacies NOT in this product) -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-[#8A735C]">
+                <i class="pi pi-filter text-[11px] text-[#C27938]"></i>
+                <span>{{ 'quickAdd.selectPharmacy' | t }}:</span>
+                @if (availablePharmacies().length > 0) {
+                  <span class="rounded-full bg-[#F8EEE2] px-2 py-0.5 text-[10px] font-extrabold text-[#C27938]">
+                    {{ availablePharmacies().length }} {{ 'quickAdd.missingCount' | t }}
+                  </span>
+                }
+              </div>
+
+              @if (availablePharmacies().length > 0) {
+                <div class="relative w-full sm:w-64">
+                  <select
+                    class="w-full appearance-none min-h-9 ps-8 pe-8 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] text-xs font-bold text-[#181A1D] outline-none transition-all focus:border-[#C27938] focus:bg-white focus:ring-2 focus:ring-[#C27938]/15 cursor-pointer shadow-2xs"
+                    [ngModel]="selectedPharmacy()"
+                    (ngModelChange)="onPharmacyChange($event)"
+                  >
+                    <option value="all">
+                      {{ 'quickAdd.allMissingPharmacies' | t }} ({{ availablePharmacies().length }})
+                    </option>
+                    @for (pharmacy of availablePharmacies(); track pharmacy.code) {
+                      <option [value]="pharmacy.code">
+                        {{ isRtl() ? pharmacy.nameAr : pharmacy.nameEn }}
+                      </option>
+                    }
+                  </select>
+                  <!-- Start Icon / Selected Logo -->
+                  <span class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
+                    @if (selectedPharmacyBrand(); as b) {
+                      <img [src]="b.icon || b.logo" [alt]="b.nameEn" class="size-4 object-contain rounded-full bg-white" />
+                    } @else {
+                      <i class="pi pi-shop text-xs text-[#C27938]"></i>
+                    }
+                  </span>
+                  <!-- Dropdown arrow -->
+                  <span class="absolute inset-y-0 end-0 flex items-center pe-2.5 pointer-events-none text-[#8A735C]">
+                    <i class="pi pi-chevron-down text-[10px]"></i>
+                  </span>
+                </div>
+              } @else {
+                <div class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800">
+                  <i class="pi pi-check-circle text-xs text-emerald-600"></i>
+                  <span>{{ 'quickAdd.allPharmaciesPresent' | t }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Quick Pill Chips for fast 1-click filtering -->
+            @if (availablePharmacies().length > 0) {
+              <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold border transition-colors shrink-0 cursor-pointer"
+                  [ngClass]="selectedPharmacy() === 'all' ? 'bg-[#181A1D] text-white border-[#181A1D]' : 'bg-[#FBF8F4] text-[#8A735C] border-[#E8D5BE] hover:bg-[#F8EEE2]'"
+                  (click)="onPharmacyChange('all')"
+                >
+                  <i class="pi pi-th-large text-[10px]"></i>
+                  <span>{{ 'quickAdd.allMissingPharmacies' | t }}</span>
+                </button>
+                @for (p of availablePharmacies(); track p.code) {
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold border transition-colors shrink-0 cursor-pointer"
+                    [ngClass]="selectedPharmacy() === p.code ? 'bg-[#C27938] text-white border-[#C27938] shadow-xs' : 'bg-[#FBF8F4] text-[#8A735C] border-[#E8D5BE] hover:bg-[#F8EEE2]'"
+                    (click)="onPharmacyChange(p.code)"
+                  >
+                    <img [src]="p.icon || p.logo" [alt]="p.nameEn" class="size-3.5 object-contain rounded-full bg-white shrink-0" />
+                    <span>{{ isRtl() ? p.nameAr : p.nameEn }}</span>
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Search Input Box -->
             <div class="relative flex items-center">
               <span class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-[#A68B6D]">
                 <i class="pi pi-search text-sm"></i>
@@ -528,6 +608,7 @@ export class QuickAddProductModalComponent {
   readonly familyMerged = output<GroupCodeMergeResult>();
 
   readonly searchQuery = signal<string>('');
+  readonly selectedPharmacy = signal<string>('all');
   readonly hits = signal<PharmacyProductSearchHit[]>([]);
   readonly aiSuggestions = signal<FamilyAiSuggestion[]>([]);
   readonly loading = signal<boolean>(false);
@@ -540,6 +621,35 @@ export class QuickAddProductModalComponent {
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
 
   readonly isRtl = computed(() => this.locale.locale() === 'ar');
+
+  readonly existingPharmacyCodes = computed<Set<string>>(() => {
+    const fam = this.family();
+    const set = new Set<string>();
+    if (!fam?.packs) return set;
+    for (const pack of fam.packs) {
+      if (pack.offers) {
+        for (const offer of pack.offers) {
+          if (offer.pharmacyCode) {
+            set.add(offer.pharmacyCode.trim().toLowerCase());
+          }
+        }
+      }
+    }
+    return set;
+  });
+
+  readonly availablePharmacies = computed<readonly PharmacyBrand[]>(() => {
+    const existing = this.existingPharmacyCodes();
+    return PHARMACY_BRANDS.filter(
+      (b) => !existing.has(b.code.toLowerCase()) && b.code.toLowerCase() !== 'lemon'
+    );
+  });
+
+  readonly selectedPharmacyBrand = computed<PharmacyBrand | null>(() => {
+    const code = this.selectedPharmacy();
+    if (!code || code === 'all') return null;
+    return PHARMACY_BRANDS.find((b) => b.code.toLowerCase() === code.toLowerCase()) ?? null;
+  });
 
   private lastLoadedGroupCode: string | null = null;
 
@@ -557,6 +667,7 @@ export class QuickAddProductModalComponent {
         this.lastLoadedGroupCode = null;
         this.aiSuggestions.set([]);
         this.searchQuery.set('');
+        this.selectedPharmacy.set('all');
         this.hits.set([]);
         this.hasSearched.set(false);
       }
@@ -644,6 +755,15 @@ export class QuickAddProductModalComponent {
     return q.startsWith('G-') && q.length >= 4;
   }
 
+  onPharmacyChange(code: string): void {
+    this.selectedPharmacy.set(code);
+    const query = this.searchQuery().trim();
+    if (query.length >= 2) {
+      this.loading.set(true);
+      this.executeSearch(query, code);
+    }
+  }
+
   onSearchInput(query: string): void {
     this.searchQuery.set(query);
     if (this.searchDebounceTimer) {
@@ -659,7 +779,7 @@ export class QuickAddProductModalComponent {
 
     this.loading.set(true);
     this.searchDebounceTimer = setTimeout(() => {
-      this.executeSearch(trimmed);
+      this.executeSearch(trimmed, this.selectedPharmacy());
     }, 300);
   }
 
@@ -670,13 +790,21 @@ export class QuickAddProductModalComponent {
     this.loading.set(false);
   }
 
-  private executeSearch(term: string): void {
+  private executeSearch(term: string, pharmacyCode: string = this.selectedPharmacy()): void {
+    const code = pharmacyCode === 'all' ? null : pharmacyCode;
     this.catalog
-      .searchPharmacyProducts(term, 30)
+      .searchPharmacyProducts(term, code, 30)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (results) => {
-          this.hits.set(results);
+          const existing = this.existingPharmacyCodes();
+          const filtered = results.filter((r) => {
+            if (code) {
+              return r.pharmacyCode.toLowerCase() === code.toLowerCase();
+            }
+            return !existing.has(r.pharmacyCode.toLowerCase()) && r.pharmacyCode.toLowerCase() !== 'lemon';
+          });
+          this.hits.set(filtered);
           this.hasSearched.set(true);
         },
         error: () => {
@@ -772,6 +900,7 @@ export class QuickAddProductModalComponent {
 
   onClose(): void {
     this.clearSearch();
+    this.selectedPharmacy.set('all');
     this.targetImageError.set(false);
     this.close.emit();
   }

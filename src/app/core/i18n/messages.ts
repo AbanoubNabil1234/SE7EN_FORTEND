@@ -612,6 +612,10 @@ export const messagesAr: MessageTree = {
     alreadyLinked: 'عائلة',
     targetProduct: 'المنتج المراد الإضافة إليه',
     currentOffers: 'عروض حالية',
+    selectPharmacy: 'تحديد الصيدلية',
+    allMissingPharmacies: 'كل الصيدليات غير المضافة',
+    allPharmaciesPresent: 'جميع الصيدليات مضافة بالفعل لهذا المنتج',
+    missingCount: 'صيدليات ناقصة',
     conflictPharmacy: 'هذه الصيدلية تمتلك عرضاً بالفعل في هذه العائلة.',
     linkFailed: 'تعذر إضافة المنتج للعائلة — يرجى التحقق وإعادة المحاولة.'
   },
@@ -1370,6 +1374,10 @@ export const messagesEn: MessageTree = {
     alreadyLinked: 'Family',
     targetProduct: 'Target Product (Adding To)',
     currentOffers: 'current offers',
+    selectPharmacy: 'Select Pharmacy',
+    allMissingPharmacies: 'All Missing Pharmacies',
+    allPharmaciesPresent: 'All pharmacies are already added to this product',
+    missingCount: 'missing pharmacies',
     conflictPharmacy: 'This pharmacy already has an offer in this family.',
     linkFailed: 'Failed to add product to family — please check and retry.'
   },
