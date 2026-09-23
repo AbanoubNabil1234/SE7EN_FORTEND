@@ -13,6 +13,7 @@ import {
 } from '../../core/domain/models/catalog-family.model';
 import { filterCategoryTree } from '../../core/domain/category-display';
 import { LocaleService } from '../../core/services/locale.service';
+import { resolveApiUrl } from '../../core/infrastructure/http/api-origin';
 
 interface CategoryVisual {
   icon: string;
@@ -216,8 +217,13 @@ const DEFAULT_VISUAL: CategoryVisual = {
                           class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-xs transition-transform group-hover:scale-105 overflow-hidden"
                           [ngClass]="getVisual(root.slug).gradient"
                         >
-                          @if (root.imageUrl) {
-                            <img [src]="root.imageUrl" [alt]="root.name" class="size-full object-cover" />
+                          @if (hasValidImage(root.imageUrl)) {
+                            <img
+                              [src]="resolveApiUrl(root.imageUrl)"
+                              [alt]="root.name"
+                              (error)="onImageError(root.imageUrl)"
+                              class="size-full object-cover"
+                            />
                           } @else {
                             <i [class]="getVisual(root.slug).icon" class="text-sm"></i>
                           }
@@ -323,8 +329,13 @@ const DEFAULT_VISUAL: CategoryVisual = {
                     (click)="openImageModal(activeCategoryNode())"
                     title="انقر لتغيير صورة القسم"
                   >
-                    @if (activeCategoryNode()!.imageUrl) {
-                      <img [src]="activeCategoryNode()!.imageUrl" [alt]="activeCategoryTitle()" class="size-full object-cover transition-transform group-hover/avatar:scale-105" />
+                    @if (hasValidImage(activeCategoryNode()!.imageUrl)) {
+                      <img
+                        [src]="resolveApiUrl(activeCategoryNode()!.imageUrl)"
+                        [alt]="activeCategoryTitle()"
+                        (error)="onImageError(activeCategoryNode()!.imageUrl)"
+                        class="size-full object-cover transition-transform group-hover/avatar:scale-105"
+                      />
                     } @else {
                       <i [class]="getVisual(activeCategoryNode()!.slug || primary.slug).icon" class="text-2xl"></i>
                     }
@@ -413,8 +424,13 @@ const DEFAULT_VISUAL: CategoryVisual = {
                         [class.dark:text-neutral-200]="selectedSubSlug() !== sub.slug"
                         (click)="onSelectSub(primary, sub)"
                       >
-                        @if (sub.imageUrl) {
-                          <img [src]="sub.imageUrl" [alt]="sub.name" class="size-4 rounded-md object-cover" />
+                        @if (hasValidImage(sub.imageUrl)) {
+                          <img
+                            [src]="resolveApiUrl(sub.imageUrl)"
+                            [alt]="sub.name"
+                            (error)="onImageError(sub.imageUrl)"
+                            class="size-4 rounded-md object-cover"
+                          />
                         }
                         <span>{{ locale.isRtl() ? sub.name : (sub.nameEn || sub.name) }}</span>
                         <span
@@ -857,8 +873,17 @@ const DEFAULT_VISUAL: CategoryVisual = {
                     (click)="onSelectRoot(root); mobileSidebarOpen.set(false)"
                   >
                     <div class="flex items-center gap-2.5 min-w-0">
-                      <div class="flex size-8 shrink-0 items-center justify-center rounded-lg" [ngClass]="getVisual(root.slug).gradient">
-                        <i [class]="getVisual(root.slug).icon" class="text-xs"></i>
+                      <div class="flex size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden" [ngClass]="getVisual(root.slug).gradient">
+                        @if (hasValidImage(root.imageUrl)) {
+                          <img
+                            [src]="resolveApiUrl(root.imageUrl)"
+                            [alt]="root.name"
+                            (error)="onImageError(root.imageUrl)"
+                            class="size-full object-cover"
+                          />
+                        } @else {
+                          <i [class]="getVisual(root.slug).icon" class="text-xs"></i>
+                        }
                       </div>
                       <span class="truncate text-xs font-bold text-[#181A1D] dark:text-white">
                         {{ locale.isRtl() ? root.name : (root.nameEn || root.name) }}
@@ -914,8 +939,9 @@ const DEFAULT_VISUAL: CategoryVisual = {
                 <div class="relative size-36 overflow-hidden rounded-2xl border-2 border-dashed border-[#E8D5BE] bg-[#FBF8F4] dark:border-neutral-700 dark:bg-neutral-950 flex items-center justify-center group shadow-inner">
                   @if (imagePreviewUrl()) {
                     <img
-                      [src]="imagePreviewUrl()!"
+                      [src]="imagePreviewUrl()!.startsWith('data:') ? imagePreviewUrl()! : resolveApiUrl(imagePreviewUrl())!"
                       alt="Preview"
+                      (error)="onImageError(imagePreviewUrl())"
                       class="size-full object-cover"
                     />
                   } @else {
@@ -1071,6 +1097,26 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   private routeSub?: Subscription;
 
   // Category Image Upload State
+  readonly resolveApiUrl = resolveApiUrl;
+  readonly brokenImages = signal<Set<string>>(new Set());
+
+  onImageError(url: string | null | undefined): void {
+    if (!url) return;
+    this.brokenImages.update((set) => {
+      const next = new Set(set);
+      next.add(url);
+      const resolved = resolveApiUrl(url);
+      if (resolved) next.add(resolved);
+      return next;
+    });
+  }
+
+  hasValidImage(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const resolved = resolveApiUrl(url);
+    return !!resolved && !this.brokenImages().has(url) && !this.brokenImages().has(resolved);
+  }
+
   readonly imageModalOpen = signal<boolean>(false);
   readonly targetCategory = signal<CategoryNode | null>(null);
   readonly selectedImageFile = signal<File | null>(null);

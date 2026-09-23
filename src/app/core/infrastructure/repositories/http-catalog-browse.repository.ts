@@ -26,7 +26,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
   private readonly http = inject(HttpClient);
   private readonly familiesCache = new TtlCache<CatalogFamilyPage>('se7en.admin.families.default.v3', STALE_MS);
   private readonly brandsCache = new TtlCache<string[]>('se7en.admin.family-brands.v1', STALE_MS);
-  private readonly structureCache = new TtlCache<CategoryNode[]>('se7en.admin.category-structure.v1', STALE_MS);
+  private readonly structureCache = new TtlCache<CategoryNode[]>('se7en.admin.category-structure.v2', STALE_MS);
   private readonly searchCache = new Map<string, { value: CatalogFamilyPage; at: number }>();
 
   getCategoryStructure(): Observable<CategoryNode[]> {
@@ -300,10 +300,11 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       .pipe(
         map((raw) => {
           this.structureCache.clear();
+          const rawUrl = String(raw['imageUrl'] ?? raw['ImageUrl'] ?? '');
           return {
             id: String(raw['id'] ?? raw['Id'] ?? categoryId),
             slug: String(raw['slug'] ?? raw['Slug'] ?? ''),
-            imageUrl: String(raw['imageUrl'] ?? raw['ImageUrl'] ?? ''),
+            imageUrl: resolveApiUrl(rawUrl) || rawUrl,
             message: String(raw['message'] ?? raw['Message'] ?? '')
           };
         })
@@ -344,7 +345,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     const nameEn = String(r['nameEn'] ?? r['NameEn'] ?? '').trim();
     const countRaw = r['productCount'] ?? r['ProductCount'];
     const imageUrlRaw = r['imageUrl'] ?? r['ImageUrl'];
-    const imageUrl = imageUrlRaw ? String(imageUrlRaw) : null;
+    const imageUrl = imageUrlRaw ? resolveApiUrl(String(imageUrlRaw)) : null;
 
     return {
       id,
