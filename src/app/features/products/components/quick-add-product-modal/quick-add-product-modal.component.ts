@@ -641,7 +641,7 @@ export class QuickAddProductModalComponent {
   readonly availablePharmacies = computed<readonly PharmacyBrand[]>(() => {
     const existing = this.existingPharmacyCodes();
     return PHARMACY_BRANDS.filter(
-      (b) => !existing.has(b.code.toLowerCase()) && b.code.toLowerCase() !== 'lemon'
+      (b) => !existing.has(b.code.toLowerCase())
     );
   });
 
@@ -802,7 +802,7 @@ export class QuickAddProductModalComponent {
             if (code) {
               return r.pharmacyCode.toLowerCase() === code.toLowerCase();
             }
-            return !existing.has(r.pharmacyCode.toLowerCase()) && r.pharmacyCode.toLowerCase() !== 'lemon';
+            return !existing.has(r.pharmacyCode.toLowerCase());
           });
           this.hits.set(filtered);
           this.hasSearched.set(true);
