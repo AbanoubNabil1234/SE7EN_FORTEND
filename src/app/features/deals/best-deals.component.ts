@@ -90,7 +90,9 @@ interface SimpleCategory {
                   min="0"
                   max="80"
                   step="5"
-                  [(ngModel)]="systemMinDiscount"
+                  [ngModel]="systemMinDiscount"
+                  (ngModelChange)="onSystemMinDiscountInput($event)"
+                  (keydown.enter)="saveSystemDefault()"
                   class="w-16 text-center text-sm font-extrabold text-[#C27938] outline-none"
                 />
               </div>
@@ -166,6 +168,7 @@ interface SimpleCategory {
               class="h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-xs font-bold text-[#181A1D] outline-none transition focus:border-[#C27938] focus:bg-white sm:text-sm"
             >
               <option value="discount_desc">{{ 'bestDeals.sortDiscountDesc' | t }}</option>
+              <option value="discount_asc">{{ 'bestDeals.sortDiscountAsc' | t }}</option>
               <option value="price_asc">{{ 'bestDeals.sortPriceAsc' | t }}</option>
               <option value="price_desc">{{ 'bestDeals.sortPriceDesc' | t }}</option>
               <option value="savings_desc">{{ 'bestDeals.sortSavingsDesc' | t }}</option>
@@ -222,18 +225,22 @@ interface SimpleCategory {
               <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'bestDeals.minDiscount' | t }}</span>
               <div class="flex items-center gap-1.5">
                 <span class="text-sm font-extrabold tabular-nums text-[#C27938]">
-                  {{ minDiscount() | number: '1.0-0' }}%
+                  @if (maxDiscount() != null) {
+                    {{ minDiscount() }}% - {{ maxDiscount() }}%
+                  } @else {
+                    {{ minDiscount() | number: '1.0-0' }}%+
+                  }
                 </span>
                 <!-- Quick Preset Chips -->
-                <div class="ms-2 flex gap-1">
-                  @for (preset of [0, 10, 20, 30, 50]; track preset) {
+                <div class="ms-2 flex flex-wrap gap-1">
+                  @for (preset of discountPresets; track preset.labelEn) {
                     <button
                       type="button"
-                      (click)="setQuickDiscount(preset)"
-                      class="rounded-lg px-2 py-0.5 text-[10px] font-bold transition"
-                      [ngClass]="minDiscount() === preset ? 'bg-[#C27938] text-white' : 'bg-[#F3EDE5] text-[#8A735C] hover:bg-[#E8D5BE]'"
+                      (click)="setDiscountPreset(preset)"
+                      class="rounded-lg px-2 py-0.5 text-[10px] font-bold transition cursor-pointer"
+                      [ngClass]="isPresetActive(preset) ? 'bg-[#C27938] text-white shadow-2xs' : 'bg-[#F3EDE5] text-[#8A735C] hover:bg-[#E8D5BE]'"
                     >
-                      {{ preset === 0 ? ('bestDeals.allPharmacies' | t) : (preset + '%+') }}
+                      {{ locale.locale() === 'ar' ? preset.labelAr : preset.labelEn }}
                     </button>
                   }
                 </div>
@@ -453,6 +460,7 @@ export class BestDealsComponent implements OnInit {
 
   // State Signals
   readonly minDiscount = signal(DEFAULT_MIN_DISCOUNT);
+  readonly maxDiscount = signal<number | null>(null);
   readonly searchQuery = signal('');
   readonly selectedPharmacy = signal('all');
   readonly selectedCategoryId = signal('all');
@@ -466,6 +474,14 @@ export class BestDealsComponent implements OnInit {
   readonly error = signal(false);
   readonly refreshingCache = signal(false);
   readonly savingSettings = signal(false);
+
+  readonly discountPresets = [
+    { labelAr: 'الكل', labelEn: 'All', min: 0, max: null },
+    { labelAr: '10% - 20%', labelEn: '10% - 20%', min: 10, max: 20 },
+    { labelAr: '20% - 30%', labelEn: '20% - 30%', min: 20, max: 30 },
+    { labelAr: '30% - 50%', labelEn: '30% - 50%', min: 30, max: 50 },
+    { labelAr: '50%+', labelEn: '50%+', min: 50, max: null }
+  ];
 
   systemMinDiscount = DEFAULT_MIN_DISCOUNT;
 
@@ -487,10 +503,25 @@ export class BestDealsComponent implements OnInit {
         this.settings.set(res);
         if (res.defaultMinDiscount > 0) {
           this.systemMinDiscount = res.defaultMinDiscount;
+          this.minDiscount.set(res.defaultMinDiscount);
         }
       },
       error: () => {}
     });
+  }
+
+  onSystemMinDiscountInput(val: number | string): void {
+    const num = Number(val);
+    this.systemMinDiscount = num;
+    if (Number.isFinite(num) && num >= 0 && num <= 80) {
+      this.minDiscount.set(num);
+      this.maxDiscount.set(null);
+      if (this.fetchTimer) clearTimeout(this.fetchTimer);
+      this.fetchTimer = setTimeout(() => {
+        this.page.set(1);
+        this.fetch(1, false);
+      }, 250);
+    }
   }
 
   loadCategories(): void {
@@ -523,9 +554,12 @@ export class BestDealsComponent implements OnInit {
         next: (res) => {
           this.settings.set(res);
           this.systemMinDiscount = res.defaultMinDiscount;
+          this.minDiscount.set(res.defaultMinDiscount);
+          this.maxDiscount.set(null);
           this.notifications.showSuccess(
             this.locale.locale() === 'ar' ? `تم حفظ نسبة الخصم (${res.defaultMinDiscount}%) وتطبيقها على الموبايل والنظام بنجاح` : `Default discount (${res.defaultMinDiscount}%) saved and applied successfully`
           );
+          this.page.set(1);
           this.fetch(1, false);
         },
         error: (err) => {
@@ -598,8 +632,9 @@ export class BestDealsComponent implements OnInit {
 
   onDiscountInput(raw: string | number): void {
     const next = clampDiscountPercent(Number(raw));
-    if (next === this.minDiscount()) return;
+    if (next === this.minDiscount() && this.maxDiscount() === null) return;
     this.minDiscount.set(next);
+    this.maxDiscount.set(null);
     if (this.fetchTimer) clearTimeout(this.fetchTimer);
     this.fetchTimer = setTimeout(() => {
       this.page.set(1);
@@ -607,10 +642,15 @@ export class BestDealsComponent implements OnInit {
     }, 150);
   }
 
-  setQuickDiscount(value: number): void {
-    this.minDiscount.set(value);
+  setDiscountPreset(preset: { min: number; max: number | null }): void {
+    this.minDiscount.set(preset.min);
+    this.maxDiscount.set(preset.max);
     this.page.set(1);
     this.fetch(1, false);
+  }
+
+  isPresetActive(preset: { min: number; max: number | null }): boolean {
+    return this.minDiscount() === preset.min && this.maxDiscount() === preset.max;
   }
 
   onSearchChange(term: string): void {
@@ -648,6 +688,7 @@ export class BestDealsComponent implements OnInit {
 
   resetAllFilters(): void {
     this.minDiscount.set(0);
+    this.maxDiscount.set(null);
     this.searchQuery.set('');
     this.selectedPharmacy.set('all');
     this.selectedCategoryId.set('all');
@@ -693,6 +734,7 @@ export class BestDealsComponent implements OnInit {
     this.listBestDeals
       .execute({
         minDiscount: this.minDiscount(),
+        maxDiscount: this.maxDiscount() ?? undefined,
         search: this.searchQuery() || undefined,
         pharmacyCode: this.selectedPharmacy() !== 'all' ? this.selectedPharmacy() : undefined,
         categoryId: this.selectedCategoryId() !== 'all' ? this.selectedCategoryId() : undefined,
