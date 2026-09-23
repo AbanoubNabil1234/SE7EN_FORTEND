@@ -63,7 +63,10 @@ export const API_ENDPOINTS = {
   CUSTOMER_CONTENT_STATUS: '/api/v1/content/status',
   CUSTOMER_CONTENT_HELP: '/api/v1/content/help',
   CUSTOMER_CONTENT_TERMS: '/api/v1/content/terms',
-  CUSTOMER_CONTENT_PRIVACY: '/api/v1/content/privacy',
   DEALS_BEST: '/deals/best',
+  ADMIN_DEALS_SETTINGS: '/api/v1/admin/deals/settings',
+  ADMIN_DEALS_REFRESH_CACHE: '/api/v1/admin/deals/refresh-cache',
+  ADMIN_DEALS_TOGGLE_PIN: '/api/v1/admin/deals/toggle-pin',
+  ADMIN_DEALS_TOGGLE_EXCLUDE: '/api/v1/admin/deals/toggle-exclude',
   ADMIN_CATEGORY_IMAGE: (id: string) => `/api/v1/admin/categories/${id}/image`
 } as const;
