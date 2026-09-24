@@ -20,11 +20,12 @@ import {
   packSizeDir as formatPackSizeDir
 } from '../../core/domain/pack-size-display';
 import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
+import { ProductImageModalComponent } from './components/product-image-modal/product-image-modal.component';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, CurrencyPipe, QuickAddProductModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, CurrencyPipe, QuickAddProductModalComponent, ProductImageModalComponent],
   template: `
     <section class="w-full space-y-3 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       @if (loading()) {
@@ -130,7 +131,9 @@ import { QuickAddProductModalComponent } from './components/quick-add-product-mo
           <div class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
               <div
-                class="mx-auto size-32 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 sm:mx-0"
+                class="group relative mx-auto size-32 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 sm:mx-0 cursor-pointer shadow-xs transition hover:border-[#C27938]/60"
+                (click)="openImageModal()"
+                title="تغيير صورة المنتج"
               >
                 @if (heroImage(f); as img) {
                   <img [src]="img" [alt]="familyTitle(f)" class="size-full object-contain p-2" />
@@ -139,6 +142,10 @@ import { QuickAddProductModalComponent } from './components/quick-add-product-mo
                     <i class="pi pi-image text-3xl"></i>
                   </div>
                 }
+                <div class="absolute inset-0 hidden group-hover:flex flex-col items-center justify-center bg-black/45 text-white text-xs font-bold transition backdrop-blur-xs">
+                  <i class="pi pi-pencil mb-1 text-sm"></i>
+                  <span>تغيير الصورة</span>
+                </div>
               </div>
 
               <div class="min-w-0 flex-1 space-y-2">
@@ -430,6 +437,14 @@ import { QuickAddProductModalComponent } from './components/quick-add-product-mo
       (close)="closeQuickAdd()"
       (productAdded)="onQuickProductAdded()"
     />
+
+    <app-product-image-modal
+      [isOpen]="isImageModalOpen()"
+      [family]="family()"
+      [initialMasterId]="selectedMasterId()"
+      (close)="isImageModalOpen.set(false)"
+      (imageChanged)="onImageChanged($event)"
+    />
   `
 })
 export class ProductDetailComponent implements OnInit {
@@ -448,6 +463,7 @@ export class ProductDetailComponent implements OnInit {
   readonly unlinkingId = signal<string | null>(null);
   readonly selectedMasterId = signal<string | null>(null);
   readonly isQuickAddOpen = signal<boolean>(false);
+  readonly isImageModalOpen = signal<boolean>(false);
 
   readonly selectedPack = computed(() => {
     const f = this.family();
@@ -507,6 +523,19 @@ export class ProductDetailComponent implements OnInit {
 
   pharmacyLogo(code: string | null | undefined): string | null {
     return resolvePharmacyLogo(code);
+  }
+
+  openImageModal(): void {
+    this.isImageModalOpen.set(true);
+  }
+
+  onImageChanged(event: { masterId: string; imageUrl: string | null }): void {
+    const f = this.family();
+    if (!f) return;
+    const key = f.familyKey;
+    if (key) {
+      this.load(key);
+    }
   }
 
   heroImage(f: CatalogFamily): string | null {

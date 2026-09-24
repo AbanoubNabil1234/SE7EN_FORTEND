@@ -68,5 +68,8 @@ export const API_ENDPOINTS = {
   ADMIN_DEALS_REFRESH_CACHE: '/api/v1/admin/deals/refresh-cache',
   ADMIN_DEALS_TOGGLE_PIN: '/api/v1/admin/deals/toggle-pin',
   ADMIN_DEALS_TOGGLE_EXCLUDE: '/api/v1/admin/deals/toggle-exclude',
-  ADMIN_CATEGORY_IMAGE: (id: string) => `/api/v1/admin/categories/${id}/image`
+  ADMIN_CATEGORY_IMAGE: (id: string) => `/api/v1/admin/categories/${id}/image`,
+  ADMIN_PRODUCT_IMAGES: (id: string) => `/api/v1/admin/products/${id}/images`,
+  ADMIN_PRODUCT_IMAGE: (id: string) => `/api/v1/admin/products/${id}/image`,
+  ADMIN_PRODUCT_IMAGE_URL: (id: string) => `/api/v1/admin/products/${id}/image-url`
 } as const;

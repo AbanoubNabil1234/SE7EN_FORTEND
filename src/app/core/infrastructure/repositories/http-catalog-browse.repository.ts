@@ -12,7 +12,8 @@ import {
   FamilyAiSuggestion,
   GroupCodeLinkResult,
   GroupCodeMergeResult,
-  PharmacyProductSearchHit
+  PharmacyProductSearchHit,
+  ProductImagesResponse
 } from '../../domain/models/catalog-family.model';
 import { API_ENDPOINTS } from '../http/api-endpoints.constants';
 import { resolveApiUrl } from '../http/api-origin';
@@ -329,6 +330,90 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
             id: String(raw['id'] ?? raw['Id'] ?? categoryId),
             slug: String(raw['slug'] ?? raw['Slug'] ?? ''),
             imageUrl: null
+          };
+        })
+      );
+  }
+
+  getProductImages(masterProductId: string): Observable<ProductImagesResponse> {
+    return this.http
+      .get<{
+        masterId: string;
+        customImageUrl: string | null;
+        pharmacyImages: Array<{
+          pharmacyProductId: string;
+          pharmacyCode: string;
+          pharmacyName: string;
+          imageUrl: string;
+          price?: number;
+          isCurrentCustom: boolean;
+        }>;
+      }>(API_ENDPOINTS.ADMIN_PRODUCT_IMAGES(masterProductId))
+      .pipe(
+        map((raw) => ({
+          masterId: raw.masterId,
+          customImageUrl: raw.customImageUrl ? resolveApiUrl(raw.customImageUrl) || raw.customImageUrl : null,
+          pharmacyImages: (raw.pharmacyImages || []).map((img) => ({
+            ...img,
+            imageUrl: resolveApiUrl(img.imageUrl) || img.imageUrl
+          }))
+        }))
+      );
+  }
+
+  uploadProductImage(
+    masterProductId: string,
+    file: File
+  ): Observable<{ id: string; imageUrl: string; message: string }> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.http
+      .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_PRODUCT_IMAGE(masterProductId), formData)
+      .pipe(
+        map((raw) => {
+          this.familiesCache.clear();
+          const rawUrl = String(raw['imageUrl'] ?? raw['ImageUrl'] ?? '');
+          return {
+            id: String(raw['id'] ?? raw['Id'] ?? masterProductId),
+            imageUrl: resolveApiUrl(rawUrl) || rawUrl,
+            message: String(raw['message'] ?? raw['Message'] ?? '')
+          };
+        })
+      );
+  }
+
+  setProductImageUrl(
+    masterProductId: string,
+    imageUrl: string
+  ): Observable<{ id: string; imageUrl: string; message: string }> {
+    return this.http
+      .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_PRODUCT_IMAGE_URL(masterProductId), { imageUrl })
+      .pipe(
+        map((raw) => {
+          this.familiesCache.clear();
+          const rawUrl = String(raw['imageUrl'] ?? raw['ImageUrl'] ?? '');
+          return {
+            id: String(raw['id'] ?? raw['Id'] ?? masterProductId),
+            imageUrl: resolveApiUrl(rawUrl) || rawUrl,
+            message: String(raw['message'] ?? raw['Message'] ?? '')
+          };
+        })
+      );
+  }
+
+  deleteProductImage(
+    masterProductId: string
+  ): Observable<{ id: string; imageUrl: string | null; message: string }> {
+    return this.http
+      .delete<Record<string, unknown>>(API_ENDPOINTS.ADMIN_PRODUCT_IMAGE(masterProductId))
+      .pipe(
+        map((raw) => {
+          this.familiesCache.clear();
+          return {
+            id: String(raw['id'] ?? raw['Id'] ?? masterProductId),
+            imageUrl: null,
+            message: String(raw['message'] ?? raw['Message'] ?? '')
           };
         })
       );

@@ -247,3 +247,19 @@ export interface PharmacyProductSearchHit {
   manualGroupCode?: string | null;
   masterProductId?: string | null;
 }
+
+export interface ProductPharmacyImageOption {
+  pharmacyProductId: string;
+  pharmacyCode: string;
+  pharmacyName: string;
+  imageUrl: string;
+  price?: number;
+  isCurrentCustom: boolean;
+}
+
+export interface ProductImagesResponse {
+  masterId: string;
+  customImageUrl: string | null;
+  pharmacyImages: ProductPharmacyImageOption[];
+}
+

@@ -39,6 +39,7 @@ import { QuickAddProductModalComponent } from './components/quick-add-product-mo
 import { MatchReviewComponent } from '../match-review/match-review.component';
 import { MatchReviewRepository } from '../../core/domain/repositories/match-review.repository';
 import { AiMatchReviewModalComponent } from './components/ai-match-review-modal/ai-match-review-modal.component';
+import { ProductImageModalComponent } from './components/product-image-modal/product-image-modal.component';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -61,7 +62,8 @@ interface CategoryOption {
     DecimalPipe,
     QuickAddProductModalComponent,
     MatchReviewComponent,
-    AiMatchReviewModalComponent
+    AiMatchReviewModalComponent,
+    ProductImageModalComponent
   ],
   template: `
     <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
@@ -262,7 +264,11 @@ interface CategoryOption {
           @for (family of families(); track listingKey(family)) {
             <article class="border-t border-[#EDE0D0] even:bg-[#FBF8F4]/60 hover:bg-[#F8EEE2]/50">
               <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
-                <div class="size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4]">
+                <div
+                  class="group/img relative size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0]/60 cursor-pointer shadow-xs transition hover:border-[#C27938]"
+                  (click)="openImageModal(family)"
+                  title="انقر لتغيير صورة المنتج"
+                >
                   @if (cardImage(family); as img) {
                     <img [src]="img" [alt]="familyTitle(family)" class="size-full object-contain p-1" loading="lazy" />
                   } @else {
@@ -270,6 +276,9 @@ interface CategoryOption {
                       <i class="pi pi-image text-sm" aria-hidden="true"></i>
                     </div>
                   }
+                  <div class="absolute inset-0 hidden group-hover/img:flex items-center justify-center bg-black/50 text-white text-[10px] transition">
+                    <i class="pi pi-pencil"></i>
+                  </div>
                 </div>
 
                 <div class="min-w-0">
@@ -402,6 +411,15 @@ interface CategoryOption {
                     (click)="openDetail(family)"
                   >
                     {{ 'productsAdmin.details' | t }}
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-[#EDE0D0] bg-[#FBF8F4] px-2 text-[11px] font-bold text-[#8A735C] hover:text-[#C27938] hover:border-[#C27938] hover:bg-white transition"
+                    (click)="openImageModal(family)"
+                    title="تغيير صورة المنتج"
+                  >
+                    <i class="pi pi-image text-xs"></i>
+                    <span>الصورة</span>
                   </button>
                   <button
                     type="button"
@@ -678,6 +696,13 @@ interface CategoryOption {
       (close)="closeAiReviewModal()"
       (matchResolved)="onAiMatchResolved($event)"
     />
+
+    <app-product-image-modal
+      [isOpen]="isImageModalOpen()"
+      [family]="imageTargetFamily()"
+      (close)="closeImageModal()"
+      (imageChanged)="onImageChanged($event)"
+    />
   `
 })
 export class ProductsAdminComponent implements OnInit, OnDestroy {
@@ -696,6 +721,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   readonly isAiReviewModalOpen = signal<boolean>(false);
   readonly selectedAiMatchId = signal<string | null>(null);
+
+  readonly isImageModalOpen = signal<boolean>(false);
+  readonly imageTargetFamily = signal<CatalogFamily | null>(null);
 
   readonly families = signal<CatalogFamily[]>([]);
   readonly brands = signal<string[]>([]);
@@ -1040,6 +1068,33 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     this.modelReviewCount.update((c) => Math.max(0, c - 1));
     if (event.action === 'accept') {
       this.reloadKeepingSelection();
+    }
+  }
+
+  openImageModal(family: CatalogFamily): void {
+    this.imageTargetFamily.set(family);
+    this.isImageModalOpen.set(true);
+  }
+
+  closeImageModal(): void {
+    this.isImageModalOpen.set(false);
+    this.imageTargetFamily.set(null);
+  }
+
+  onImageChanged(event: { masterId: string; imageUrl: string | null }): void {
+    const target = this.imageTargetFamily();
+    if (target) {
+      this.families.update((fams) =>
+        fams.map((f) => {
+          if (f.familyKey === target.familyKey) {
+            return {
+              ...f,
+              imageUrl: event.imageUrl ?? null
+            };
+          }
+          return f;
+        })
+      );
     }
   }
 

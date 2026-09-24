@@ -6,7 +6,8 @@ import {
   FamilyAiSuggestion,
   GroupCodeLinkResult,
   GroupCodeMergeResult,
-  PharmacyProductSearchHit
+  PharmacyProductSearchHit,
+  ProductImagesResponse
 } from '../models/catalog-family.model';
 
 export type CatalogFamilySort = 'pharmaciesDesc' | 'nameAsc' | 'nameDesc';
@@ -43,5 +44,17 @@ export abstract class CatalogBrowseRepository {
     file: File
   ): Observable<{ id: string; slug: string; imageUrl: string; message: string }>;
   abstract deleteCategoryImage(categoryId: string): Observable<{ id: string; slug: string; imageUrl: string | null }>;
+  abstract getProductImages(masterProductId: string): Observable<ProductImagesResponse>;
+  abstract uploadProductImage(
+    masterProductId: string,
+    file: File
+  ): Observable<{ id: string; imageUrl: string; message: string }>;
+  abstract setProductImageUrl(
+    masterProductId: string,
+    imageUrl: string
+  ): Observable<{ id: string; imageUrl: string; message: string }>;
+  abstract deleteProductImage(
+    masterProductId: string
+  ): Observable<{ id: string; imageUrl: string | null; message: string }>;
   abstract clearCache(): void;
 }
