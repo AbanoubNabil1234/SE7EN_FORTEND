@@ -128,99 +128,10 @@ interface CategoryOption {
           </div>
 
           @if (activeTab() === 'catalog') {
-            <!-- Quick Department Pills (الشرائح السريعة للأقسام الرئيسية) -->
-            <div class="border-t border-[#EDE0D0] pt-3">
-              <div class="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
-                <button
-                  type="button"
-                  (click)="onPrimaryCategoryChange('')"
-                  [class]="!primaryCategorySlug()
-                    ? 'bg-[#181A1D] text-white shadow-xs'
-                    : 'border border-[#E8D5BE] bg-white text-[#4A4038] hover:bg-[#FBF8F4] hover:border-[#C27938]'"
-                  class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all cursor-pointer"
-                >
-                  <i class="pi pi-th-large text-[11px]"></i>
-                  <span>{{ 'productsAdmin.filterAllPrimary' | t }}</span>
-                </button>
-
-                @for (cat of primaryCategories(); track cat.slug) {
-                  <button
-                    type="button"
-                    (click)="onPrimaryCategoryChange(cat.slug)"
-                    [class]="primaryCategorySlug() === cat.slug
-                      ? 'bg-[#C27938] text-white shadow-xs'
-                      : 'border border-[#E8D5BE] bg-white text-[#4A4038] hover:bg-[#FBF8F4] hover:border-[#C27938]'"
-                    class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all cursor-pointer"
-                  >
-                    <i [class]="getCategoryIcon(cat.slug)" class="text-[11px]"></i>
-                    <span>{{ categoryLabel(cat) }}</span>
-                    @if (cat.productCount != null && cat.productCount > 0) {
-                      <span
-                        [class]="primaryCategorySlug() === cat.slug ? 'bg-white/25 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
-                        class="rounded-full px-1.5 py-0.2 text-[10px] font-extrabold tabular-nums"
-                      >
-                        {{ cat.productCount | number }}
-                      </span>
-                    }
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Pharmacy Count Filter Pills (شرائح تصفية عدد الصيدليات المربوطة مع تحديث حي للأرقام) -->
-            <div class="flex flex-col gap-2 rounded-xl bg-[#FBF8F4] p-3 border border-[#EDE0D0]/80">
-              <div class="flex items-center justify-between gap-2 flex-wrap">
-                <div class="flex items-center gap-1.5 text-xs font-bold text-[#8A735C]">
-                  <i class="pi pi-link text-xs text-[#C27938]"></i>
-                  <span>{{ 'productsAdmin.filterPharmacyCount' | t }}:</span>
-                </div>
-                <span class="text-[11px] font-semibold text-[#A68B6D] flex items-center gap-1">
-                  <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  تحديث حي للأعداد
-                </span>
-              </div>
-              <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
-                <button
-                  type="button"
-                  (click)="setPharmacyCount(null)"
-                  [class]="pharmacyCount() === null
-                    ? 'bg-[#181A1D] text-white shadow-xs'
-                    : 'border border-[#E8D5BE] bg-white text-[#4A4038] hover:bg-[#FBF8F4] hover:border-[#C27938]'"
-                  class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer"
-                >
-                  <span>{{ 'productsAdmin.pharmacyCountAll' | t }}</span>
-                  <span
-                    [class]="pharmacyCount() === null ? 'bg-white/20 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
-                    class="rounded-full px-1.5 py-0.2 text-[10px] font-extrabold tabular-nums"
-                  >
-                    {{ (distributionTotal() || total()) | number }}
-                  </span>
-                </button>
-
-                @for (item of pharmacyCountOptions; track item.count) {
-                  <button
-                    type="button"
-                    (click)="setPharmacyCount(item.count)"
-                    [class]="pharmacyCount() === item.count
-                      ? 'bg-[#C27938] text-white shadow-xs'
-                      : 'border border-[#E8D5BE] bg-white text-[#4A4038] hover:bg-[#FBF8F4] hover:border-[#C27938]'"
-                    class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer"
-                  >
-                    <span>{{ item.labelKey | t }}</span>
-                    <span
-                      [class]="pharmacyCount() === item.count ? 'bg-white/25 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
-                      class="rounded-full px-1.5 py-0.2 text-[10px] font-extrabold tabular-nums"
-                    >
-                      {{ countFor(item.count) | number }}
-                    </span>
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Main Filter Grid (البحث، القسم الرئيسي، القسم الفرعي، البراند، الترتيب) -->
-            <div class="grid gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-5">
-              <label class="block space-y-1.5 sm:col-span-2 lg:col-span-1">
+            <!-- Filter Grid: Search, Primary Category, Subcategory, Pharmacy Count, Brand, Sort -->
+            <div class="border-t border-[#EDE0D0] pt-3 grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+              <!-- 1. Search -->
+              <label class="block space-y-1.5">
                 <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.search' | t }}</span>
                 <input
                   type="search"
@@ -233,6 +144,7 @@ interface CategoryOption {
                 />
               </label>
 
+              <!-- 2. Primary Category Dropdown -->
               <label class="block space-y-1.5">
                 <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterPrimaryCategory' | t }}</span>
                 <select
@@ -247,6 +159,7 @@ interface CategoryOption {
                 </select>
               </label>
 
+              <!-- 3. Subcategory Dropdown -->
               <label class="block space-y-1.5">
                 <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterSubcategory' | t }}</span>
                 <select
@@ -262,6 +175,27 @@ interface CategoryOption {
                 </select>
               </label>
 
+              <!-- 4. Pharmacy Count Dropdown (عدد الصيدليات المربوطة) -->
+              <label class="block space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterPharmacyCount' | t }}</span>
+                  <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse" title="تحديث حي للأعداد"></span>
+                </div>
+                <select
+                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  [ngModel]="pharmacyCount() !== null ? pharmacyCount() : ''"
+                  (ngModelChange)="setPharmacyCount($event ? +$event : null)"
+                >
+                  <option value="">{{ 'productsAdmin.pharmacyCountAll' | t }} ({{ (distributionTotal() || total()) | number }})</option>
+                  @for (item of pharmacyCountOptions; track item.count) {
+                    <option [value]="item.count">
+                      {{ item.labelKey | t }} ({{ countFor(item.count) | number }})
+                    </option>
+                  }
+                </select>
+              </label>
+
+              <!-- 5. Brand Dropdown -->
               <label class="block space-y-1.5">
                 <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterBrand' | t }}</span>
                 <select
@@ -276,6 +210,7 @@ interface CategoryOption {
                 </select>
               </label>
 
+              <!-- 6. Sort Dropdown -->
               <label class="block space-y-1.5">
                 <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterSort' | t }}</span>
                 <select
