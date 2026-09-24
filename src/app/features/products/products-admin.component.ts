@@ -129,26 +129,29 @@ interface CategoryOption {
 
           @if (activeTab() === 'catalog') {
             <!-- Filter Grid: Search, Primary Category, Subcategory, Pharmacy Count, Brand, Sort -->
-            <div class="border-t border-[#EDE0D0] pt-3 grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+            <div class="border-t border-[#EDE0D0] pt-3 grid gap-2.5 grid-cols-2 md:grid-cols-3 lg:grid-cols-6 items-end">
               <!-- 1. Search -->
-              <label class="block space-y-1.5">
-                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.search' | t }}</span>
-                <input
-                  type="search"
-                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
-                  [ngModel]="query()"
-                  (ngModelChange)="onQueryChange($event)"
-                  [placeholder]="'productsAdmin.searchPlaceholder' | t"
-                  autocomplete="off"
-                  [attr.aria-busy]="searching()"
-                />
+              <label class="block">
+                <span class="flex items-center text-[11px] font-bold text-[#A68B6D] h-4 mb-1.5 truncate">{{ 'productsAdmin.search' | t }}</span>
+                <div class="relative w-full">
+                  <i class="pi pi-search absolute start-2.5 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D] pointer-events-none"></i>
+                  <input
+                    type="search"
+                    class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] ps-8 pe-2.5 text-xs font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors"
+                    [ngModel]="query()"
+                    (ngModelChange)="onQueryChange($event)"
+                    [placeholder]="'productsAdmin.searchPlaceholder' | t"
+                    autocomplete="off"
+                    [attr.aria-busy]="searching()"
+                  />
+                </div>
               </label>
 
               <!-- 2. Primary Category Dropdown -->
-              <label class="block space-y-1.5">
-                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterPrimaryCategory' | t }}</span>
+              <label class="block">
+                <span class="flex items-center text-[11px] font-bold text-[#A68B6D] h-4 mb-1.5 truncate">{{ 'productsAdmin.filterPrimaryCategory' | t }}</span>
                 <select
-                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-2.5 text-xs font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors cursor-pointer"
                   [ngModel]="primaryCategorySlug()"
                   (ngModelChange)="onPrimaryCategoryChange($event)"
                 >
@@ -160,10 +163,10 @@ interface CategoryOption {
               </label>
 
               <!-- 3. Subcategory Dropdown -->
-              <label class="block space-y-1.5">
-                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterSubcategory' | t }}</span>
+              <label class="block">
+                <span class="flex items-center text-[11px] font-bold text-[#A68B6D] h-4 mb-1.5 truncate">{{ 'productsAdmin.filterSubcategory' | t }}</span>
                 <select
-                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white disabled:opacity-50"
+                  class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-2.5 text-xs font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors cursor-pointer disabled:opacity-50"
                   [disabled]="!primaryCategorySlug() || currentSubcategories().length === 0"
                   [ngModel]="subcategorySlug()"
                   (ngModelChange)="onSubcategoryChange($event)"
@@ -176,13 +179,13 @@ interface CategoryOption {
               </label>
 
               <!-- 4. Pharmacy Count Dropdown (عدد الصيدليات المربوطة) -->
-              <label class="block space-y-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterPharmacyCount' | t }}</span>
-                  <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse" title="تحديث حي للأعداد"></span>
-                </div>
+              <label class="block">
+                <span class="flex items-center gap-1.5 text-[11px] font-bold text-[#A68B6D] h-4 mb-1.5 truncate">
+                  <span>{{ 'productsAdmin.filterPharmacyCount' | t }}</span>
+                  <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="تحديث حي للأعداد"></span>
+                </span>
                 <select
-                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-2.5 text-xs font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors cursor-pointer"
                   [ngModel]="pharmacyCount() !== null ? pharmacyCount() : ''"
                   (ngModelChange)="setPharmacyCount($event ? +$event : null)"
                 >
@@ -196,10 +199,10 @@ interface CategoryOption {
               </label>
 
               <!-- 5. Brand Dropdown -->
-              <label class="block space-y-1.5">
-                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterBrand' | t }}</span>
+              <label class="block">
+                <span class="flex items-center text-[11px] font-bold text-[#A68B6D] h-4 mb-1.5 truncate">{{ 'productsAdmin.filterBrand' | t }}</span>
                 <select
-                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-2.5 text-xs font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors cursor-pointer"
                   [ngModel]="brand()"
                   (ngModelChange)="onBrandChange($event)"
                 >
@@ -211,10 +214,10 @@ interface CategoryOption {
               </label>
 
               <!-- 6. Sort Dropdown -->
-              <label class="block space-y-1.5">
-                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterSort' | t }}</span>
+              <label class="block">
+                <span class="flex items-center text-[11px] font-bold text-[#A68B6D] h-4 mb-1.5 truncate">{{ 'productsAdmin.filterSort' | t }}</span>
                 <select
-                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-2.5 text-xs font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors cursor-pointer"
                   [ngModel]="sort()"
                   (ngModelChange)="onSortChange($event)"
                 >

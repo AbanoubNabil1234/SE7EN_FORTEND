@@ -521,7 +521,7 @@ export const messagesAr: MessageTree = {
     filterSubcategory: 'القسم الفرعي',
     filterAllPrimary: 'كل الأقسام الرئيسية',
     filterAllSub: 'كل الأقسام الفرعية',
-    filterPharmacyCount: 'عدد الصيدليات المربوطة',
+    filterPharmacyCount: 'عدد الصيدليات',
     pharmacyCountAll: 'الكل',
     pharmacyCount8Plus: '8+ صيدليات',
     pharmacyCount7: '7 صيدليات',
