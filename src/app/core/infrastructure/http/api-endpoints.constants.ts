@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   CATEGORIES_STRUCTURE: '/categories/structure',
   CATEGORIES_TREE: '/categories/tree',
   CATALOG_FAMILIES: '/catalog/families',
+  CATALOG_FAMILIES_PHARMACY_COUNTS: '/catalog/families/pharmacy-counts',
   CATALOG_FAMILY_ITEM: '/catalog/families/item',
   CATALOG_FAMILY_BRANDS: '/catalog/families/brands',
   LIVE_SEARCH: '/search/live',

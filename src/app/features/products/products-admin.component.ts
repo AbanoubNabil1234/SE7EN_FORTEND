@@ -128,60 +128,167 @@ interface CategoryOption {
           </div>
 
           @if (activeTab() === 'catalog') {
-            <div class="grid gap-3 border-t border-[#EDE0D0] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Quick Department Pills (الشرائح السريعة للأقسام الرئيسية) -->
+            <div class="border-t border-[#EDE0D0] pt-3">
+              <div class="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
+                <button
+                  type="button"
+                  (click)="onPrimaryCategoryChange('')"
+                  [class]="!primaryCategorySlug()
+                    ? 'bg-[#181A1D] text-white shadow-xs'
+                    : 'border border-[#E8D5BE] bg-white text-[#4A4038] hover:bg-[#FBF8F4] hover:border-[#C27938]'"
+                  class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all cursor-pointer"
+                >
+                  <i class="pi pi-th-large text-[11px]"></i>
+                  <span>{{ 'productsAdmin.filterAllPrimary' | t }}</span>
+                </button>
+
+                @for (cat of primaryCategories(); track cat.slug) {
+                  <button
+                    type="button"
+                    (click)="onPrimaryCategoryChange(cat.slug)"
+                    [class]="primaryCategorySlug() === cat.slug
+                      ? 'bg-[#C27938] text-white shadow-xs'
+                      : 'border border-[#E8D5BE] bg-white text-[#4A4038] hover:bg-[#FBF8F4] hover:border-[#C27938]'"
+                    class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <i [class]="getCategoryIcon(cat.slug)" class="text-[11px]"></i>
+                    <span>{{ categoryLabel(cat) }}</span>
+                    @if (cat.productCount != null && cat.productCount > 0) {
+                      <span
+                        [class]="primaryCategorySlug() === cat.slug ? 'bg-white/25 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
+                        class="rounded-full px-1.5 py-0.2 text-[10px] font-extrabold tabular-nums"
+                      >
+                        {{ cat.productCount | number }}
+                      </span>
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Pharmacy Count Filter Pills (شرائح تصفية عدد الصيدليات المربوطة مع تحديث حي للأرقام) -->
+            <div class="flex flex-col gap-2 rounded-xl bg-[#FBF8F4] p-3 border border-[#EDE0D0]/80">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div class="flex items-center gap-1.5 text-xs font-bold text-[#8A735C]">
+                  <i class="pi pi-link text-xs text-[#C27938]"></i>
+                  <span>{{ 'productsAdmin.filterPharmacyCount' | t }}:</span>
+                </div>
+                <span class="text-[11px] font-semibold text-[#A68B6D] flex items-center gap-1">
+                  <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  تحديث حي للأعداد
+                </span>
+              </div>
+              <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
+                <button
+                  type="button"
+                  (click)="setPharmacyCount(null)"
+                  [class]="pharmacyCount() === null
+                    ? 'bg-[#181A1D] text-white shadow-xs'
+                    : 'border border-[#E8D5BE] bg-white text-[#4A4038] hover:bg-[#FBF8F4] hover:border-[#C27938]'"
+                  class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer"
+                >
+                  <span>{{ 'productsAdmin.pharmacyCountAll' | t }}</span>
+                  <span
+                    [class]="pharmacyCount() === null ? 'bg-white/20 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
+                    class="rounded-full px-1.5 py-0.2 text-[10px] font-extrabold tabular-nums"
+                  >
+                    {{ (distributionTotal() || total()) | number }}
+                  </span>
+                </button>
+
+                @for (item of pharmacyCountOptions; track item.count) {
+                  <button
+                    type="button"
+                    (click)="setPharmacyCount(item.count)"
+                    [class]="pharmacyCount() === item.count
+                      ? 'bg-[#C27938] text-white shadow-xs'
+                      : 'border border-[#E8D5BE] bg-white text-[#4A4038] hover:bg-[#FBF8F4] hover:border-[#C27938]'"
+                    class="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <span>{{ item.labelKey | t }}</span>
+                    <span
+                      [class]="pharmacyCount() === item.count ? 'bg-white/25 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
+                      class="rounded-full px-1.5 py-0.2 text-[10px] font-extrabold tabular-nums"
+                    >
+                      {{ countFor(item.count) | number }}
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Main Filter Grid (البحث، القسم الرئيسي، القسم الفرعي، البراند، الترتيب) -->
+            <div class="grid gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-5">
               <label class="block space-y-1.5 sm:col-span-2 lg:col-span-1">
                 <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.search' | t }}</span>
-              <input
-                type="search"
-                class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
-                [ngModel]="query()"
-                (ngModelChange)="onQueryChange($event)"
-                [placeholder]="'productsAdmin.searchPlaceholder' | t"
-                autocomplete="off"
-                [attr.aria-busy]="searching()"
-              />
-            </label>
+                <input
+                  type="search"
+                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  [ngModel]="query()"
+                  (ngModelChange)="onQueryChange($event)"
+                  [placeholder]="'productsAdmin.searchPlaceholder' | t"
+                  autocomplete="off"
+                  [attr.aria-busy]="searching()"
+                />
+              </label>
 
-            <label class="block space-y-1.5">
-              <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterCategory' | t }}</span>
-              <select
-                class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
-                [ngModel]="categorySlug()"
-                (ngModelChange)="onCategoryChange($event)"
-              >
-                <option value="">{{ 'productsAdmin.filterAllCategories' | t }}</option>
-                @for (cat of categoryOptions(); track cat.slug) {
-                  <option [value]="cat.slug">{{ cat.name }}</option>
-                }
-              </select>
-            </label>
+              <label class="block space-y-1.5">
+                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterPrimaryCategory' | t }}</span>
+                <select
+                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  [ngModel]="primaryCategorySlug()"
+                  (ngModelChange)="onPrimaryCategoryChange($event)"
+                >
+                  <option value="">{{ 'productsAdmin.filterAllPrimary' | t }}</option>
+                  @for (cat of primaryCategories(); track cat.slug) {
+                    <option [value]="cat.slug">{{ categoryLabel(cat) }}</option>
+                  }
+                </select>
+              </label>
 
-            <label class="block space-y-1.5">
-              <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterBrand' | t }}</span>
-              <select
-                class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
-                [ngModel]="brand()"
-                (ngModelChange)="onBrandChange($event)"
-              >
-                <option value="">{{ 'productsAdmin.allBrands' | t }}</option>
-                @for (b of brands(); track b) {
-                  <option [value]="b">{{ b }}</option>
-                }
-              </select>
-            </label>
+              <label class="block space-y-1.5">
+                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterSubcategory' | t }}</span>
+                <select
+                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white disabled:opacity-50"
+                  [disabled]="!primaryCategorySlug() || currentSubcategories().length === 0"
+                  [ngModel]="subcategorySlug()"
+                  (ngModelChange)="onSubcategoryChange($event)"
+                >
+                  <option value="">{{ primaryCategorySlug() ? ('productsAdmin.filterAllSub' | t) : 'اختر قسماً أولاً' }}</option>
+                  @for (sub of currentSubcategories(); track sub.slug) {
+                    <option [value]="sub.slug">{{ categoryLabel(sub) }}</option>
+                  }
+                </select>
+              </label>
 
-            <label class="block space-y-1.5">
-              <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterSort' | t }}</span>
-              <select
-                class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
-                [ngModel]="sort()"
-                (ngModelChange)="onSortChange($event)"
-              >
-                <option value="nameAsc">{{ 'productsAdmin.sortNameAsc' | t }}</option>
-                <option value="nameDesc">{{ 'productsAdmin.sortNameDesc' | t }}</option>
-              </select>
-            </label>
-          </div>
+              <label class="block space-y-1.5">
+                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterBrand' | t }}</span>
+                <select
+                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  [ngModel]="brand()"
+                  (ngModelChange)="onBrandChange($event)"
+                >
+                  <option value="">{{ 'productsAdmin.allBrands' | t }}</option>
+                  @for (b of brands(); track b) {
+                    <option [value]="b">{{ b }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="block space-y-1.5">
+                <span class="text-[11px] font-bold text-[#A68B6D]">{{ 'productsAdmin.filterSort' | t }}</span>
+                <select
+                  class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm font-semibold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
+                  [ngModel]="sort()"
+                  (ngModelChange)="onSortChange($event)"
+                >
+                  <option value="pharmaciesDesc">الأكثر صيدليات أولاً (8 → 1)</option>
+                  <option value="nameAsc">{{ 'productsAdmin.sortNameAsc' | t }}</option>
+                  <option value="nameDesc">{{ 'productsAdmin.sortNameDesc' | t }}</option>
+                </select>
+              </label>
+            </div>
 
           <div class="flex flex-wrap items-center gap-2 text-sm font-semibold tabular-nums text-[#8A735C]">
             <span>
@@ -728,6 +835,11 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly families = signal<CatalogFamily[]>([]);
   readonly brands = signal<string[]>([]);
   readonly categoryNodes = signal<CategoryNode[]>([]);
+  readonly primaryCategorySlug = signal<string>('');
+  readonly subcategorySlug = signal<string>('');
+  readonly pharmacyCount = signal<number | null>(null);
+  readonly pharmacyDistribution = signal<Record<number, number>>({});
+  readonly distributionTotal = signal<number>(0);
   readonly query = signal('');
   readonly categorySlug = signal('');
   readonly brand = signal('');
@@ -764,8 +876,116 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     Math.min(this.page() * this.listPageSize(), this.total())
   );
   readonly pageButtons = computed(() => this.buildPageButtons(this.page(), this.totalPages()));
-  readonly categoryOptions = computed(() => this.flattenCategories(this.categoryNodes()));
+  readonly primaryCategories = computed(() => this.categoryNodes());
+  readonly selectedPrimaryNode = computed(() =>
+    this.primaryCategories().find((c) => c.slug === this.primaryCategorySlug()) ?? null
+  );
+  readonly currentSubcategories = computed(() => this.selectedPrimaryNode()?.children ?? []);
   readonly searchReady = computed(() => isCatalogSearchReady(this.query()));
+
+  readonly pharmacyCountOptions: Array<{ count: number; labelKey: string }> = [
+    { count: 8, labelKey: 'productsAdmin.pharmacyCount8Plus' },
+    { count: 7, labelKey: 'productsAdmin.pharmacyCount7' },
+    { count: 6, labelKey: 'productsAdmin.pharmacyCount6' },
+    { count: 5, labelKey: 'productsAdmin.pharmacyCount5' },
+    { count: 4, labelKey: 'productsAdmin.pharmacyCount4' },
+    { count: 3, labelKey: 'productsAdmin.pharmacyCount3' },
+    { count: 2, labelKey: 'productsAdmin.pharmacyCount2' },
+    { count: 1, labelKey: 'productsAdmin.pharmacyCount1' }
+  ];
+
+  readonly categoryVisuals: Record<string, { icon: string }> = {
+    'medicines-treatments': { icon: 'pi pi-heart-fill' },
+    'vitamins-supplements': { icon: 'pi pi-bolt' },
+    'skin-care': { icon: 'pi pi-sparkles' },
+    'hair-care': { icon: 'pi pi-star-fill' },
+    'personal-care': { icon: 'pi pi-user' },
+    'mother-baby': { icon: 'pi pi-heart' },
+    'medical-supplies': { icon: 'pi pi-shield' },
+    'beauty-cosmetics': { icon: 'pi pi-palette' },
+    'health-food': { icon: 'pi pi-apple' },
+    'other': { icon: 'pi pi-th-large' }
+  };
+
+  getCategoryIcon(slug: string): string {
+    return this.categoryVisuals[slug]?.icon ?? 'pi pi-tag';
+  }
+
+  categoryLabel(node: CategoryNode): string {
+    return categoryDisplayName(node, this.locale.locale());
+  }
+
+  countFor(n: number): number {
+    const dist = this.pharmacyDistribution();
+    if (n === 8) {
+      let sum = 0;
+      for (const [k, v] of Object.entries(dist)) {
+        if (Number(k) >= 8) sum += v;
+      }
+      return sum;
+    }
+    return dist[n] ?? 0;
+  }
+
+  setPharmacyCount(count: number | null): void {
+    if (this.pharmacyCount() === count) return;
+    this.pharmacyCount.set(count);
+    this.reload();
+  }
+
+  onPrimaryCategoryChange(slug: string): void {
+    this.primaryCategorySlug.set(slug);
+    this.subcategorySlug.set('');
+    this.categorySlug.set(slug);
+    this.reload();
+    this.loadPharmacyDistribution();
+  }
+
+  onSubcategoryChange(slug: string): void {
+    this.subcategorySlug.set(slug);
+    const effectiveSlug = slug || this.primaryCategorySlug();
+    this.categorySlug.set(effectiveSlug);
+    this.reload();
+    this.loadPharmacyDistribution();
+  }
+
+  loadPharmacyDistribution(): void {
+    const cat = this.categorySlug().trim() || undefined;
+    this.catalog.getPharmacyDistributionCounts(cat).subscribe({
+      next: (res) => {
+        this.pharmacyDistribution.set(res.counts);
+        this.distributionTotal.set(res.total);
+      },
+      error: () => {}
+    });
+  }
+
+  private syncCategoryFromSlug(slug: string): void {
+    if (!slug) {
+      this.primaryCategorySlug.set('');
+      this.subcategorySlug.set('');
+      return;
+    }
+    const nodes = this.categoryNodes();
+    for (const parent of nodes) {
+      if (parent.slug === slug) {
+        this.primaryCategorySlug.set(parent.slug);
+        this.subcategorySlug.set('');
+        return;
+      }
+      if (parent.children) {
+        for (const child of parent.children) {
+          if (child.slug === slug) {
+            this.primaryCategorySlug.set(parent.slug);
+            this.subcategorySlug.set(child.slug);
+            return;
+          }
+        }
+      }
+    }
+    this.primaryCategorySlug.set('');
+    this.subcategorySlug.set('');
+  }
 
   ngOnInit(): void {
     const tabParam = this.route.snapshot.queryParamMap.get('tab')?.trim();
@@ -784,7 +1004,12 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     });
 
     const slug = this.route.snapshot.queryParamMap.get('categorySlug')?.trim() ?? '';
-    if (slug) this.categorySlug.set(slug);
+    if (slug) {
+      this.categorySlug.set(slug);
+      this.syncCategoryFromSlug(slug);
+    }
+    this.ensureFilterOptions();
+    this.loadPharmacyDistribution();
     this.reload();
     this.route.queryParamMap.pipe(skip(1)).subscribe((params) => {
       const t = params.get('tab')?.trim();
@@ -794,7 +1019,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       const next = params.get('categorySlug')?.trim() ?? '';
       if (next === this.categorySlug()) return;
       this.categorySlug.set(next);
+      this.syncCategoryFromSlug(next);
       this.reload();
+      this.loadPharmacyDistribution();
     });
   }
 
@@ -828,7 +1055,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   onCategoryChange(value: string): void {
     this.categorySlug.set(value);
+    this.syncCategoryFromSlug(value);
     this.reload();
+    this.loadPharmacyDistribution();
   }
 
   onBrandChange(value: string): void {
@@ -938,6 +1167,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
         next: (res) => {
           this.removeOfferLocally(id);
           this.notifications.showSuccess(this.i18n.t('productsAdmin.linkedOk'), res.code);
+          this.loadPharmacyDistribution();
           if (family?.familyKey) {
             this.refreshFamilyInPlace(family.familyKey);
           } else {
@@ -975,6 +1205,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
             this.i18n.t('productsAdmin.unlinkedOk'),
             this.pharmacyLabel(offer)
           );
+          this.loadPharmacyDistribution();
           if (family?.familyKey) {
             this.refreshFamilyInPlace(family.familyKey);
           } else {
@@ -1037,6 +1268,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   onQuickProductAdded(): void {
     const fam = this.quickAddFamily();
     this.closeQuickAdd();
+    this.loadPharmacyDistribution();
     if (fam?.familyKey) {
       this.openOfferKeys.update((keys) => new Set([...keys, fam.familyKey]));
       this.refreshFamilyInPlace(fam.familyKey);
@@ -1051,6 +1283,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   onFamilyMerged(): void {
     this.closeQuickAdd();
+    this.loadPharmacyDistribution();
     this.reloadKeepingSelection();
   }
 
@@ -1067,6 +1300,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   onAiMatchResolved(event: { matchId: string; action: 'accept' | 'reject' }): void {
     this.modelReviewCount.update((c) => Math.max(0, c - 1));
     if (event.action === 'accept') {
+      this.loadPharmacyDistribution();
       this.reloadKeepingSelection();
     }
   }
@@ -1301,7 +1535,10 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   private loadFilterOptions(): void {
     this.catalog.getCategoryStructure().subscribe({
-      next: (nodes) => this.categoryNodes.set(nodes),
+      next: (nodes) => {
+        this.categoryNodes.set(nodes);
+        this.syncCategoryFromSlug(this.categorySlug());
+      },
       error: () => this.categoryNodes.set([])
     });
     this.catalog.listFamilyBrands().subscribe({
@@ -1375,7 +1612,8 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
         brand: brand || undefined,
         sort,
         page: targetPage,
-        pageSize
+        pageSize,
+        pharmacyCount: this.pharmacyCount() || undefined
       })
       .pipe(
         finalize(() => {

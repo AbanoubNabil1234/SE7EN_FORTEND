@@ -67,6 +67,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     sort?: CatalogFamilySort;
     page?: number;
     pageSize?: number;
+    pharmacyCount?: number;
   }): Observable<CatalogFamilyPage> {
     let httpParams = new HttpParams()
       .set('page', String(params.page ?? 1))
@@ -83,6 +84,9 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     }
     if (params.sort) {
       httpParams = httpParams.set('sort', params.sort);
+    }
+    if (params.pharmacyCount != null && params.pharmacyCount > 0) {
+      httpParams = httpParams.set('pharmacyCount', String(params.pharmacyCount));
     }
 
     const request$ = this.http
@@ -113,6 +117,24 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     return request$;
   }
 
+  getPharmacyDistributionCounts(categorySlug?: string): Observable<{ counts: Record<number, number>; total: number }> {
+    let params = new HttpParams();
+    if (categorySlug?.trim()) {
+      params = params.set('categorySlug', categorySlug.trim());
+    }
+    return this.http
+      .get<{ counts: Record<number, number>; total: number }>(
+        API_ENDPOINTS.CATALOG_FAMILIES_PHARMACY_COUNTS,
+        { params }
+      )
+      .pipe(
+        map((res) => ({
+          counts: res?.counts ?? {},
+          total: res?.total ?? 0
+        }))
+      );
+  }
+
   private isDefaultFirstPage(params: {
     categorySlug?: string;
     brand?: string;
@@ -120,6 +142,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     sort?: CatalogFamilySort;
     page?: number;
     pageSize?: number;
+    pharmacyCount?: number;
   }): boolean {
     return (
       (params.page ?? 1) === 1 &&
@@ -127,6 +150,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       !params.categorySlug?.trim() &&
       !params.brand?.trim() &&
       !params.query?.trim() &&
+      (!params.pharmacyCount || params.pharmacyCount <= 0) &&
       (!params.sort || params.sort === 'pharmaciesDesc')
     );
   }
