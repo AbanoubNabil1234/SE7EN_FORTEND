@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -25,7 +25,7 @@ interface PropertyDiffDisplay {
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe, TranslatePipe],
   template: `
-    <section class="w-full space-y-5 px-4 py-4 sm:px-6 sm:py-6" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
+    <section class="w-full space-y-4" [class.px-4]="!isEmbedded()" [class.py-4]="!isEmbedded()" [class.sm:px-6]="!isEmbedded()" [class.sm:py-6]="!isEmbedded()" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       
       <!-- Top Header Card -->
       <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
@@ -631,6 +631,7 @@ interface PropertyDiffDisplay {
   `
 })
 export class AuditLogsComponent implements OnInit {
+  readonly isEmbedded = input<boolean>(false);
   private readonly auditLogRepo = inject(AuditLogRepository);
   readonly locale = inject(LocaleService);
   private readonly notify = inject(NotificationService);

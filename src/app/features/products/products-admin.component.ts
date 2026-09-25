@@ -127,11 +127,12 @@ interface CategoryOption {
             </div>
 
             <a
-              routerLink="/audit-logs"
+              routerLink="/settings"
+              [queryParams]="{ tab: 'logs' }"
               class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-3.5 text-xs font-bold text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#C27938] transition-colors"
             >
               <i class="pi pi-history text-xs"></i>
-              <span>{{ 'nav.auditLogs' | t }}</span>
+              <span>{{ 'settings.tabLogs' | t }}</span>
             </a>
           </div>
 

@@ -9,6 +9,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { API_ORIGIN } from '../../core/infrastructure/http/api-origin';
 import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.constants';
+import { AuditLogsComponent } from '../audit-logs/audit-logs.component';
 
 type SettingsTab = 'help' | 'terms' | 'privacy' | 'logs' | 'dev';
 type ContentLang = 'ar' | 'en';
@@ -74,7 +75,7 @@ const SETTINGS_KEY = 'se7en_dev_settings';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, AuditLogsComponent],
   template: `
     <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
       <!-- Active Maintenance Banner if enabled -->
@@ -134,19 +135,6 @@ const SETTINGS_KEY = 'se7en_dev_settings';
                 <i class="pi pi-check text-sm"></i>
                 <span>{{ 'settings.saveContent' | t }}</span>
               }
-            </button>
-          }
-
-          <!-- Refresh Button for Logs Tab -->
-          @if (activeTab() === 'logs') {
-            <button
-              type="button"
-              (click)="fetchSystemLogs()"
-              [disabled]="loadingLogs()"
-              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 py-2.5 text-xs font-bold text-[#181A1D] shadow-xs transition hover:bg-[#F3EDE5] disabled:opacity-50 sm:text-sm"
-            >
-              <i class="pi pi-refresh text-xs sm:text-sm text-[#C27938]" [ngClass]="loadingLogs() ? 'pi-spin' : ''"></i>
-              <span>{{ 'settings.logsRefresh' | t }}</span>
             </button>
           }
         </div>
@@ -554,144 +542,9 @@ const SETTINGS_KEY = 'se7en_dev_settings';
         </div>
       }
 
-      <!-- Tab 4: System Logs Explorer (Logs Mgt) -->
+      <!-- Tab 4: Unified System & Audit Logs -->
       @if (activeTab() === 'logs') {
-        <div class="space-y-4">
-          <!-- Filters & Search Bar -->
-          <div class="rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-sm sm:p-5">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <!-- Search Bar -->
-              <div class="relative flex-1">
-                <i class="pi pi-search absolute top-1/2 -translate-y-1/2 text-xs text-[#8A735C] ltr:left-3 rtl:right-3"></i>
-                <input
-                  type="text"
-                  [(ngModel)]="logSearchQuery"
-                  [placeholder]="'settings.logsSearchPlaceholder' | t"
-                  class="h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] text-xs outline-none transition focus:border-[#C27938] focus:bg-white sm:text-sm ltr:pl-9 ltr:pr-3 rtl:pr-9 rtl:pl-3"
-                />
-              </div>
-
-              <!-- Level Filters -->
-              <div class="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  (click)="logLevelFilter.set('all')"
-                  class="rounded-xl px-3 py-1.5 text-xs font-bold transition"
-                  [ngClass]="logLevelFilter() === 'all' ? 'bg-[#181A1D] text-white' : 'bg-[#F3EDE5] text-[#5C4D3E] hover:bg-[#E8D5BE]'"
-                >
-                  {{ 'settings.logsAll' | t }}
-                </button>
-                <button
-                  type="button"
-                  (click)="logLevelFilter.set('success')"
-                  class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition"
-                  [ngClass]="logLevelFilter() === 'success' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'"
-                >
-                  <span class="size-1.5 rounded-full bg-emerald-500"></span>
-                  {{ 'settings.logsSuccess' | t }}
-                </button>
-                <button
-                  type="button"
-                  (click)="logLevelFilter.set('warn')"
-                  class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition"
-                  [ngClass]="logLevelFilter() === 'warn' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-800 hover:bg-amber-100'"
-                >
-                  <span class="size-1.5 rounded-full bg-amber-500"></span>
-                  {{ 'settings.logsWarn' | t }}
-                </button>
-                <button
-                  type="button"
-                  (click)="logLevelFilter.set('error')"
-                  class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition"
-                  [ngClass]="logLevelFilter() === 'error' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-800 hover:bg-rose-100'"
-                >
-                  <span class="size-1.5 rounded-full bg-rose-500"></span>
-                  {{ 'settings.logsError' | t }}
-                </button>
-                <button
-                  type="button"
-                  (click)="logLevelFilter.set('info')"
-                  class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition"
-                  [ngClass]="logLevelFilter() === 'info' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
-                >
-                  <span class="size-1.5 rounded-full bg-blue-500"></span>
-                  {{ 'settings.logsInfo' | t }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Log Entries List -->
-          @if (loadingLogs()) {
-            <div class="flex flex-col items-center justify-center rounded-2xl border border-[#E8D5BE] bg-white p-12 text-center shadow-sm">
-              <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]"></i>
-              <p class="mt-3 text-xs font-bold text-[#8A735C]">جاري تحميل سجلات النظام والعمليات...</p>
-            </div>
-          } @else if (filteredLogs().length === 0) {
-            <div class="rounded-2xl border border-[#E8D5BE] bg-white p-12 text-center shadow-sm">
-              <i class="pi pi-inbox text-3xl text-[#D6C4B0]"></i>
-              <p class="mt-3 text-sm font-bold text-[#181A1D]">{{ 'settings.logsNoData' | t }}</p>
-            </div>
-          } @else {
-            <div class="space-y-3">
-              @for (log of filteredLogs(); track log.id) {
-                <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-xs transition hover:border-[#C27938]/60 sm:p-5">
-                  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex items-center gap-2.5">
-                      <!-- Level Badge Icon -->
-                      <span
-                        class="inline-flex size-7 shrink-0 items-center justify-center rounded-lg text-xs"
-                        [ngClass]="{
-                          'bg-emerald-100 text-emerald-700': log.level === 'success',
-                          'bg-amber-100 text-amber-700': log.level === 'warn',
-                          'bg-rose-100 text-rose-700': log.level === 'error',
-                          'bg-blue-100 text-blue-700': log.level === 'info'
-                        }"
-                      >
-                        <i
-                          class="pi"
-                          [ngClass]="{
-                            'pi-check': log.level === 'success',
-                            'pi-exclamation-triangle': log.level === 'warn',
-                            'pi-times-circle': log.level === 'error',
-                            'pi-info-circle': log.level === 'info'
-                          }"
-                        ></i>
-                      </span>
-
-                      <!-- Title -->
-                      <h3 class="text-xs font-extrabold text-[#181A1D] sm:text-sm">
-                        {{ locale.locale() === 'ar' ? log.titleAr : log.titleEn }}
-                      </h3>
-
-                      <!-- Pharmacy Code badge if present -->
-                      @if (log.pharmacyCode) {
-                        <span class="rounded-md bg-[#F3EDE5] px-2 py-0.5 text-[10px] font-mono font-bold text-[#8A735C]">
-                          {{ log.pharmacyCode }}
-                        </span>
-                      }
-
-                      <!-- Category Tag -->
-                      <span class="rounded-md bg-[#F8EEE2] px-2 py-0.5 text-[10px] font-bold text-[#C27938]">
-                        {{ locale.locale() === 'ar' ? log.categoryLabelAr : log.categoryLabelEn }}
-                      </span>
-                    </div>
-
-                    <!-- Timestamp -->
-                    <div class="text-[11px] font-mono font-medium text-[#8A735C]">
-                      {{ formatLogTime(log.timestampUtc) }}
-                    </div>
-                  </div>
-
-                  <!-- Log Detailed Message -->
-                  <p class="mt-2 text-xs font-medium leading-relaxed text-[#5C4D3E] sm:text-sm">
-                    {{ locale.locale() === 'ar' ? log.messageAr : log.messageEn }}
-                  </p>
-                </div>
-              }
-            </div>
-          }
-        </div>
+        <app-audit-logs [isEmbedded]="true" />
       }
 
       <!-- Tab 5: Development & Maintenance Mode -->
@@ -928,30 +781,6 @@ export class SettingsComponent implements OnInit {
   readonly editLang = signal<ContentLang>('ar');
   readonly savingContent = signal(false);
   readonly loadingContent = signal(false);
-  readonly loadingLogs = signal(false);
-
-  readonly rawLogs = signal<SystemLogEntry[]>([]);
-  readonly logLevelFilter = signal<string>('all');
-  logSearchQuery = '';
-
-  readonly filteredLogs = computed(() => {
-    let result = this.rawLogs();
-    const level = this.logLevelFilter();
-    if (level !== 'all') {
-      result = result.filter(l => l.level === level);
-    }
-    const query = this.logSearchQuery.trim().toLowerCase();
-    if (query) {
-      result = result.filter(l =>
-        l.titleAr.toLowerCase().includes(query) ||
-        l.titleEn.toLowerCase().includes(query) ||
-        l.messageAr.toLowerCase().includes(query) ||
-        l.messageEn.toLowerCase().includes(query) ||
-        (l.pharmacyCode && l.pharmacyCode.toLowerCase().includes(query))
-      );
-    }
-    return result;
-  });
 
   readonly devSettings = signal<DevSettings>({
     devMode: false,
@@ -987,14 +816,10 @@ export class SettingsComponent implements OnInit {
     this.loadLocalDevSettings();
     this.syncFromUrl();
     this.fetchAdminContent();
-    this.fetchSystemLogs();
   }
 
   setTab(tab: SettingsTab): void {
     this.activeTab.set(tab);
-    if (tab === 'logs' && this.rawLogs().length === 0) {
-      this.fetchSystemLogs();
-    }
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab },
@@ -1042,20 +867,7 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  fetchSystemLogs(): void {
-    this.loadingLogs.set(true);
-    this.http.get<SystemLogEntry[]>(API_ENDPOINTS.ADMIN_LOGS).subscribe({
-      next: (res) => {
-        this.loadingLogs.set(false);
-        if (res && Array.isArray(res)) {
-          this.rawLogs.set(res);
-        }
-      },
-      error: () => {
-        this.loadingLogs.set(false);
-      }
-    });
-  }
+
 
   saveContentChanges(): void {
     this.savingContent.set(true);
@@ -1080,15 +892,7 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  formatLogTime(utcString: string): string {
-    if (!utcString) return '';
-    try {
-      const d = new Date(utcString);
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + d.toLocaleDateString();
-    } catch {
-      return utcString;
-    }
-  }
+
 
   private loadLocalDevSettings(): void {
     try {

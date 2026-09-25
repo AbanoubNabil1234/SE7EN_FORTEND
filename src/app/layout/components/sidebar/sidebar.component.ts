@@ -171,7 +171,6 @@ export class SidebarComponent {
     { path: '/coupons', icon: 'pi-ticket', labelKey: 'nav.coupons' },
     { path: '/match-review', icon: 'pi-check-square', labelKey: 'nav.matchReview' },
     { path: '/best-deals', icon: 'pi-shopping-bag', labelKey: 'nav.bestDeals' },
-    { path: '/audit-logs', icon: 'pi-history', labelKey: 'nav.auditLogs' },
     { path: '/users', icon: 'pi-users', labelKey: 'nav.users' }
   ];
 

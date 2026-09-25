@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { adminGuard } from './core/guards/auth.guard';
 
@@ -82,8 +83,10 @@ export const routes: Routes = [
       },
       {
         path: 'audit-logs',
-        loadComponent: () =>
-          import('./features/audit-logs/audit-logs.component').then((m) => m.AuditLogsComponent)
+        redirectTo: () => {
+          const router = inject(Router);
+          return router.createUrlTree(['/settings'], { queryParams: { tab: 'logs' } });
+        }
       },
       {
         path: 'users',
