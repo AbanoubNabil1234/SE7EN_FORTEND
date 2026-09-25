@@ -81,6 +81,11 @@ export const routes: Routes = [
           import('./features/match-review/match-review.component').then((m) => m.MatchReviewComponent)
       },
       {
+        path: 'audit-logs',
+        loadComponent: () =>
+          import('./features/audit-logs/audit-logs.component').then((m) => m.AuditLogsComponent)
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/users/users.component').then((m) => m.UsersComponent)
