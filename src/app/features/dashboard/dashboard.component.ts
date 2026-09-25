@@ -107,12 +107,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
         next: (data) => {
           this.snapshot.set(data);
           if (forceRefresh) {
-            this.notifications.showSuccess('تم تحديث إحصائيات النظام وإعادة الحساب بنجاح');
+            this.notifications.showSuccess(this.i18n.t('dashboard.statsRefreshSuccess'));
           }
         },
         error: () => {
           this.snapshotError.set(true);
-          this.notifications.showError('تعذر تحميل بيانات لوحة التحكم الحية');
+          this.notifications.showError(this.i18n.t('dashboard.statsLoadError'));
         }
       });
   }

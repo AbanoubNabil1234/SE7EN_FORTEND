@@ -4,12 +4,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-badge',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <span [class]="badgeClasses()">
-      <ng-content></ng-content>
-    </span>
-  `
+  templateUrl: './badge.component.html'
 })
 export class BadgeComponent {
   variant = input<'brand' | 'success' | 'warning' | 'info' | 'danger' | 'neutral'>('brand');

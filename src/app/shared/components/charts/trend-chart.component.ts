@@ -1,3 +1,4 @@
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { Component, computed, input, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { DashboardTrendPoint } from '../../../core/domain/models/dashboard.model';
@@ -5,136 +6,16 @@ import { DashboardTrendPoint } from '../../../core/domain/models/dashboard.model
 @Component({
   selector: 'app-trend-chart',
   standalone: true,
-  imports: [CommonModule, DecimalPipe],
+  imports: [CommonModule, DecimalPipe, TranslatePipe],
   host: {
     class: 'block w-full'
   },
-  template: `
-    <div class="relative w-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-5 dark:border-neutral-800">
-        <div class="space-y-1">
-          <h3 class="text-balance text-base font-black text-slate-900 dark:text-white">
-            {{ title() }}
-          </h3>
-          <p class="text-pretty text-xs font-medium text-slate-500 dark:text-neutral-400">
-            {{ subtitle() }}
-          </p>
-        </div>
-        <div class="flex items-center gap-4 text-xs font-semibold">
-          <div class="flex items-center gap-1.5">
-            <span class="size-2 rounded-full bg-[#C27938]"></span>
-            <span class="text-slate-700 dark:text-neutral-300">تحديثات الأسعار</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="size-2 rounded-full bg-emerald-500"></span>
-            <span class="text-slate-700 dark:text-neutral-300">نسبة النجاح %</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- SVG Canvas Chart -->
-      <div class="relative h-60 w-full pt-3">
-        @if (data().length === 0) {
-          <div class="flex size-full items-center justify-center text-sm font-medium text-slate-400">
-            لا توجد بيانات سجلات كافية
-          </div>
-        } @else {
-          <svg viewBox="0 0 700 220" class="size-full overflow-visible" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#C27938" stop-opacity="0.15" />
-                <stop offset="100%" stop-color="#C27938" stop-opacity="0.0" />
-              </linearGradient>
-            </defs>
-
-            <!-- Background Grid Lines -->
-            <g class="stroke-slate-100 dark:stroke-neutral-800" stroke-width="1" stroke-dasharray="3 3">
-              <line x1="40" y1="20" x2="680" y2="20" />
-              <line x1="40" y1="65" x2="680" y2="65" />
-              <line x1="40" y1="110" x2="680" y2="110" />
-              <line x1="40" y1="155" x2="680" y2="155" />
-            </g>
-
-            <!-- Gradient Area Fill -->
-            <path [attr.d]="areaPath()" fill="url(#priceGradient)" />
-
-            <!-- Price Updates Smooth Path -->
-            <path
-              [attr.d]="linePath()"
-              fill="none"
-              stroke="#C27938"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-
-            <!-- Success Rate Line Path -->
-            <path
-              [attr.d]="successLinePath()"
-              fill="none"
-              stroke="#10B981"
-              stroke-width="2"
-              stroke-dasharray="4 4"
-              stroke-linecap="round"
-            />
-
-            <!-- Data Points -->
-            @for (point of computedPoints(); track point.index) {
-              <g class="group cursor-pointer" (mouseenter)="activePoint.set(point.raw)">
-                <!-- Price Circle -->
-                <circle
-                  [attr.cx]="point.x"
-                  [attr.cy]="point.y"
-                  r="4"
-                  class="fill-white stroke-[#C27938] stroke-2 transition-transform duration-150 group-hover:r-5"
-                />
-
-                <!-- Success Rate Circle -->
-                <circle
-                  [attr.cx]="point.x"
-                  [attr.cy]="point.successY"
-                  r="3.5"
-                  class="fill-white stroke-[#10B981] stroke-2"
-                />
-
-                <!-- X Axis Date Label -->
-                <text
-                  [attr.x]="point.x"
-                  y="185"
-                  text-anchor="middle"
-                  class="fill-slate-400 text-[10px] font-semibold"
-                >
-                  {{ point.label }}
-                </text>
-              </g>
-            }
-          </svg>
-        }
-
-        <!-- Active Tooltip -->
-        @if (activePoint(); as pt) {
-          <div
-            class="pointer-events-none absolute top-2 start-1/2 -translate-x-1/2 rounded-xl border border-slate-200 bg-white/95 px-3.5 py-2 text-xs shadow-md backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/95"
-          >
-            <div class="flex items-center gap-2 border-b border-slate-100 pb-1 font-bold text-slate-800 dark:border-neutral-700 dark:text-white">
-              <span>{{ pt.dateLabel }}</span>
-              <span class="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 tabular-nums">
-                {{ pt.successRate }}% نجاح
-              </span>
-            </div>
-            <div class="pt-1 text-[11px] font-semibold text-slate-600 dark:text-neutral-300 tabular-nums">
-              {{ pt.priceUpdates | number }} تحديث سعر &bull; {{ pt.scrapeRuns }} عملية
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  `
+  templateUrl: './trend-chart.component.html'
 })
 export class TrendChartComponent {
   readonly data = input<DashboardTrendPoint[]>([]);
-  readonly title = input('نشاط التحديثات والمزامنة');
-  readonly subtitle = input('معدل تحديثات الأسعار اليومية ونسبة نجاح المزامنة');
+  readonly title = input('');
+  readonly subtitle = input('');
 
   readonly activePoint = signal<DashboardTrendPoint | null>(null);
 

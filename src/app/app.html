@@ -1,7 +1,7 @@
 <router-outlet></router-outlet>
 
 @if (showLoading()) {
-  <div class="global-loading" role="status" aria-live="polite" aria-label="جارٍ التحميل">
+  <div class="global-loading" role="status" aria-live="polite" [attr.aria-label]="'common.loading' | t">
     <div class="global-loading__grid" aria-hidden="true"></div>
     <div class="global-loading__orbit" aria-hidden="true">
       <!-- Orbit ring wires and sweeping beam -->
@@ -17,7 +17,7 @@
         <span>SE7EN</span>
       </div>
 
-      <!-- 7 Orbit Pharmacy Stations (Baton Relay Handover: لوجو يسلم لوجو) -->
+      <!-- 7 Orbit Pharmacy Stations (Baton Relay Handover) -->
       @for (pharmacy of loadingPharmacies; track pharmacy.code; let i = $index) {
         <div
           class="global-loading__node"
@@ -41,7 +41,7 @@
 
     <!-- Loading caption -->
     <p class="global-loading__caption">
-      <span>جارٍ تحميل الصفحة</span>
+      <span>{{ 'common.pageLoading' | t }}</span>
       <span class="global-loading__dots" aria-hidden="true">
         <i>.</i><i>.</i><i>.</i>
       </span>

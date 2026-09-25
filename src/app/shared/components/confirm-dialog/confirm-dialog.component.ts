@@ -1,84 +1,19 @@
 import { Component, HostListener, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { LocaleService } from '../../../core/services/locale.service';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    @if (dialog.isOpen()) {
-      <div
-        class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-        role="alertdialog"
-        aria-modal="true"
-        [attr.aria-label]="options()?.title || (isRtl() ? 'تأكيد العملية' : 'Confirm Action')"
-      >
-        <!-- Backdrop -->
-        <div
-          class="fixed inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity duration-200"
-          (click)="dialog.handleCancel()"
-          aria-hidden="true"
-        ></div>
-
-        <!-- Modal Card -->
-        <div
-          class="relative w-full max-w-md overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white p-6 shadow-2xl transition-all duration-200"
-          [attr.dir]="isRtl() ? 'rtl' : 'ltr'"
-          [class.font-ar]="isRtl()"
-        >
-          <!-- Top Accent / Header with Icon -->
-          <div class="flex items-start gap-4">
-            <!-- Icon Container -->
-            <div
-              class="flex size-12 shrink-0 items-center justify-center rounded-xl"
-              [ngClass]="iconContainerClass()"
-            >
-              <i class="text-xl" [ngClass]="iconClass()" aria-hidden="true"></i>
-            </div>
-
-            <!-- Content Area -->
-            <div class="min-w-0 flex-1 pt-0.5">
-              <h3 class="text-base font-bold text-[#181A1D]">
-                {{ options()?.title || defaultTitle() }}
-              </h3>
-              <p class="mt-1.5 text-sm leading-relaxed text-[#6B5A48] break-words">
-                {{ options()?.message }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="mt-6 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              class="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-semibold text-[#6B5A48] hover:bg-[#F8EEE2] hover:text-[#181A1D] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C27938]/30"
-              (click)="dialog.handleCancel()"
-            >
-              {{ options()?.cancelText || (isRtl() ? 'إلغاء' : 'Cancel') }}
-            </button>
-
-            <button
-              type="button"
-              class="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-xs font-bold text-white shadow-sm transition-all focus:outline-none focus:ring-2"
-              [ngClass]="confirmButtonClass()"
-              (click)="dialog.handleConfirm()"
-            >
-              <span>{{ options()?.confirmText || (isRtl() ? 'تأكيد' : 'Confirm') }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    }
-  `,
-  styles: `
-    .font-ar {
-      font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
-    }
-  `
+  imports: [CommonModule, TranslatePipe],
+  templateUrl: './confirm-dialog.component.html',
+  styleUrl: './confirm-dialog.component.css'
 })
 export class ConfirmDialogComponent {
+  private readonly i18n = inject(I18nService);
   readonly dialog = inject(ConfirmDialogService);
   private readonly locale = inject(LocaleService);
 
@@ -87,9 +22,9 @@ export class ConfirmDialogComponent {
 
   readonly defaultTitle = computed(() => {
     const type = this.options()?.type;
-    if (type === 'danger') return this.isRtl() ? 'تأكيد الحذف / الفصل' : 'Confirm Action';
-    if (type === 'warning') return this.isRtl() ? 'تحذير' : 'Warning';
-    return this.isRtl() ? 'تأكيد العملية' : 'Confirm';
+    if (type === 'danger') return this.i18n.t('common.confirmActionDanger');
+    if (type === 'warning') return this.i18n.t('common.warning');
+    return this.i18n.t('common.confirmAction');
   });
 
   readonly iconContainerClass = computed(() => {

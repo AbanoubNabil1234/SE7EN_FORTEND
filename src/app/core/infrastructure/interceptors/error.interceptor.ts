@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { NotificationService } from '../../services/notification.service';
+import { I18nService } from '../../i18n/i18n.service';
 import { API_ENDPOINTS } from '../http/api-endpoints.constants';
 import { LocalStorageService } from '../storage/local-storage.service';
 
@@ -14,6 +15,7 @@ const AUTH_USER_KEY = 'se7en_auth_user';
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const notificationService = inject(NotificationService);
+  const i18n = inject(I18nService);
   const router = inject(Router);
   const storage = inject(LocalStorageService);
 
@@ -34,19 +36,19 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      let message = 'حدث خطأ غير متوقع في الاتصال بالشبكة';
+      let message = i18n.t('common.networkError');
       if (error.status === 401) {
-        message = 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.';
+        message = i18n.t('common.sessionExpired');
         storage.removeItem(AUTH_USER_KEY);
         if (!router.url.includes('/login')) {
           router.navigate(['/login']);
         }
       } else if (error.status === 403) {
-        message = 'ليس لديك الصلاحية لتنفيذ هذا الإجراء.';
+        message = i18n.t('common.forbiddenError');
       } else if (error.error?.message) {
         message = error.error.message;
       }
-      notificationService.showError(message, 'تنبيه النظام');
+      notificationService.showError(message, i18n.t('common.systemAlert'));
       return throwError(() => error);
     })
   );

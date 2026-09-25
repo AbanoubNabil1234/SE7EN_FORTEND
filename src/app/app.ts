@@ -8,6 +8,7 @@ import {
   RouterOutlet
 } from '@angular/router';
 import { LoadingService } from './core/services/loading.service';
+import { TranslatePipe } from './shared/pipes/translate.pipe';
 
 interface LoadingPharmacy {
   code: string;
@@ -17,7 +18,7 @@ interface LoadingPharmacy {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, TranslatePipe],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

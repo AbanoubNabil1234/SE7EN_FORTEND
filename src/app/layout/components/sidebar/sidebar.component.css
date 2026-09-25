@@ -1,0 +1,42 @@
+:host { display: contents; }
+
+:host ::ng-deep a.nav-active {
+  background: rgba(194, 121, 56, 0.18);
+  color: #ffffff;
+}
+
+:host ::ng-deep a.nav-active > span:first-child {
+  background: #c27938;
+  color: #ffffff;
+}
+
+@media (max-width: 1023px) {
+  .shell-sidebar {
+    position: fixed;
+    top: 0.75rem;
+    bottom: 0.75rem;
+    inset-inline-start: 0.75rem;
+    height: auto;
+  }
+  .shell-sidebar--closed {
+    transform: translateX(calc(-100% - 1.5rem));
+    pointer-events: none;
+  }
+  .shell-sidebar--closed.is-rtl {
+    transform: translateX(calc(100% + 1.5rem));
+  }
+  .shell-sidebar--open {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell-sidebar {
+    position: relative;
+    inset: auto;
+    height: 100%;
+    transform: none !important;
+    pointer-events: auto;
+  }
+}

@@ -1,0 +1,931 @@
+<section class="w-full space-y-5 px-3 py-4 sm:px-5 sm:py-6" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
+  
+  <!-- Top Hero Header Bar -->
+  <div class="relative overflow-hidden rounded-3xl border border-[#E8D5BE]/80 bg-white/90 p-5 shadow-xs backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-900/90 sm:p-7">
+    <div class="absolute -end-24 -top-24 size-96 rounded-full bg-gradient-to-br from-[#C27938]/10 via-[#F8EEE2]/30 to-transparent blur-3xl pointer-events-none"></div>
+    <div class="h-1 bg-gradient-to-r from-[#C27938] via-amber-400 to-[#C27938] absolute top-0 inset-x-0"></div>
+
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between relative z-10">
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 rounded-full bg-[#F8EEE2] px-3.5 py-1 text-xs font-bold text-[#C27938] dark:bg-neutral-800">
+          <span class="size-2 rounded-full bg-[#C27938] animate-pulse"></span>
+          {{ 'categories.catalogBadge' | t }}
+        </div>
+        <h1 class="text-2xl font-black text-[#181A1D] dark:text-white sm:text-3xl tracking-tight">
+          {{ 'categories.title' | t }}
+        </h1>
+        <p class="max-w-2xl text-xs sm:text-sm font-medium text-[#8A735C] dark:text-neutral-400">
+          {{ 'categories.subtitle' | t }}
+        </p>
+      </div>
+
+      <!-- Quick Metrics Badges & Mobile Drawer Button -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="flex items-center gap-2 rounded-2xl border border-[#EDE0D0] bg-[#FBF8F4] px-3.5 py-2 text-xs font-bold text-[#181A1D] dark:border-neutral-800 dark:bg-neutral-950 dark:text-white">
+          <i class="pi pi-sitemap text-[#C27938]"></i>
+          <span>{{ 'categories.rootDeptsBadge' | t }}</span>
+        </div>
+
+        <div class="flex items-center gap-2 rounded-2xl border border-[#EDE0D0] bg-[#FBF8F4] px-3.5 py-2 text-xs font-bold text-[#181A1D] dark:border-neutral-800 dark:bg-neutral-950 dark:text-white">
+          <i class="pi pi-tags text-emerald-600"></i>
+          <span>{{ 'categories.subDeptsBadge' | t }}</span>
+        </div>
+
+        <!-- Mobile Category Drawer Toggle Button -->
+        <button
+          type="button"
+          class="lg:hidden flex items-center gap-2 rounded-2xl bg-[#C27938] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#A6652B] transition-colors"
+          (click)="mobileSidebarOpen.set(true)"
+        >
+          <i class="pi pi-bars"></i>
+          <span>{{ 'categories.categoryMenu' | t }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Layout: Sidebar (Categories) + Main Content (Products) -->
+  <div class="flex flex-col lg:flex-row items-start gap-5">
+
+    <!-- ==================== SIDEBAR (Categories Tree) ==================== -->
+    <aside class="hidden lg:block w-80 shrink-0 sticky top-4 space-y-4">
+      <div class="overflow-hidden rounded-3xl border border-[#E8D5BE]/80 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+        
+        <!-- Sidebar Header & Search -->
+        <div class="p-4 border-b border-[#EDE0D0]/80 dark:border-neutral-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-[#A68B6D] dark:text-neutral-400">
+              {{ 'categories.treeTitle' | t }}
+            </span>
+            <span class="text-[11px] font-bold rounded-full bg-[#F8EEE2] px-2 py-0.5 text-[#C27938] dark:bg-neutral-800">
+              {{ roots().length }} {{ 'categories.sectionsCount' | t }}
+            </span>
+          </div>
+
+          <!-- Filter within categories -->
+          <div class="relative">
+            <i class="pi pi-filter pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D]"></i>
+            <input
+              type="text"
+              class="h-9 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] pe-3 ps-8 text-xs font-medium text-[#181A1D] outline-none placeholder:text-[#A68B6D] focus:border-[#C27938] focus:bg-white dark:border-neutral-800 dark:bg-neutral-950 dark:text-white"
+              [placeholder]="'categories.searchPlaceholder' | t"
+              [ngModel]="categoryFilterQuery()"
+              (ngModelChange)="categoryFilterQuery.set($event)"
+            />
+          </div>
+        </div>
+
+        <!-- Categories Tree List -->
+        <div class="p-2 max-h-[calc(100vh-280px)] overflow-y-auto space-y-1 divide-y divide-[#EDE0D0]/40 dark:divide-neutral-800/40">
+          @if (categoriesLoading()) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <div class="p-3 animate-pulse flex items-center gap-3">
+                <div class="size-9 rounded-xl bg-[#F8EEE2] dark:bg-neutral-800"></div>
+                <div class="flex-1 space-y-1.5">
+                  <div class="h-3.5 w-24 rounded bg-[#E8D5BE]/60 dark:bg-neutral-800"></div>
+                  <div class="h-2.5 w-16 rounded bg-[#F8EEE2] dark:bg-neutral-800"></div>
+                </div>
+              </div>
+            }
+          } @else {
+            @for (root of filteredRoots(); track root.id) {
+              <div class="pt-1 first:pt-0">
+                <!-- Root Department Row -->
+                <div
+                  class="group relative flex items-center justify-between rounded-2xl p-2.5 cursor-pointer transition-all duration-200"
+                  [class.bg-[#F8EEE2]]="selectedPrimarySlug() === root.slug && !selectedSubSlug()"
+                  [class.dark:bg-neutral-800]="selectedPrimarySlug() === root.slug && !selectedSubSlug()"
+                  [class.border]="selectedPrimarySlug() === root.slug && !selectedSubSlug()"
+                  [class.border-[#C27938]/30]="selectedPrimarySlug() === root.slug && !selectedSubSlug()"
+                  [class.hover:bg-[#FBF8F4]]="selectedPrimarySlug() !== root.slug"
+                  [class.dark:hover:bg-neutral-800/60]="selectedPrimarySlug() !== root.slug"
+                  (click)="onSelectRoot(root)"
+                >
+                  <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div
+                      class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-xs transition-transform group-hover:scale-105 overflow-hidden"
+                      [ngClass]="getVisual(root.slug).gradient"
+                    >
+                      @if (hasValidImage(root.imageUrl)) {
+                        <img
+                          [src]="resolveApiUrl(root.imageUrl)"
+                          [alt]="root.name"
+                          (error)="onImageError(root.imageUrl)"
+                          class="size-full object-cover"
+                        />
+                      } @else {
+                        <i [class]="getVisual(root.slug).icon" class="text-sm"></i>
+                      }
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="truncate text-xs font-bold text-[#181A1D] dark:text-white">
+                        {{ locale.isRtl() ? root.name : (root.nameEn || root.name) }}
+                      </div>
+                      @if (root.nameEn && locale.isRtl()) {
+                        <div class="truncate text-[10px] font-medium text-[#8A735C] dark:text-neutral-400">
+                          {{ root.nameEn }}
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 shrink-0 ms-2">
+                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-extrabold tabular-nums text-slate-600 dark:bg-neutral-800 dark:text-neutral-300">
+                      {{ root.productCount | number }}
+                    </span>
+
+                    @if (root.children && root.children.length > 0) {
+                      <button
+                        type="button"
+                        class="p-1 text-[#A68B6D] hover:text-[#C27938] transition-colors"
+                        (click)="toggleAccordion(root.slug, $event)"
+                        aria-label="Toggle subcategories"
+                      >
+                        <i
+                          class="pi text-xs transition-transform duration-200"
+                          [class.pi-chevron-down]="isExpanded(root.slug)"
+                          [class.pi-chevron-left]="!isExpanded(root.slug) && locale.isRtl()"
+                          [class.pi-chevron-right]="!isExpanded(root.slug) && !locale.isRtl()"
+                        ></i>
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Subcategories Accordion List -->
+                @if (root.children && root.children.length > 0 && isExpanded(root.slug)) {
+                  <div class="my-1 ms-4 space-y-0.5 border-s-2 border-[#E8D5BE]/60 pe-1 ps-2.5 dark:border-neutral-800 animate-fadeIn">
+                    <!-- 'All in Department' Option -->
+                    <div
+                      class="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-semibold cursor-pointer transition-colors"
+                      [class.bg-[#C27938]]="selectedPrimarySlug() === root.slug && !selectedSubSlug()"
+                      [class.text-white]="selectedPrimarySlug() === root.slug && !selectedSubSlug()"
+                      [class.text-[#8A735C]]="selectedPrimarySlug() !== root.slug || selectedSubSlug()"
+                      [class.dark:text-neutral-400]="selectedPrimarySlug() !== root.slug || selectedSubSlug()"
+                      [class.hover:bg-[#F8EEE2]]="selectedPrimarySlug() !== root.slug || selectedSubSlug()"
+                      [class.dark:hover:bg-neutral-800]="selectedPrimarySlug() !== root.slug || selectedSubSlug()"
+                      (click)="onSelectAllInRoot(root)"
+                    >
+                      <span>{{ 'categories.allIn' | t }} {{ locale.isRtl() ? root.name : (root.nameEn || root.name) }}</span>
+                      <span class="text-[10px] opacity-80 tabular-nums">({{ root.productCount | number }})</span>
+                    </div>
+
+                    <!-- Specific Subcategories -->
+                    @for (sub of root.children; track sub.id) {
+                      <div
+                        class="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+                        [class.bg-[#C27938]]="selectedSubSlug() === sub.slug"
+                        [class.text-white]="selectedSubSlug() === sub.slug"
+                        [class.font-bold]="selectedSubSlug() === sub.slug"
+                        [class.text-[#181A1D]]="selectedSubSlug() !== sub.slug"
+                        [class.dark:text-neutral-300]="selectedSubSlug() !== sub.slug"
+                        [class.hover:bg-[#F8EEE2]]="selectedSubSlug() !== sub.slug"
+                        [class.dark:hover:bg-neutral-800]="selectedSubSlug() !== sub.slug"
+                        (click)="onSelectSub(root, sub)"
+                      >
+                        <span class="truncate">{{ locale.isRtl() ? sub.name : (sub.nameEn || sub.name) }}</span>
+                        <span
+                          class="text-[10px] tabular-nums shrink-0 ms-2"
+                          [class.text-white]="selectedSubSlug() === sub.slug"
+                          [class.text-[#8A735C]]="selectedSubSlug() !== sub.slug"
+                        >
+                          {{ sub.productCount | number }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT (Products Browser) ==================== -->
+    <main id="products-pane" class="flex-1 min-w-0 space-y-4 w-full">
+
+      <!-- Active Category Header Card & Subcategory Chips -->
+      @if (currentPrimaryNode(); as primary) {
+        <div class="overflow-hidden rounded-3xl border border-[#E8D5BE]/80 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 sm:p-6">
+          
+          <!-- Category Details & Breadcrumbs -->
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#EDE0D0]/80 pb-4 dark:border-neutral-800">
+            <div class="flex items-center gap-3.5">
+              <div
+                class="relative group/avatar flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm overflow-hidden border border-[#E8D5BE] dark:border-neutral-700 cursor-pointer"
+                [ngClass]="getVisual(activeCategoryNode()!.slug || primary.slug).gradient"
+                (click)="openImageModal(activeCategoryNode())"
+                [title]="'categories.changeImgTooltip' | t"
+              >
+                @if (hasValidImage(activeCategoryNode()!.imageUrl)) {
+                  <img
+                    [src]="resolveApiUrl(activeCategoryNode()!.imageUrl)"
+                    [alt]="activeCategoryTitle()"
+                    (error)="onImageError(activeCategoryNode()!.imageUrl)"
+                    class="size-full object-cover transition-transform group-hover/avatar:scale-105"
+                  />
+                } @else {
+                  <i [class]="getVisual(activeCategoryNode()!.slug || primary.slug).icon" class="text-2xl"></i>
+                }
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity text-white">
+                  <i class="pi pi-camera text-base"></i>
+                </div>
+              </div>
+              <div>
+                <!-- Breadcrumbs -->
+                <div class="flex items-center gap-1.5 text-[11px] font-semibold text-[#8A735C] dark:text-neutral-400 mb-0.5">
+                  <span>{{ 'categories.breadcrumbsRoot' | t }}</span>
+                  <i class="pi pi-angle-left text-[10px]" *ngIf="locale.isRtl()"></i>
+                  <i class="pi pi-angle-right text-[10px]" *ngIf="!locale.isRtl()"></i>
+                  <span class="text-[#C27938] font-bold">{{ locale.isRtl() ? primary.name : (primary.nameEn || primary.name) }}</span>
+                  @if (currentSubNode(); as sub) {
+                    <i class="pi pi-angle-left text-[10px]" *ngIf="locale.isRtl()"></i>
+                    <i class="pi pi-angle-right text-[10px]" *ngIf="!locale.isRtl()"></i>
+                    <span class="text-[#181A1D] dark:text-white font-black">{{ locale.isRtl() ? sub.name : (sub.nameEn || sub.name) }}</span>
+                  }
+                </div>
+
+                <h2 class="text-xl font-black text-[#181A1D] dark:text-white sm:text-2xl">
+                  {{ activeCategoryTitle() }}
+                </h2>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                (click)="openImageModal(activeCategoryNode())"
+                class="flex items-center gap-2 rounded-2xl border border-[#C27938]/30 bg-[#F8EEE2] px-3.5 py-2 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-all shadow-xs dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-[#C27938]"
+              >
+                <i class="pi pi-camera text-xs"></i>
+                <span>{{ currentSubNode() ? ('categories.changeImgSub' | t) : ('categories.changeImgRoot' | t) }}</span>
+              </button>
+
+              <!-- Total Count Badge -->
+              <div class="flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2 text-xs font-extrabold text-slate-700 dark:bg-neutral-800 dark:text-neutral-300">
+                <i class="pi pi-box"></i>
+                <span>{{ total() | number }} {{ 'categories.pricedProductsAvailable' | t }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Horizontal Subcategory Chips Carousel -->
+          @if (primary.children && primary.children.length > 0) {
+            <div class="pt-4 space-y-2">
+              <span class="text-[11px] font-bold text-[#A68B6D] dark:text-neutral-400 block">
+                {{ 'categories.availableSubcategories' | t }}
+              </span>
+              <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <!-- 'All' Chip -->
+                <button
+                  type="button"
+                  class="shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all"
+                  [class.bg-[#C27938]]="!selectedSubSlug()"
+                  [class.text-white]="!selectedSubSlug()"
+                  [class.shadow-sm]="!selectedSubSlug()"
+                  [class.bg-[#FBF8F4]]="selectedSubSlug()"
+                  [class.text-[#8A735C]]="selectedSubSlug()"
+                  [class.border]="selectedSubSlug()"
+                  [class.border-[#E8D5BE]]="selectedSubSlug()"
+                  [class.hover:bg-[#F8EEE2]]="selectedSubSlug()"
+                  [class.dark:bg-neutral-800]="selectedSubSlug()"
+                  (click)="onSelectAllInRoot(primary)"
+                >
+                  {{ 'categories.showAll' | t }} ({{ primary.productCount | number }})
+                </button>
+
+                <!-- Subcategory Chips -->
+                @for (sub of primary.children; track sub.id) {
+                  <button
+                    type="button"
+                    class="shrink-0 flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all"
+                    [class.bg-[#C27938]]="selectedSubSlug() === sub.slug"
+                    [class.text-white]="selectedSubSlug() === sub.slug"
+                    [class.font-bold]="selectedSubSlug() === sub.slug"
+                    [class.shadow-sm]="selectedSubSlug() === sub.slug"
+                    [class.bg-[#FBF8F4]]="selectedSubSlug() !== sub.slug"
+                    [class.text-[#181A1D]]="selectedSubSlug() !== sub.slug"
+                    [class.border]="selectedSubSlug() !== sub.slug"
+                    [class.border-[#E8D5BE]]="selectedSubSlug() !== sub.slug"
+                    [class.hover:bg-[#F8EEE2]]="selectedSubSlug() !== sub.slug"
+                    [class.dark:bg-neutral-800]="selectedSubSlug() !== sub.slug"
+                    [class.dark:text-neutral-200]="selectedSubSlug() !== sub.slug"
+                    (click)="onSelectSub(primary, sub)"
+                  >
+                    @if (hasValidImage(sub.imageUrl)) {
+                      <img
+                        [src]="resolveApiUrl(sub.imageUrl)"
+                        [alt]="sub.name"
+                        (error)="onImageError(sub.imageUrl)"
+                        class="size-4 rounded-md object-cover"
+                      />
+                    }
+                    <span>{{ locale.isRtl() ? sub.name : (sub.nameEn || sub.name) }}</span>
+                    <span
+                      class="rounded-full px-1.5 py-0.2 text-[10px] font-bold"
+                      [class.bg-white/20]="selectedSubSlug() === sub.slug"
+                      [class.text-white]="selectedSubSlug() === sub.slug"
+                      [class.bg-black/5]="selectedSubSlug() !== sub.slug"
+                      [class.text-[#8A735C]]="selectedSubSlug() !== sub.slug"
+                    >
+                      {{ sub.productCount | number }}
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Toolbar: Search within Category, Sorting, View Toggle -->
+      <div class="flex flex-col gap-3 rounded-2xl border border-[#E8D5BE]/80 bg-white p-3.5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 sm:flex-row sm:items-center sm:justify-between">
+        
+        <!-- Instant Search inside Category -->
+        <div class="relative flex-1 max-w-md">
+          <i class="pi pi-search pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-sm text-[#A68B6D]"></i>
+          <input
+            type="search"
+            class="h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] pe-3 ps-9 text-xs font-medium text-[#181A1D] outline-none placeholder:text-[#A68B6D] focus:border-[#C27938] focus:bg-white dark:border-neutral-800 dark:bg-neutral-950 dark:text-white"
+            [placeholder]="('categories.searchIn' | t) + ' ' + activeCategoryTitle() + '...'"
+            [ngModel]="productSearchQuery()"
+            (ngModelChange)="onSearchInput($event)"
+          />
+        </div>
+
+        <!-- Sort & View Controls -->
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <!-- Sort Select -->
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-[#8A735C] dark:text-neutral-400">
+            <i class="pi pi-sort-alt"></i>
+            <select
+              class="h-10 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-xs font-bold text-[#181A1D] outline-none focus:border-[#C27938] dark:border-neutral-800 dark:bg-neutral-950 dark:text-white cursor-pointer"
+              [ngModel]="selectedSort()"
+              (ngModelChange)="onSortChange($event)"
+            >
+              <option value="pharmaciesDesc">{{ 'categories.sortAvailability' | t }}</option>
+              <option value="nameAsc">{{ 'categories.sortNameAsc' | t }}</option>
+              <option value="nameDesc">{{ 'categories.sortNameDesc' | t }}</option>
+            </select>
+          </div>
+
+          <!-- View Mode Toggle (Grid / List) -->
+          <div class="flex items-center rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] p-0.5 dark:border-neutral-800 dark:bg-neutral-950">
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-xs transition-colors"
+              [class.bg-white]="viewMode() === 'grid'"
+              [class.text-[#C27938]]="viewMode() === 'grid'"
+              [class.shadow-xs]="viewMode() === 'grid'"
+              [class.text-[#8A735C]]="viewMode() !== 'grid'"
+              (click)="viewMode.set('grid')"
+              [attr.aria-label]="'categories.gridView' | t"
+              [title]="'categories.gridView' | t"
+            >
+              <i class="pi pi-th-large"></i>
+            </button>
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-xs transition-colors"
+              [class.bg-white]="viewMode() === 'list'"
+              [class.text-[#C27938]]="viewMode() === 'list'"
+              [class.shadow-xs]="viewMode() === 'list'"
+              [class.text-[#8A735C]]="viewMode() !== 'list'"
+              (click)="viewMode.set('list')"
+              [attr.aria-label]="'categories.listView' | t"
+              [title]="'categories.listView' | t"
+            >
+              <i class="pi pi-list"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PRODUCTS LIST / GRID ==================== -->
+      @if (productsLoading() && products().length === 0) {
+        <!-- Shimmer Skeletons -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 animate-pulse">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="rounded-3xl border border-[#E8D5BE]/60 bg-white p-4 space-y-3 dark:border-neutral-800 dark:bg-neutral-900">
+              <div class="aspect-[4/3] rounded-2xl bg-[#F8EEE2]/60 dark:bg-neutral-800"></div>
+              <div class="space-y-2">
+                <div class="h-3 w-16 rounded bg-[#E8D5BE]/60 dark:bg-neutral-800"></div>
+                <div class="h-4 w-3/4 rounded bg-[#E8D5BE] dark:bg-neutral-800"></div>
+                <div class="h-6 w-24 rounded bg-[#F8EEE2] dark:bg-neutral-800"></div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (productsError()) {
+        <!-- Error State -->
+        <div class="rounded-3xl border border-rose-200 bg-rose-50/80 p-8 text-center dark:border-rose-900/50 dark:bg-rose-950/40">
+          <i class="pi pi-exclamation-triangle text-3xl text-rose-500 mb-2"></i>
+          <h3 class="text-base font-bold text-rose-900 dark:text-rose-200">{{ 'categories.errorTitle' | t }}</h3>
+          <p class="text-xs text-rose-700 dark:text-rose-300 mt-1">{{ 'categories.errorDesc' | t }}</p>
+          <button
+            type="button"
+            class="mt-4 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 transition-colors"
+            (click)="reloadProducts()"
+          >
+            {{ 'categories.retry' | t }}
+          </button>
+        </div>
+      } @else if (products().length === 0) {
+        <!-- Empty State -->
+        <div class="rounded-3xl border border-dashed border-[#E8D5BE] bg-white p-12 text-center dark:border-neutral-800 dark:bg-neutral-900">
+          <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F8EEE2] text-[#C27938] dark:bg-neutral-800">
+            <i class="pi pi-search text-2xl"></i>
+          </div>
+          <h3 class="mt-4 text-base font-bold text-[#181A1D] dark:text-white">{{ 'categories.noProductsFound' | t }}</h3>
+          <p class="mt-1 text-xs text-[#8A735C] dark:text-neutral-400">
+            @if (productSearchQuery()) {
+              {{ 'categories.noProductsSearchPrefix' | t }} "{{ productSearchQuery() }}" {{ 'categories.noProductsSearchSuffix' | t }}
+            } @else {
+              {{ 'categories.noProductsEmpty' | t }}
+            }
+          </p>
+          @if (productSearchQuery()) {
+            <button
+              type="button"
+              class="mt-4 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 py-2 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] transition-colors"
+              (click)="clearSearch()"
+            >
+              {{ 'categories.clearSearch' | t }}
+            </button>
+          }
+        </div>
+      } @else {
+        
+        <!-- GRID VIEW -->
+        @if (viewMode() === 'grid') {
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            @for (family of products(); track family.familyKey) {
+              <article
+                class="group relative flex flex-col overflow-hidden rounded-3xl border border-[#E8D5BE]/80 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-[#C27938]/60 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+              >
+                <!-- Product Image & Badges -->
+                <div class="relative aspect-[4/3] w-full overflow-hidden bg-[#FBF8F4] dark:bg-neutral-950/80 p-4 flex items-center justify-center">
+                  @if (cardImage(family); as img) {
+                    <img
+                      [src]="img"
+                      [alt]="familyTitle(family)"
+                      class="size-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <div class="flex size-full items-center justify-center text-[#C27938]/40">
+                      <i class="pi pi-image text-3xl"></i>
+                    </div>
+                  }
+
+                  <!-- Savings Badge -->
+                  @if (cardSavings(family); as savings) {
+                    <span class="absolute start-3 top-3 rounded-xl bg-rose-600 px-2.5 py-1 text-[11px] font-black text-white shadow-xs">
+                      -{{ savings | number: '1.0-0' }}% {{ 'categories.savingsPrefix' | t }}
+                    </span>
+                  }
+
+                  <!-- Match Status Badge -->
+                  @if (isConfirmedFamily(family)) {
+                    <span class="absolute end-3 top-3 flex items-center gap-1 rounded-xl bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                      <i class="pi pi-check text-[9px]"></i>
+                      {{ 'categories.confirmedMatch' | t }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Card Body -->
+                <div class="flex flex-1 flex-col p-4 space-y-2.5">
+                  
+                  <!-- Brand & Dosage Form -->
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="truncate text-[11px] font-extrabold uppercase tracking-wide text-[#C27938]">
+                      {{ family.brand || ('categories.pharmaProduct' | t) }}
+                    </span>
+                    @if (family.dosageForm) {
+                      <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-neutral-800 dark:text-neutral-300">
+                        {{ family.dosageForm }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Product Title -->
+                  <a
+                    [routerLink]="['/products/detail']"
+                    [queryParams]="{ key: family.familyKey }"
+                    class="line-clamp-2 text-xs font-bold leading-snug text-[#181A1D] hover:text-[#C27938] transition-colors dark:text-white cursor-pointer"
+                    [title]="familyTitle(family)"
+                  >
+                    {{ familyTitle(family) }}
+                  </a>
+
+                  <!-- Strength / Size details if present -->
+                  @if (family.strength) {
+                    <div class="text-[11px] font-medium text-[#8A735C] dark:text-neutral-400">
+                      {{ family.strength }}
+                    </div>
+                  }
+
+                  <!-- Price & Availability Section -->
+                  <div class="mt-auto pt-3 border-t border-[#EDE0D0]/80 dark:border-neutral-800 flex items-end justify-between">
+                    <div>
+                      <span class="text-[10px] font-semibold text-[#8A735C] dark:text-neutral-400 block">
+                        {{ 'categories.lowestPriceAvailable' | t }}
+                      </span>
+                      <span class="text-base font-black text-[#181A1D] dark:text-white tabular-nums">
+                        {{ cardPrice(family) | currency: 'SAR':'symbol':'1.2-2' }}
+                      </span>
+                    </div>
+
+                    <!-- Pharmacy Count Pill -->
+                    <div class="text-end">
+                      <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                        <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                        {{ cardPharmacyCount(family) }} {{ 'categories.pharmaciesCount' | t }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Action: Compare Prices -->
+                  <a
+                    [routerLink]="['/products/detail']"
+                    [queryParams]="{ key: family.familyKey }"
+                    class="mt-2 flex items-center justify-center gap-2 rounded-2xl bg-[#181A1D] py-2 text-xs font-bold text-white transition-colors hover:bg-[#C27938] dark:bg-white dark:text-black dark:hover:bg-[#C27938] dark:hover:text-white"
+                  >
+                    <i class="pi pi-sliders-h text-xs"></i>
+                    <span>{{ 'categories.comparePrices' | t }}</span>
+                  </a>
+                </div>
+              </article>
+            }
+          </div>
+        }
+
+        <!-- LIST VIEW -->
+        @if (viewMode() === 'list') {
+          <div class="space-y-3">
+            @for (family of products(); track family.familyKey) {
+              <article
+                class="group flex flex-col sm:flex-row items-center gap-4 rounded-3xl border border-[#E8D5BE]/80 bg-white p-3.5 shadow-xs transition-all duration-200 hover:border-[#C27938]/60 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+              >
+                <!-- Product Thumbnail -->
+                <div class="relative size-24 shrink-0 rounded-2xl bg-[#FBF8F4] dark:bg-neutral-950 p-2 flex items-center justify-center">
+                  @if (cardImage(family); as img) {
+                    <img [src]="img" [alt]="familyTitle(family)" class="size-full object-contain" loading="lazy" />
+                  } @else {
+                    <i class="pi pi-image text-2xl text-[#C27938]/40"></i>
+                  }
+                  @if (cardSavings(family); as savings) {
+                    <span class="absolute -start-1.5 -top-1.5 rounded-lg bg-rose-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                      -{{ savings | number: '1.0-0' }}%
+                    </span>
+                  }
+                </div>
+
+                <!-- Product Info -->
+                <div class="flex-1 min-w-0 space-y-1 text-center sm:text-start">
+                  <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <span class="text-[11px] font-extrabold uppercase text-[#C27938]">
+                      {{ family.brand || ('categories.pharmaProduct' | t) }}
+                    </span>
+                    @if (family.dosageForm) {
+                      <span class="rounded-md bg-slate-100 px-2 py-0.2 text-[10px] font-medium text-slate-600 dark:bg-neutral-800 dark:text-neutral-300">
+                        {{ family.dosageForm }}
+                      </span>
+                    }
+                  </div>
+
+                  <a
+                    [routerLink]="['/products/detail']"
+                    [queryParams]="{ key: family.familyKey }"
+                    class="text-sm font-bold text-[#181A1D] hover:text-[#C27938] transition-colors dark:text-white truncate block cursor-pointer"
+                    [title]="familyTitle(family)"
+                  >
+                    {{ familyTitle(family) }}
+                  </a>
+
+                  <div class="text-[11px] text-[#8A735C] dark:text-neutral-400">
+                    {{ family.strength || '' }}
+                  </div>
+                </div>
+
+                <!-- Price & Pharmacy Stats -->
+                <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 shrink-0 pe-2">
+                  <div class="text-start sm:text-end">
+                    <span class="text-[10px] font-semibold text-[#8A735C] block">{{ 'categories.lowestPrice' | t }}</span>
+                    <span class="text-base font-black text-[#181A1D] dark:text-white tabular-nums">
+                      {{ cardPrice(family) | currency: 'SAR':'symbol':'1.2-2' }}
+                    </span>
+                  </div>
+                  <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                    {{ cardPharmacyCount(family) }} {{ 'categories.pharmaciesCount' | t }}
+                  </span>
+                </div>
+
+                <!-- Action Button -->
+                <a
+                  [routerLink]="['/products/detail']"
+                  [queryParams]="{ key: family.familyKey }"
+                  class="shrink-0 flex items-center justify-center gap-2 rounded-2xl bg-[#181A1D] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#C27938] transition-colors dark:bg-white dark:text-black dark:hover:bg-[#C27938] dark:hover:text-white"
+                >
+                  <span>{{ 'categories.comparePrices' | t }}</span>
+                  <i class="pi pi-arrow-left text-xs" *ngIf="locale.isRtl()"></i>
+                  <i class="pi pi-arrow-right text-xs" *ngIf="!locale.isRtl()"></i>
+                </a>
+              </article>
+            }
+          </div>
+        }
+
+        <!-- Numbered Pagination Controls -->
+        @if (totalPages() > 1) {
+          <div class="mt-8 flex flex-col items-center justify-between gap-4 rounded-3xl border border-[#E8D5BE]/80 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 sm:flex-row">
+            <!-- Info: Current items count & total -->
+            <div class="text-xs font-bold text-[#8A735C] dark:text-neutral-400 tabular-nums">
+              <span>{{ 'categories.showing' | t }}</span>
+              <span class="text-[#181A1D] dark:text-white font-black mx-1">
+                {{ pageStartItem() | number }} - {{ pageEndItem() | number }}
+              </span>
+              <span>{{ 'categories.of' | t }}</span>
+              <span class="text-[#C27938] font-black mx-1">{{ total() | number }}</span>
+              <span>{{ 'categories.productsWord' | t }}</span>
+              <span class="text-neutral-300 dark:text-neutral-700 mx-1.5">•</span>
+              <span>{{ 'categories.pageWord' | t }}</span>
+              <span class="text-[#181A1D] dark:text-white font-black mx-1">{{ page() | number }}</span>
+              <span>{{ 'categories.ofPage' | t }}</span>
+              <span class="font-black mx-1">{{ totalPages() | number }}</span>
+            </div>
+
+            <!-- Page Buttons -->
+            <div class="flex items-center gap-1.5 flex-wrap justify-center" aria-label="Pagination">
+              <!-- Prev Button -->
+              <button
+                type="button"
+                class="flex size-9 items-center justify-center rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] text-xs font-bold text-[#181A1D] transition-all hover:border-[#C27938] hover:bg-[#F8EEE2] disabled:pointer-events-none disabled:opacity-40 dark:border-neutral-800 dark:bg-neutral-950 dark:text-white dark:hover:bg-neutral-800 cursor-pointer"
+                [disabled]="page() <= 1 || productsLoading()"
+                (click)="prevPage()"
+                [title]="'categories.prevPage' | t"
+              >
+                <i class="pi pi-chevron-right text-xs" *ngIf="locale.isRtl()"></i>
+                <i class="pi pi-chevron-left text-xs" *ngIf="!locale.isRtl()"></i>
+              </button>
+
+              <!-- Numbered Page Buttons & Ellipsis -->
+              @for (p of visiblePages(); track $index) {
+                @if (p === '...') {
+                  <span class="flex size-9 items-center justify-center text-xs font-bold text-[#A68B6D]">...</span>
+                } @else {
+                  <button
+                    type="button"
+                    class="flex size-9 items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    [class.bg-[#C27938]]="page() === p"
+                    [class.text-white]="page() === p"
+                    [class.shadow-xs]="page() === p"
+                    [class.border]="page() !== p"
+                    [class.border-[#E8D5BE]]="page() !== p"
+                    [class.bg-[#FBF8F4]]="page() !== p"
+                    [class.text-[#181A1D]]="page() !== p"
+                    [class.hover:border-[#C27938]]="page() !== p"
+                    [class.hover:bg-[#F8EEE2]]="page() !== p"
+                    [class.dark:border-neutral-800]="page() !== p"
+                    [class.dark:bg-neutral-950]="page() !== p"
+                    [class.dark:text-white]="page() !== p"
+                    [class.dark:hover:bg-neutral-800]="page() !== p"
+                    [disabled]="productsLoading()"
+                    (click)="goToPage(p)"
+                  >
+                    {{ p }}
+                  </button>
+                }
+              }
+
+              <!-- Next Button -->
+              <button
+                type="button"
+                class="flex size-9 items-center justify-center rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] text-xs font-bold text-[#181A1D] transition-all hover:border-[#C27938] hover:bg-[#F8EEE2] disabled:pointer-events-none disabled:opacity-40 dark:border-neutral-800 dark:bg-neutral-950 dark:text-white dark:hover:bg-neutral-800 cursor-pointer"
+                [disabled]="page() >= totalPages() || productsLoading()"
+                (click)="nextPage()"
+                [title]="'categories.nextPage' | t"
+              >
+                <i class="pi pi-chevron-left text-xs" *ngIf="locale.isRtl()"></i>
+                <i class="pi pi-chevron-right text-xs" *ngIf="!locale.isRtl()"></i>
+              </button>
+            </div>
+          </div>
+        } @else if (total() > 0) {
+          <!-- Single Page Count Summary -->
+          <div class="flex items-center justify-center pt-6 text-xs font-bold text-[#8A735C] dark:text-neutral-400">
+            <span>{{ 'categories.showAllProducts' | t }} {{ total() | number }} {{ 'categories.productsWord' | t }}</span>
+          </div>
+        }
+      }
+    </main>
+  </div>
+
+  <!-- ==================== MOBILE CATEGORIES DRAWER (Off-canvas) ==================== -->
+  @if (mobileSidebarOpen()) {
+    <div class="fixed inset-0 z-50 flex lg:hidden">
+      <!-- Backdrop -->
+      <div
+        class="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-fadeIn"
+        (click)="mobileSidebarOpen.set(false)"
+      ></div>
+
+      <!-- Drawer Content -->
+      <div
+        class="relative z-10 flex w-full max-w-xs flex-col bg-white shadow-2xl dark:bg-neutral-900 animate-slideInEnd"
+        [class.ms-auto]="!locale.isRtl()"
+        [class.me-auto]="locale.isRtl()"
+      >
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between border-b border-[#EDE0D0] p-4 dark:border-neutral-800">
+          <div class="flex items-center gap-2 font-black text-[#181A1D] dark:text-white">
+            <i class="pi pi-sitemap text-[#C27938]"></i>
+            <span>{{ 'categories.treeTitle' | t }}</span>
+          </div>
+          <button
+            type="button"
+            class="rounded-xl p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
+            (click)="mobileSidebarOpen.set(false)"
+          >
+            <i class="pi pi-times text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-1 divide-y divide-[#EDE0D0]/40 dark:divide-neutral-800/40">
+          @for (root of roots(); track root.id) {
+            <div class="pt-1 first:pt-0">
+              <div
+                class="flex items-center justify-between rounded-xl p-2.5 cursor-pointer"
+                [class.bg-[#F8EEE2]]="selectedPrimarySlug() === root.slug"
+                [class.dark:bg-neutral-800]="selectedPrimarySlug() === root.slug"
+                (click)="onSelectRoot(root); mobileSidebarOpen.set(false)"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="flex size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden" [ngClass]="getVisual(root.slug).gradient">
+                    @if (hasValidImage(root.imageUrl)) {
+                      <img
+                        [src]="resolveApiUrl(root.imageUrl)"
+                        [alt]="root.name"
+                        (error)="onImageError(root.imageUrl)"
+                        class="size-full object-cover"
+                      />
+                    } @else {
+                      <i [class]="getVisual(root.slug).icon" class="text-xs"></i>
+                    }
+                  </div>
+                  <span class="truncate text-xs font-bold text-[#181A1D] dark:text-white">
+                    {{ locale.isRtl() ? root.name : (root.nameEn || root.name) }}
+                  </span>
+                </div>
+                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-neutral-800 dark:text-neutral-300">
+                  {{ root.productCount | number }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Category Image Upload Modal -->
+  @if (imageModalOpen() && targetCategory(); as cat) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn" (click)="closeImageModal()">
+      <div
+        class="relative w-full max-w-md overflow-hidden rounded-3xl border border-[#E8D5BE] bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
+        (click)="$event.stopPropagation()"
+      >
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-[#EDE0D0]/80 pb-4 dark:border-neutral-800">
+          <div class="flex items-center gap-3">
+            <div class="flex size-10 items-center justify-center rounded-xl bg-[#F8EEE2] text-[#C27938] dark:bg-neutral-800">
+              <i class="pi pi-image text-lg"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-black text-[#181A1D] dark:text-white">
+                {{ 'categories.modalTitle' | t }}
+              </h3>
+              <p class="text-xs font-medium text-[#8A735C] dark:text-neutral-400">
+                {{ locale.isRtl() ? cat.name : (cat.nameEn || cat.name) }}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="closeImageModal()"
+            [disabled]="uploadingImage()"
+            class="flex size-8 items-center justify-center rounded-full text-[#A68B6D] hover:bg-[#F8EEE2] hover:text-[#181A1D] transition-colors dark:hover:bg-neutral-800"
+          >
+            <i class="pi pi-times text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="py-5 space-y-4">
+          <!-- Image Preview Box -->
+          <div class="flex flex-col items-center justify-center">
+            <div class="relative size-36 overflow-hidden rounded-2xl border-2 border-dashed border-[#E8D5BE] bg-[#FBF8F4] dark:border-neutral-700 dark:bg-neutral-950 flex items-center justify-center group shadow-inner">
+              @if (imagePreviewUrl()) {
+                <img
+                  [src]="imagePreviewUrl()!.startsWith('data:') ? imagePreviewUrl()! : resolveApiUrl(imagePreviewUrl())!"
+                  alt="Preview"
+                  (error)="onImageError(imagePreviewUrl())"
+                  class="size-full object-cover"
+                />
+              } @else {
+                <div class="text-center p-3 text-[#A68B6D]">
+                  <i class="pi pi-image text-3xl mb-1 block opacity-50"></i>
+                  <span class="text-[11px] font-medium">{{ 'categories.noImageYet' | t }}</span>
+                </div>
+              }
+            </div>
+
+            @if (selectedImageFile()) {
+              <span class="mt-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                {{ 'categories.selectedNewFile' | t }} {{ selectedImageFile()!.name }}
+              </span>
+            }
+          </div>
+
+          <!-- File Input Trigger -->
+          <div class="space-y-1.5">
+            <label class="flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-750">
+              <i class="pi pi-upload text-sm text-[#C27938]"></i>
+              <span>{{ imagePreviewUrl() ? ('categories.pickImageChange' | t) : ('categories.pickImageNew' | t) }}</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                class="sr-only"
+                [disabled]="uploadingImage()"
+                (change)="onImagePicked($event)"
+              />
+            </label>
+            <p class="text-center text-[10px] font-medium text-[#8A735C] dark:text-neutral-400">
+              {{ 'categories.supportedFormats' | t }}
+            </p>
+          </div>
+
+          <!-- Success / Error Alerts -->
+          @if (uploadSuccessMessage()) {
+            <div class="rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-300 animate-fadeIn">
+              <i class="pi pi-check-circle me-1.5"></i>
+              {{ uploadSuccessMessage() }}
+            </div>
+          }
+          @if (uploadErrorMessage()) {
+            <div class="rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:border-rose-800 dark:text-rose-300 animate-fadeIn">
+              <i class="pi pi-exclamation-circle me-1.5"></i>
+              {{ uploadErrorMessage() }}
+            </div>
+          }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex items-center justify-between border-t border-[#EDE0D0]/80 pt-4 dark:border-neutral-800">
+          <div>
+            @if (cat.imageUrl) {
+              <button
+                type="button"
+                (click)="deleteCategoryImage(cat)"
+                [disabled]="uploadingImage()"
+                class="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline disabled:opacity-50"
+              >
+                <i class="pi pi-trash me-1"></i>
+                {{ 'categories.deleteImage' | t }}
+              </button>
+            }
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="closeImageModal()"
+              [disabled]="uploadingImage()"
+              class="rounded-xl border border-[#E8D5BE] px-4 py-2 text-xs font-bold text-[#6B5A48] hover:bg-[#F8EEE2] transition-colors dark:border-neutral-700 dark:text-neutral-300"
+            >
+              {{ 'categories.cancel' | t }}
+            </button>
+            <button
+              type="button"
+              (click)="submitCategoryImage()"
+              [disabled]="!selectedImageFile() || uploadingImage()"
+              class="flex items-center gap-2 rounded-xl bg-[#C27938] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#A86428] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              @if (uploadingImage()) {
+                <i class="pi pi-spin pi-spinner text-xs"></i>
+                <span>{{ 'categories.savingImage' | t }}</span>
+              } @else {
+                <i class="pi pi-check text-xs"></i>
+                <span>{{ 'categories.saveImage' | t }}</span>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+</section>

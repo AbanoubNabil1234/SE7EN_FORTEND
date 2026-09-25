@@ -1,0 +1,22 @@
+.bg-review-selected {
+  background: #F8EEE2;
+}
+
+/* Slim sleek scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E8D5BE;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C27938;
+}

@@ -10,16 +10,7 @@ import { LocaleService } from '../../core/services/locale.service';
   selector: 'app-admin-placeholder',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <section class="w-full px-4 py-5 sm:px-5">
-      <div class="rounded-2xl border border-[#E8D5BE] bg-white p-8 shadow-sm">
-        <h1 class="text-balance text-2xl font-semibold text-[#181A1D]">{{ title() }}</h1>
-        <p class="mt-2 text-pretty text-sm text-[#8A735C]">
-          {{ subtitle() }}
-        </p>
-      </div>
-    </section>
-  `
+  templateUrl: './admin-placeholder.component.html'
 })
 export class AdminPlaceholderComponent {
   private readonly route = inject(ActivatedRoute);

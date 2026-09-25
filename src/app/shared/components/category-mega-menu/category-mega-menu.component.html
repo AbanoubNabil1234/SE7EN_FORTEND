@@ -1,0 +1,135 @@
+<div
+  class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white"
+  (mouseleave)="previewSlug.set('')"
+>
+  <div class="flex flex-col lg:flex-row">
+    <ul
+      class="max-h-72 overflow-y-auto lg:max-h-[min(28rem,70dvh)] lg:w-72 lg:shrink-0 lg:border-e lg:border-[#EDE0D0]"
+      [ngClass]="mobileSubmenuOpen() ? 'hidden lg:block' : 'block'"
+      role="list"
+      [attr.aria-label]="'categoryMenu.primaries' | t"
+    >
+      @for (node of roots(); track node.id) {
+        <li>
+          <button
+            type="button"
+            class="flex min-h-11 w-full items-center gap-2.5 px-3 py-2 text-start text-sm font-semibold"
+            [ngClass]="isActive(node) ? 'bg-[#181A1D] text-white' : 'text-[#181A1D] hover:bg-[#FBF8F4]'"
+            [attr.aria-current]="isActive(node) ? 'true' : null"
+            (mouseenter)="previewSlug.set(node.slug)"
+            (focus)="previewSlug.set(node.slug)"
+            (click)="onPrimaryClick(node)"
+          >
+            <span
+              class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg"
+              [ngClass]="isActive(node) ? 'bg-white/10 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
+            >
+              <app-category-icon class="size-4" [name]="icon(node)" />
+            </span>
+            <span class="min-w-0 flex-1 truncate">{{ label(node) }}</span>
+            @if (showCounts() && node.productCount != null) {
+              <span
+                class="shrink-0 text-[11px] font-bold tabular-nums"
+                [ngClass]="isActive(node) ? 'text-white/70' : 'text-[#A68B6D]'"
+              >
+                {{ node.productCount }}
+              </span>
+            }
+            @if (node.children.length) {
+              <i
+                class="pi text-[10px]"
+                [ngClass]="[
+                  locale.isRtl() ? 'pi-chevron-left' : 'pi-chevron-right',
+                  isActive(node) ? 'text-white/70' : 'text-[#C4B09A]'
+                ]"
+                aria-hidden="true"
+              ></i>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+
+    <div
+      class="min-h-48 flex-1 bg-[#FBF8F4] lg:max-h-[min(28rem,70dvh)] lg:overflow-y-auto"
+      [ngClass]="mobileSubmenuOpen() ? 'block' : 'hidden lg:block'"
+    >
+      @if (activePrimary(); as primary) {
+        <div class="flex items-start justify-between gap-3 border-b border-[#EDE0D0] px-4 py-3">
+          <div class="min-w-0">
+            <button
+              type="button"
+              class="mb-2 inline-flex items-center gap-1 text-[11px] font-bold text-[#C27938] lg:hidden"
+              (click)="mobileSubmenuOpen.set(false)"
+            >
+              <i
+                class="pi"
+                [ngClass]="locale.isRtl() ? 'pi-arrow-right' : 'pi-arrow-left'"
+                aria-hidden="true"
+              ></i>
+              {{ 'categoryMenu.back' | t }}
+            </button>
+            <div class="flex items-center gap-2.5">
+              <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#F8EEE2] text-[#C27938]">
+                <app-category-icon class="size-5" [name]="icon(primary)" />
+              </span>
+              <div class="min-w-0">
+                <p class="text-balance text-base font-extrabold text-[#181A1D]">{{ label(primary) }}</p>
+                <p class="mt-0.5 text-pretty text-[12px] font-medium text-[#8A735C]">
+                  {{ 'categoryMenu.subHint' | t }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-[#181A1D] px-3 text-[11px] font-bold text-white hover:bg-black"
+            (click)="allSelected.emit(primary)"
+          >
+            {{ 'categoryMenu.allProducts' | t }}
+          </button>
+        </div>
+
+        @if (primary.children.length) {
+          <ul class="grid gap-1 p-2 sm:grid-cols-2" [attr.aria-label]="label(primary)">
+            @for (child of primary.children; track child.id) {
+              <li>
+                <button
+                  type="button"
+                  class="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-start text-sm font-semibold text-[#181A1D] hover:bg-white"
+                  [class.bg-white]="selectedSubSlug() === child.slug"
+                  [class.shadow-sm]="selectedSubSlug() === child.slug"
+                  (click)="childSelected.emit(child)"
+                >
+                  <span class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#C27938] ring-1 ring-[#EDE0D0]">
+                    <app-category-icon class="size-3.5" [name]="icon(child)" />
+                  </span>
+                  <span class="min-w-0 flex-1 truncate">{{ label(child) }}</span>
+                  @if (showCounts() && child.productCount != null) {
+                    <span class="shrink-0 text-[11px] font-bold tabular-nums text-[#A68B6D]">
+                      {{ child.productCount }}
+                    </span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="px-4 py-8 text-sm font-medium text-[#8A735C]">
+            {{ 'categoryMenu.noSubs' | t }}
+          </p>
+        }
+      } @else {
+        <div class="flex h-full min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
+          <div class="inline-flex size-12 items-center justify-center rounded-2xl bg-[#F8EEE2] text-[#C27938]">
+            <app-category-icon class="size-6" name="sitemap" />
+          </div>
+          <p class="mt-3 text-sm font-bold text-[#181A1D]">{{ 'categoryMenu.emptyPreview' | t }}</p>
+          <p class="mt-1 max-w-sm text-pretty text-[12px] font-medium text-[#8A735C]">
+            {{ 'categoryMenu.emptyPreviewHint' | t }}
+          </p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

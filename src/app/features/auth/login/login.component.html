@@ -1,0 +1,371 @@
+<div
+      class="login-shell"
+      [class.is-ar]="localeService.isRtl()"
+      [class.is-en]="!localeService.isRtl()"
+    >
+      <aside class="stage" [attr.dir]="localeService.isRtl() ? 'rtl' : 'ltr'">
+        <div class="stage-grid"></div>
+        <div class="stage-aurora stage-aurora--a"></div>
+        <div class="stage-aurora stage-aurora--b"></div>
+        <div class="stage-vignette"></div>
+
+        <header class="stage-top">
+          <div class="brand-lockup">
+            <img src="assets/logo.png" alt="se7en" class="brand-lockup__mark" />
+            <div>
+              <div class="brand-lockup__word">se<span>7</span>en</div>
+              <div class="brand-lockup__tag">{{ 'login.brandTag' | t }}</div>
+            </div>
+          </div>
+          <div class="stage-top__actions">
+            <div class="live-pill">
+              <span class="live-pill__dot"></span>
+              {{ 'login.livePill' | t }}
+            </div>
+          </div>
+        </header>
+
+        <div class="stage-hero">
+          <p class="eyebrow">{{ 'login.eyebrow' | t }}</p>
+          <h1>
+            {{ 'login.titleLine1' | t }}<br />
+            <em>{{ 'login.titleLine2' | t }}</em>
+          </h1>
+          <p class="lede">{{ 'login.lede' | t }}</p>
+
+          <div class="orbit" [attr.aria-label]="'login.orbitLabel' | t">
+            <svg class="orbit__wires" viewBox="0 0 420 420" aria-hidden="true">
+              <defs>
+                <linearGradient id="wireGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#e5be96" stop-opacity="0.2" />
+                  <stop offset="50%" stop-color="#c27938" stop-opacity="0.9" />
+                  <stop offset="100%" stop-color="#e5be96" stop-opacity="0.2" />
+                </linearGradient>
+                <filter id="glowSoft">
+                  <feGaussianBlur stdDeviation="2.2" result="b" />
+                  <feMerge>
+                    <feMergeNode in="b" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <circle cx="210" cy="210" [attr.r]="orbitRadius" class="orbit__ring orbit__ring--outer" />
+              <circle cx="210" cy="210" [attr.r]="orbitRadius * 0.65" class="orbit__ring orbit__ring--inner" />
+
+              @for (p of pharmacies; track p.code) {
+                <line
+                  x1="210"
+                  y1="210"
+                  [attr.x2]="hubX(p.angle)"
+                  [attr.y2]="hubY(p.angle)"
+                  class="orbit__spoke"
+                  filter="url(#glowSoft)"
+                />
+              }
+
+              @for (p of pharmacies; track p.code; let i = $index) {
+                <line
+                  [attr.x1]="hubX(p.angle)"
+                  [attr.y1]="hubY(p.angle)"
+                  [attr.x2]="hubX(pharmacies[(i + 1) % pharmacies.length].angle)"
+                  [attr.y2]="hubY(pharmacies[(i + 1) % pharmacies.length].angle)"
+                  class="orbit__chord"
+                />
+              }
+
+              <circle cx="210" cy="210" [attr.r]="orbitRadius" class="orbit__pulse" />
+            </svg>
+
+            <div class="orbit__hub">
+              <img src="assets/logo.png" alt="se7en" />
+              <span>se7en</span>
+            </div>
+
+            @for (p of pharmacies; track p.code; let i = $index) {
+              <div
+                class="orbit__node"
+                [style.--angle]="p.angle + 'deg'"
+                [style.--radius.px]="orbitRadius"
+                [style.animation-delay]="(i * 90) + 'ms'"
+                [title]="pharmacyName(p)"
+              >
+                <div class="orbit__disk">
+                  <img [src]="p.logo" [alt]="pharmacyName(p)" />
+                </div>
+                <span>{{ pharmacyName(p) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <footer class="stage-foot">
+          <span>© {{ year }} se7en</span>
+          <span class="stage-foot__sep"></span>
+          <span>{{ 'login.footMesh' | t }}</span>
+        </footer>
+      </aside>
+
+      <main class="auth" [attr.dir]="localeService.isRtl() ? 'rtl' : 'ltr'">
+        <div class="auth__glow"></div>
+
+        <div class="lang-switch" role="group" [attr.aria-label]="'common.language' | t">
+          <button
+            type="button"
+            class="lang-switch__btn"
+            [class.is-active]="localeService.locale() === 'ar'"
+            (click)="localeService.setLocale('ar')"
+          >
+            {{ 'common.langAr' | t }}
+          </button>
+          <button
+            type="button"
+            class="lang-switch__btn"
+            [class.is-active]="localeService.locale() === 'en'"
+            (click)="localeService.setLocale('en')"
+          >
+            EN
+          </button>
+        </div>
+
+        <div class="auth__mobile-brand lg-hidden">
+          <img src="assets/logo.png" alt="se7en" />
+          <div>
+            <strong>se<span>7</span>en</strong>
+            <small>{{ 'login.brandTag' | t }}</small>
+          </div>
+        </div>
+
+        <section class="auth__panel">
+          @switch (view()) {
+            @case ('login') {
+              <div class="auth__intro">
+                <h2>{{ 'login.welcome' | t }}</h2>
+                <p>{{ 'login.welcomeHint' | t }}</p>
+              </div>
+
+              <form class="auth__form" [formGroup]="form" (ngSubmit)="onSubmit()">
+                <label class="field">
+                  <span>{{ 'login.email' | t }}</span>
+                  <input
+                    type="email"
+                    autocomplete="username"
+                    formControlName="email"
+                    [placeholder]="'login.emailPlaceholder' | t"
+                  />
+                </label>
+
+                <label class="field">
+                  <span>{{ 'login.password' | t }}</span>
+                  <div class="field__password">
+                    <input
+                      [type]="showPassword() ? 'text' : 'password'"
+                      autocomplete="current-password"
+                      formControlName="password"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      class="field__toggle field__toggle--icon"
+                      (click)="showPassword.set(!showPassword())"
+                      [attr.aria-label]="(showPassword() ? 'login.hidePassword' : 'login.showPassword') | t"
+                    >
+                      <i class="pi" [class.pi-eye]="!showPassword()" [class.pi-eye-slash]="showPassword()"></i>
+                    </button>
+                  </div>
+                </label>
+
+                <div class="auth__row">
+                  <button type="button" class="auth__link-btn" (click)="openForgot()">
+                    {{ 'login.forgotLink' | t }}
+                  </button>
+                </div>
+
+                @if (error()) {
+                  <div class="auth__error">{{ error() }}</div>
+                }
+
+                <button
+                  type="submit"
+                  class="auth__submit"
+                  [class.is-rtl]="localeService.isRtl()"
+                  [disabled]="form.invalid || submitting()"
+                >
+                  @if (submitting()) {
+                    <span class="auth__spinner"></span>
+                  }
+                  {{ 'login.submit' | t }}
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            }
+
+            @case ('forgot') {
+              <div class="auth__intro">
+                <h2>{{ 'login.forgotTitle' | t }}</h2>
+                <p>{{ 'login.forgotHint' | t }}</p>
+              </div>
+
+              <form class="auth__form" [formGroup]="forgotForm" (ngSubmit)="onForgotSubmit()">
+                <label class="field">
+                  <span>{{ 'login.email' | t }}</span>
+                  <input
+                    type="email"
+                    autocomplete="email"
+                    formControlName="email"
+                    [placeholder]="'login.emailPlaceholder' | t"
+                  />
+                </label>
+
+                @if (error()) {
+                  <div class="auth__error">{{ error() }}</div>
+                }
+
+                <button
+                  type="submit"
+                  class="auth__submit"
+                  [disabled]="forgotForm.invalid || submitting()"
+                >
+                  @if (submitting()) {
+                    <span class="auth__spinner"></span>
+                  }
+                  {{ 'login.forgotSubmit' | t }}
+                </button>
+
+                <button type="button" class="auth__ghost" (click)="backToLogin()">
+                  {{ 'login.backToLogin' | t }}
+                </button>
+              </form>
+            }
+
+            @case ('verify') {
+              <div class="auth__intro">
+                <h2>{{ 'login.verifyTitle' | t }}</h2>
+                <p>{{ 'login.verifyHint' | t }}</p>
+              </div>
+
+              <form class="auth__form" [formGroup]="verifyForm" (ngSubmit)="onVerifySubmit()">
+                <label class="field">
+                  <span>{{ 'login.verifyCode' | t }}</span>
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    maxlength="6"
+                    formControlName="code"
+                    class="field__otp"
+                    placeholder="••••••"
+                  />
+                </label>
+
+                @if (error()) {
+                  <div class="auth__error">{{ error() }}</div>
+                }
+
+                <button
+                  type="submit"
+                  class="auth__submit"
+                  [disabled]="verifyForm.invalid || submitting()"
+                >
+                  @if (submitting()) {
+                    <span class="auth__spinner"></span>
+                  }
+                  {{ 'login.verifySubmit' | t }}
+                </button>
+
+                <div class="auth__row auth__row--between">
+                  <button type="button" class="auth__link-btn" (click)="resendCode()" [disabled]="submitting()">
+                    {{ 'login.resendCode' | t }}
+                  </button>
+                  <button type="button" class="auth__ghost auth__ghost--inline" (click)="backToLogin()">
+                    {{ 'login.backToLogin' | t }}
+                  </button>
+                </div>
+              </form>
+            }
+
+            @case ('reset') {
+              <div class="auth__intro">
+                <h2>{{ 'login.resetTitle' | t }}</h2>
+                <p>{{ 'login.resetHint' | t }}</p>
+              </div>
+
+              <form class="auth__form" [formGroup]="resetForm" (ngSubmit)="onResetSubmit()">
+                <label class="field">
+                  <span>{{ 'login.newPassword' | t }}</span>
+                  <div class="field__password">
+                    <input
+                      [type]="showPassword() ? 'text' : 'password'"
+                      autocomplete="new-password"
+                      formControlName="password"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      class="field__toggle field__toggle--icon"
+                      (click)="showPassword.set(!showPassword())"
+                      [attr.aria-label]="(showPassword() ? 'login.hidePassword' : 'login.showPassword') | t"
+                    >
+                      <i class="pi" [class.pi-eye]="!showPassword()" [class.pi-eye-slash]="showPassword()"></i>
+                    </button>
+                  </div>
+                </label>
+
+                <label class="field">
+                  <span>{{ 'login.confirmPassword' | t }}</span>
+                  <div class="field__password">
+                    <input
+                      [type]="showConfirmPassword() ? 'text' : 'password'"
+                      autocomplete="new-password"
+                      formControlName="confirmPassword"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      class="field__toggle field__toggle--icon"
+                      (click)="showConfirmPassword.set(!showConfirmPassword())"
+                      [attr.aria-label]="(showConfirmPassword() ? 'login.hidePassword' : 'login.showPassword') | t"
+                    >
+                      <i class="pi" [class.pi-eye]="!showConfirmPassword()" [class.pi-eye-slash]="showConfirmPassword()"></i>
+                    </button>
+                  </div>
+                </label>
+
+                @if (error()) {
+                  <div class="auth__error">{{ error() }}</div>
+                }
+
+                <button
+                  type="submit"
+                  class="auth__submit"
+                  [disabled]="resetForm.invalid || submitting()"
+                >
+                  @if (submitting()) {
+                    <span class="auth__spinner"></span>
+                  }
+                  {{ 'login.resetSubmit' | t }}
+                </button>
+              </form>
+            }
+          }
+
+          <div class="auth__sources lg-hidden">
+            <div class="auth__sources-label">{{ 'login.sources' | t }}</div>
+            <div class="auth__chain">
+              @for (p of pharmacies; track p.code; let last = $last) {
+                <div class="auth__chip" [title]="pharmacyName(p)">
+                  <div class="orbit__disk orbit__disk--sm">
+                    <img [src]="p.logo" [alt]="pharmacyName(p)" />
+                  </div>
+                </div>
+                @if (!last) {
+                  <div class="auth__link"></div>
+                }
+              }
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
