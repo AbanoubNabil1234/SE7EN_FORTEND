@@ -28,6 +28,8 @@ import { DashboardRepository } from './core/domain/repositories/dashboard.reposi
 import { HttpDashboardRepository } from './core/infrastructure/repositories/http-dashboard.repository';
 import { MatchReviewRepository } from './core/domain/repositories/match-review.repository';
 import { HttpMatchReviewRepository } from './core/infrastructure/repositories/http-match-review.repository';
+import { AuditLogRepository } from './core/domain/repositories/audit-log.repository';
+import { HttpAuditLogRepository } from './core/infrastructure/repositories/http-audit-log.repository';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -48,6 +50,7 @@ export const appConfig: ApplicationConfig = {
     { provide: BestDealsRepository, useClass: HttpBestDealsRepository },
     { provide: LiveSearchRepository, useClass: HttpLiveSearchRepository },
     { provide: DashboardRepository, useClass: HttpDashboardRepository },
-    { provide: MatchReviewRepository, useClass: HttpMatchReviewRepository }
+    { provide: MatchReviewRepository, useClass: HttpMatchReviewRepository },
+    { provide: AuditLogRepository, useClass: HttpAuditLogRepository }
   ]
 };
