@@ -28,6 +28,8 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
   private readonly familiesCache = new TtlCache<CatalogFamilyPage>('se7en.admin.families.default.v3', STALE_MS);
   private readonly brandsCache = new TtlCache<string[]>('se7en.admin.family-brands.v1', STALE_MS);
   private readonly structureCache = new TtlCache<CategoryNode[]>('se7en.admin.category-structure.v2', STALE_MS);
+  private readonly treeCache = new TtlCache<CategoryNode[]>('se7en.admin.category-tree.v2', STALE_MS);
+  private readonly distributionCache = new Map<string, { value: { counts: Record<number, number>; total: number }; at: number }>();
   private readonly searchCache = new Map<string, { value: CatalogFamilyPage; at: number }>();
 
   getCategoryStructure(): Observable<CategoryNode[]> {
@@ -40,9 +42,12 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
   }
 
   getCategoryTree(): Observable<CategoryNode[]> {
-    return this.http
-      .get<unknown>(API_ENDPOINTS.CATEGORIES_TREE)
-      .pipe(map((raw) => this.normalizeNodes(Array.isArray(raw) ? raw : [])));
+    return this.treeCache.staleWhileRevalidate(
+      FRESH_MS,
+      this.http
+        .get<unknown>(API_ENDPOINTS.CATEGORIES_TREE)
+        .pipe(map((raw) => this.normalizeNodes(Array.isArray(raw) ? raw : [])))
+    );
   }
 
   listFamilyBrands(): Observable<string[]> {
@@ -118,6 +123,12 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
   }
 
   getPharmacyDistributionCounts(categorySlug?: string): Observable<{ counts: Record<number, number>; total: number }> {
+    const key = (categorySlug ?? '').trim().toLowerCase();
+    const cached = this.distributionCache.get(key);
+    if (cached && Date.now() - cached.at < 60_000) {
+      return of(cached.value);
+    }
+
     let params = new HttpParams();
     if (categorySlug?.trim()) {
       params = params.set('categorySlug', categorySlug.trim());
@@ -128,10 +139,14 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
         { params }
       )
       .pipe(
-        map((res) => ({
-          counts: res?.counts ?? {},
-          total: res?.total ?? 0
-        }))
+        map((res) => {
+          const val = {
+            counts: res?.counts ?? {},
+            total: res?.total ?? 0
+          };
+          this.distributionCache.set(key, { value: val, at: Date.now() });
+          return val;
+        })
       );
   }
 

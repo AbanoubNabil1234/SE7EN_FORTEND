@@ -8,11 +8,19 @@ import {
   AuditLogPagedResult,
   AuditLogQuery
 } from '../../domain/models/audit-log.model';
+import { TtlCache } from '../http/ttl-cache';
+
+const FILTER_OPTIONS_FRESH_MS = 5 * 60_000;
+const FILTER_OPTIONS_STALE_MS = 30 * 60_000;
 
 @Injectable({ providedIn: 'root' })
 export class HttpAuditLogRepository implements AuditLogRepository {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/v1/admin/audit-logs';
+  private readonly filterCache = new TtlCache<AuditLogFilterOptions>(
+    'se7en.admin.audit-logs.filters.v1',
+    FILTER_OPTIONS_STALE_MS
+  );
 
   query(q: AuditLogQuery): Observable<AuditLogPagedResult> {
     let params = new HttpParams()
@@ -34,6 +42,9 @@ export class HttpAuditLogRepository implements AuditLogRepository {
   }
 
   getFilterOptions(): Observable<AuditLogFilterOptions> {
-    return this.http.get<AuditLogFilterOptions>(`${this.baseUrl}/filter-options`);
+    return this.filterCache.staleWhileRevalidate(
+      FILTER_OPTIONS_FRESH_MS,
+      this.http.get<AuditLogFilterOptions>(`${this.baseUrl}/filter-options`)
+    );
   }
 }

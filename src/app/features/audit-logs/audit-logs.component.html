@@ -24,6 +24,26 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider text-[#A68B6D]">{{ 'auditLogs.statTotal' | t }}</span>
                 <span class="text-lg font-black text-[#181A1D] tabular-nums">{{ totalCount() | number }}</span>
               </div>
+              <!-- Auto-Refresh Toggle -->
+              <button
+                type="button"
+                (click)="toggleAutoRefresh()"
+                class="inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-98"
+                [ngClass]="autoRefreshEnabled() ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-white border-[#E8D5BE] text-[#5C4936] hover:bg-[#FBF8F4]'"
+                [title]="'auditLogs.autoRefresh' | t"
+              >
+                @if (autoRefreshEnabled()) {
+                  <span class="relative flex size-2.5">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex size-2.5 rounded-full bg-emerald-600"></span>
+                  </span>
+                  <span>{{ 'auditLogs.live' | t }}</span>
+                } @else {
+                  <i class="pi pi-clock text-xs text-[#A68B6D]"></i>
+                  <span>{{ 'auditLogs.autoRefresh' | t }}</span>
+                }
+              </button>
+
               <button
                 type="button"
                 (click)="loadLogs()"
