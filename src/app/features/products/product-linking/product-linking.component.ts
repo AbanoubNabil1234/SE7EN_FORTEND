@@ -5,9 +5,12 @@ import { finalize, Subscription } from 'rxjs';
 import { CatalogBrowseRepository } from '../../../core/domain/repositories/catalog-browse.repository';
 import {
   CatalogFamily,
+  CatalogOffer,
   FamilyAiSuggestion,
   PharmacyProductSearchHit
 } from '../../../core/domain/models/catalog-family.model';
+import { pharmacyLogo as resolvePharmacyLogo } from '../../../core/domain/pharmacy-brands';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { LocaleService } from '../../../core/services/locale.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -28,6 +31,7 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
   private readonly catalog = inject(CatalogBrowseRepository);
   private readonly i18n = inject(I18nService);
   private readonly notifications = inject(NotificationService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   // Filter & Search for Linked Products (Left Pane)
   readonly selectedCount = signal<number | null>(null);
@@ -76,6 +80,20 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
 
   // Right Pane Tabs
   readonly activeTab = signal<'suggestions' | 'search'>('suggestions');
+
+  // Currently linked offers for selected family
+  readonly selectedFamilyOffers = computed<CatalogOffer[]>(() => {
+    const fam = this.selectedFamily();
+    if (!fam?.packs) return [];
+    const list: CatalogOffer[] = [];
+    for (const pack of fam.packs) {
+      if (pack.offers) {
+        list.push(...pack.offers);
+      }
+    }
+    return list;
+  });
+  readonly unlinkingOfferId = signal<string | null>(null);
 
   // Suggestions state
   readonly suggestions = signal<FamilyAiSuggestion[]>([]);
@@ -312,7 +330,27 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
           }
           // Remove linked item from suggestions
           this.suggestions.update((prev) => prev.filter((s) => s.id !== suggestion.id));
-          // Reload current family
+
+          // Optimistically add the new offer to selectedFamily immediately
+          const newOffer: CatalogOffer = {
+            pharmacyProductId: suggestion.id,
+            pharmacyCode: suggestion.pharmacyCode,
+            pharmacyName: suggestion.pharmacyName,
+            listingName: suggestion.name,
+            englishListingName: suggestion.englishName || null,
+            productUrl: suggestion.productUrl || null,
+            imageUrl: suggestion.imageUrl || null,
+            price: suggestion.price || 0,
+            oldPrice: suggestion.oldPrice || null,
+            discountPercent: null,
+            currency: suggestion.currency || 'SAR',
+            availability: 'InStock',
+            packSize: suggestion.packSize || '',
+            barcode: suggestion.barcode || '',
+            matchMethod: suggestion.matchMethod || 'MANUAL_LINK'
+          };
+
+          this.addOfferLocally(newOffer, res?.code || family.groupCode);
           this.refreshSelectedFamily(family.familyKey);
         },
         error: (err) => {
@@ -392,7 +430,27 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
           }
           // Remove from search results
           this.searchResults.update((prev) => prev.filter((h) => h.id !== hit.id));
-          // Refresh selected family
+
+          // Optimistically add the new offer to selectedFamily immediately
+          const newOffer: CatalogOffer = {
+            pharmacyProductId: hit.id,
+            pharmacyCode: hit.pharmacyCode,
+            pharmacyName: hit.pharmacyName,
+            listingName: hit.name,
+            englishListingName: hit.englishName || null,
+            productUrl: hit.productUrl || null,
+            imageUrl: hit.imageUrl || null,
+            price: hit.price || 0,
+            oldPrice: null,
+            discountPercent: null,
+            currency: hit.currency || 'SAR',
+            availability: 'InStock',
+            packSize: hit.packSize || '',
+            barcode: hit.barcode || '',
+            matchMethod: 'MANUAL_LINK'
+          };
+
+          this.addOfferLocally(newOffer, res?.code || family.groupCode);
           this.refreshSelectedFamily(family.familyKey);
         },
         error: (err) => {
@@ -407,18 +465,159 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
       });
   }
 
+  async unlinkOffer(offer: CatalogOffer): Promise<void> {
+    const id = offer.pharmacyProductId;
+    if (!id || this.unlinkingOfferId()) return;
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('productLinking.unlinkAction'),
+      message: this.i18n.t('productLinking.unlinkConfirm'),
+      type: 'danger',
+      confirmText: this.i18n.t('productLinking.unlinkAction'),
+    });
+    if (!confirmed) return;
+
+    this.unlinkingOfferId.set(id);
+    this.catalog
+      .unlinkOffer(id)
+      .pipe(finalize(() => this.unlinkingOfferId.set(null)))
+      .subscribe({
+        next: () => {
+          this.notifications.showSuccess(
+            this.i18n.t('productLinking.unlinkedSuccessfully'),
+            offer.listingName || offer.pharmacyName || ''
+          );
+
+          // Remove offer locally from selectedFamily
+          this.selectedFamily.update((fam) => {
+            if (!fam) return null;
+            return {
+              ...fam,
+              packs: fam.packs.map((p) => {
+                const remaining = (p.offers || []).filter((o) => o.pharmacyProductId !== id);
+                return {
+                  ...p,
+                  offers: remaining,
+                  pharmacyCount: remaining.length
+                };
+              })
+            };
+          });
+
+          // Also remove offer locally from families list
+          const currentFam = this.selectedFamily();
+          if (currentFam) {
+            this.families.update((list) =>
+              list.map((f) => {
+                const isMatch =
+                  f.familyKey === currentFam.familyKey ||
+                  (f.groupCode && currentFam.groupCode && f.groupCode === currentFam.groupCode) ||
+                  f.packs.some((p) => currentFam.packs.some((cp) => cp.masterId === p.masterId));
+                if (!isMatch) return f;
+                return {
+                  ...f,
+                  packs: f.packs.map((p) => {
+                    const remaining = (p.offers || []).filter((o) => o.pharmacyProductId !== id);
+                    return {
+                      ...p,
+                      offers: remaining,
+                      pharmacyCount: remaining.length
+                    };
+                  })
+                };
+              })
+            );
+            this.refreshSelectedFamily(currentFam.familyKey);
+          }
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('productLinking.unlinkedFailed'),
+            this.i18n.t('productLinking.title')
+          );
+        }
+      });
+  }
+
   viewProductUrl(url?: string | null): void {
     if (url && typeof window !== 'undefined') {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
   }
 
+  pharmacyLogo(code: string | null | undefined): string | null {
+    return resolvePharmacyLogo(code);
+  }
+
+  pharmacyLabel(offer: CatalogOffer): string {
+    return offer.pharmacyName || offer.pharmacyCode || '';
+  }
+
+  private addOfferLocally(newOffer: CatalogOffer, groupCode?: string | null): void {
+    const currentFam = this.selectedFamily();
+    if (!currentFam) return;
+
+    const updatedPacks = currentFam.packs && currentFam.packs.length > 0
+      ? currentFam.packs.map((p, idx) => {
+          if (idx === 0) {
+            const existingOffers = (p.offers || []).filter((o) => o.pharmacyProductId !== newOffer.pharmacyProductId);
+            const offers = [...existingOffers, newOffer];
+            return {
+              ...p,
+              offers,
+              pharmacyCount: offers.length
+            };
+          }
+          return p;
+        })
+      : [{
+          masterId: '',
+          label: currentFam.label || '',
+          packSize: '',
+          barcode: null,
+          lowestPrice: newOffer.price,
+          highestPrice: newOffer.price,
+          savingsPercent: null,
+          pharmacyCount: 1,
+          priceSyncEnabled: true,
+          offers: [newOffer]
+        }];
+
+    const updatedFam: CatalogFamily = {
+      ...currentFam,
+      groupCode: groupCode || currentFam.groupCode,
+      packs: updatedPacks
+    };
+
+    this.selectedFamily.set(updatedFam);
+
+    // Update in families list as well
+    this.families.update((list) =>
+      list.map((f) => {
+        const isMatch =
+          f.familyKey === currentFam.familyKey ||
+          (f.groupCode && updatedFam.groupCode && f.groupCode === updatedFam.groupCode) ||
+          f.packs.some((p) => updatedFam.packs.some((up) => up.masterId === p.masterId));
+        return isMatch ? updatedFam : f;
+      })
+    );
+  }
+
   private refreshSelectedFamily(familyKey: string): void {
+    if (!familyKey) return;
     this.catalog.getFamilyByKey(familyKey).subscribe({
       next: (updated) => {
+        if (!updated) return;
         this.selectedFamily.set(updated);
         this.families.update((list) =>
-          list.map((f) => (f.familyKey === familyKey ? updated : f))
+          list.map((f) => {
+            const isMatch =
+              f.familyKey === familyKey ||
+              f.familyKey === updated.familyKey ||
+              (f.groupCode && updated.groupCode && f.groupCode === updated.groupCode) ||
+              f.packs.some((p) => updated.packs.some((up) => up.masterId === p.masterId));
+            return isMatch ? updated : f;
+          })
         );
       },
       error: () => {}

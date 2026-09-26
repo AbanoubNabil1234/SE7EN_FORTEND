@@ -496,12 +496,29 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     );
   }
 
-  private refreshFamilyInPlace(familyKey: string): void {
+  private refreshFamilyInPlace(familyKey: string, oldFamily?: CatalogFamily | null, newGroupCode?: string): void {
     if (!familyKey) return;
     this.catalog.getFamilyByKey(familyKey).subscribe({
       next: (freshFamily) => {
+        if (!freshFamily) {
+          this.reloadKeepingSelection();
+          return;
+        }
+        const freshCards = flattenFamilyPacks([freshFamily]);
+        const replacement = freshCards[0] ?? freshFamily;
+
         this.families.update((current) =>
-          current.map((f) => (f.familyKey === freshFamily.familyKey ? freshFamily : f))
+          current.map((f) => {
+            const isMatch =
+              f.familyKey === familyKey ||
+              f.familyKey === freshFamily.familyKey ||
+              (oldFamily && f.familyKey === oldFamily.familyKey) ||
+              (f.groupCode && freshFamily.groupCode && f.groupCode === freshFamily.groupCode) ||
+              (newGroupCode && f.groupCode === newGroupCode) ||
+              f.packs.some((p) => freshFamily.packs.some((fp) => fp.masterId === p.masterId)) ||
+              (oldFamily && f.packs.some((p) => oldFamily.packs.some((op) => op.masterId === p.masterId)));
+            return isMatch ? replacement : f;
+          })
         );
       },
       error: () => {
@@ -520,13 +537,16 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     this.quickAddFamily.set(null);
   }
 
-  onQuickProductAdded(): void {
+  onQuickProductAdded(event?: { pharmacyProductId: string; groupCode: string }): void {
     const fam = this.quickAddFamily();
     this.closeQuickAdd();
     this.loadPharmacyDistribution();
-    if (fam?.familyKey) {
-      this.openOfferKeys.update((keys) => new Set([...keys, fam.familyKey]));
-      this.refreshFamilyInPlace(fam.familyKey);
+    const keyToRefresh = fam?.familyKey || event?.groupCode;
+    if (keyToRefresh) {
+      if (fam?.familyKey) {
+        this.openOfferKeys.update((keys) => new Set([...keys, fam.familyKey]));
+      }
+      this.refreshFamilyInPlace(keyToRefresh, fam, event?.groupCode);
     } else {
       this.reloadKeepingSelection();
     }

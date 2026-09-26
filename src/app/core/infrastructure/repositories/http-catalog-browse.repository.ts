@@ -195,6 +195,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
         map((raw) => {
           this.familiesCache.clear();
           this.searchCache.clear();
+          this.distributionCache.clear();
           return {
             code: String(raw['code'] ?? raw['Code'] ?? code),
             familyKey: String(raw['familyKey'] ?? raw['FamilyKey'] ?? ''),
@@ -209,6 +210,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
   clearCache(): void {
     this.familiesCache.clear();
     this.searchCache.clear();
+    this.distributionCache.clear();
   }
 
   unlinkOffer(pharmacyProductId: string): Observable<boolean> {
@@ -220,6 +222,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
         map((res) => {
           this.familiesCache.clear();
           this.searchCache.clear();
+          this.distributionCache.clear();
           return Boolean(res.success);
         })
       );
@@ -235,6 +238,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
         map((raw) => {
           this.familiesCache.clear();
           this.searchCache.clear();
+          this.distributionCache.clear();
           return {
             targetCode: String(raw['targetCode'] ?? raw['TargetCode'] ?? targetGroupCode),
             sourceCode: String(raw['sourceCode'] ?? raw['SourceCode'] ?? sourceGroupCode),

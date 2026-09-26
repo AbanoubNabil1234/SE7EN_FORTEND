@@ -242,9 +242,9 @@ export class ProductDetailComponent implements OnInit {
     this.isQuickAddOpen.set(false);
   }
 
-  onQuickProductAdded(): void {
+  onQuickProductAdded(event?: { pharmacyProductId: string; groupCode: string }): void {
     this.closeQuickAdd();
-    const key = this.family()?.familyKey;
+    const key = this.family()?.familyKey || event?.groupCode;
     if (key) this.load(key);
   }
 

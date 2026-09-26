@@ -776,6 +776,96 @@
           </div>
         </div>
 
+        <!-- Currently Linked Pharmacy Offers Section -->
+        <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <h4 class="text-xs sm:text-sm font-extrabold text-[#181A1D] flex items-center gap-1.5">
+                <i class="pi pi-check-circle text-emerald-600 text-xs" aria-hidden="true"></i>
+                <span>{{ 'productLinking.linkedOffersTitle' | t }}</span>
+                <span class="rounded-full bg-[#EEDBCA] px-2 py-0.5 text-[11px] font-bold text-[#A66324]">
+                  {{ selectedFamilyOffers().length }}
+                </span>
+              </h4>
+              <p class="text-[11px] text-[#8A735C]">
+                {{ 'productLinking.linkedOffersSub' | t }}
+              </p>
+            </div>
+          </div>
+
+          @if (selectedFamilyOffers().length === 0) {
+            <div class="py-4 text-center text-xs text-[#8A735C]">
+              {{ 'productLinking.noLinkedOffers' | t }}
+            </div>
+          } @else {
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pe-1 custom-scrollbar">
+              @for (offer of selectedFamilyOffers(); track (offer.pharmacyProductId || offer.pharmacyCode + (offer.listingName || ''))) {
+                <div class="flex items-center justify-between gap-2 p-2 rounded-lg border border-[#EDE0D0] bg-white hover:border-[#C27938]/40 transition-all">
+                  <div class="flex items-center gap-2 min-w-0">
+                    @if (pharmacyLogo(offer.pharmacyCode)) {
+                      <img
+                        [src]="pharmacyLogo(offer.pharmacyCode)"
+                        [alt]="pharmacyLabel(offer)"
+                        class="size-7 shrink-0 rounded-md border border-[#EDE0D0] object-contain bg-white p-0.5"
+                      />
+                    } @else {
+                      <span class="size-7 shrink-0 rounded-md bg-[#FAF3EA] border border-[#EEDBCA] inline-flex items-center justify-center text-[#A66324] text-[10px] font-bold">
+                        <i class="pi pi-building" aria-hidden="true"></i>
+                      </span>
+                    }
+                    <div class="min-w-0">
+                      <div class="text-xs font-bold text-[#181A1D] truncate">
+                        {{ pharmacyLabel(offer) }}
+                      </div>
+                      <div class="text-[11px] text-[#8A735C] truncate">
+                        {{ offer.listingName || offer.englishListingName || '' }}
+                      </div>
+                      <div class="flex items-center gap-1.5 text-[11px]">
+                        <span class="font-extrabold text-[#C27938]">
+                          {{ offer.price }} {{ offer.currency || 'SAR' }}
+                        </span>
+                        @if (offer.packSize) {
+                          <span class="text-[#D0BEAA]">|</span>
+                          <span class="text-[10px] text-[#8A735C]">{{ offer.packSize }}</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1 shrink-0">
+                    @if (offer.productUrl) {
+                      <a
+                        [href]="offer.productUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="size-7 inline-flex items-center justify-center rounded-lg border border-[#EEDBCA] bg-[#FAF8F5] text-[#8A735C] hover:text-[#181A1D] hover:bg-[#F8EEE2] transition-colors"
+                        [attr.title]="'productLinking.viewAction' | t"
+                        [attr.aria-label]="'productLinking.viewAction' | t"
+                      >
+                        <i class="pi pi-external-link text-[10px]" aria-hidden="true"></i>
+                      </a>
+                    }
+                    <button
+                      type="button"
+                      (click)="unlinkOffer(offer)"
+                      [disabled]="unlinkingOfferId() === offer.pharmacyProductId"
+                      class="size-7 inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors cursor-pointer disabled:opacity-50"
+                      [attr.title]="'productLinking.unlinkAction' | t"
+                      [attr.aria-label]="'productLinking.unlinkAction' | t"
+                    >
+                      @if (unlinkingOfferId() === offer.pharmacyProductId) {
+                        <i class="pi pi-spin pi-spinner text-[10px]" aria-hidden="true"></i>
+                      } @else {
+                        <i class="pi pi-trash text-[10px]" aria-hidden="true"></i>
+                      }
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
         <!-- Mode Tabs: Match Suggestions & Manual Search -->
         <div class="grid grid-cols-2 gap-2 border-b border-[#EDE0D0] pb-3">
           <button

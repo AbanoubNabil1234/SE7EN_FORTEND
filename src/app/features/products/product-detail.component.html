@@ -406,7 +406,7 @@
       [family]="family()"
       [isOpen]="isQuickAddOpen()"
       (close)="closeQuickAdd()"
-      (productAdded)="onQuickProductAdded()"
+      (productAdded)="onQuickProductAdded($event)"
     />
 
     <app-product-image-modal

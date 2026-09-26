@@ -328,7 +328,14 @@ export const messagesAr: MessageTree = {
     pageLabel: 'صفحة',
     totalProducts: 'إجمالي',
     showingProducts: 'عرض',
-    aiModelSuggestionBadge: 'اقتراح الذكاء الاصطناعي (AI Model)'
+    aiModelSuggestionBadge: 'اقتراح الذكاء الاصطناعي (AI Model)',
+    linkedOffersTitle: 'عروض الصيدليات المرتبطة حالياً',
+    linkedOffersSub: 'قائمة الصيدليات المربوطة بهذا المنتج مع الأسعار وإمكانية إلغاء الربط',
+    unlinkAction: 'إلغاء الربط',
+    unlinkConfirm: 'هل أنت متأكد من رغبتك في إلغاء ربط هذا العرض من المجموعة؟',
+    unlinkedSuccessfully: 'تم إلغاء ربط المنتج بنجاح',
+    unlinkedFailed: 'تعذر إلغاء ربط المنتج، يرجى المحاولة مرة أخرى',
+    noLinkedOffers: 'لا توجد عروض صيدليات مرتبطة حالياً'
   },
   searchPharmacies: {
     badge: 'تطبيق العميل',
@@ -1732,7 +1739,14 @@ export const messagesEn: MessageTree = {
     pageLabel: 'Page',
     totalProducts: 'Total',
     showingProducts: 'Showing',
-    aiModelSuggestionBadge: 'AI Model Suggestion'
+    aiModelSuggestionBadge: 'AI Model Suggestion',
+    linkedOffersTitle: 'Currently Linked Pharmacy Offers',
+    linkedOffersSub: 'List of pharmacies linked to this product with prices and unlink capability',
+    unlinkAction: 'Unlink',
+    unlinkConfirm: 'Are you sure you want to unlink this offer from the group?',
+    unlinkedSuccessfully: 'Product unlinked successfully',
+    unlinkedFailed: 'Failed to unlink product, please try again',
+    noLinkedOffers: 'No pharmacy offers currently linked'
   },
   searchPharmacies: {
     badge: 'Customer app',

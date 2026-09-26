@@ -672,7 +672,7 @@
       [family]="quickAddFamily()"
       [isOpen]="isQuickAddOpen()"
       (close)="closeQuickAdd()"
-      (productAdded)="onQuickProductAdded()"
+      (productAdded)="onQuickProductAdded($event)"
       (familyMerged)="onFamilyMerged()"
     />
 
