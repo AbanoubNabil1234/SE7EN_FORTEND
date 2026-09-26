@@ -397,9 +397,18 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   openDetail(family: CatalogFamily): void {
-    void this.router.navigate(['/products/detail'], {
-      queryParams: { key: family.familyKey }
-    });
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree(['/products/detail'], {
+        queryParams: { key: family.familyKey }
+      })
+    );
+    if (typeof window !== 'undefined') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      void this.router.navigate(['/products/detail'], {
+        queryParams: { key: family.familyKey }
+      });
+    }
   }
 
   setDraft(id: string, value: string): void {

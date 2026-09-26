@@ -391,13 +391,15 @@
                         : ('productsAdmin.showOffers' | t)
                     }}
                   </button>
-                  <button
-                    type="button"
-                    class="inline-flex min-h-8 items-center whitespace-nowrap rounded-lg bg-[#181A1D] px-2 text-[11px] font-bold text-white hover:bg-black"
-                    (click)="openDetail(family)"
+                  <a
+                    [routerLink]="['/products/detail']"
+                    [queryParams]="{ key: family.familyKey }"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex min-h-8 items-center whitespace-nowrap rounded-lg bg-[#181A1D] px-2 text-[11px] font-bold text-white hover:bg-black transition-colors"
                   >
                     {{ 'productsAdmin.details' | t }}
-                  </button>
+                  </a>
                   <button
                     type="button"
                     class="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-[#EDE0D0] bg-[#FBF8F4] px-2 text-[11px] font-bold text-[#8A735C] hover:text-[#C27938] hover:border-[#C27938] hover:bg-white transition"
