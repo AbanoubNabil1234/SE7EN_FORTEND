@@ -172,7 +172,7 @@
           <div class="flex flex-wrap items-center gap-2 text-sm font-semibold tabular-nums text-[#8A735C]">
             <span>
               {{ 'productsAdmin.showing' | t }}:
-              <span class="text-[#181A1D]">{{ rangeStart() }}â€“{{ rangeEnd() }}</span>
+              <span class="text-[#181A1D]">{{ rangeStart() }} - {{ rangeEnd() }}</span>
               {{ 'productsAdmin.pageOf' | t }}
               <span class="text-[#181A1D]">{{ total() }}</span>
             </span>
@@ -495,7 +495,7 @@
                         {{ pack.lowestPrice | currency: 'SAR':'symbol':'1.2-2' }}
                         @if (pack.highestPrice > pack.lowestPrice) {
                           <span class="font-semibold text-[#8A735C]">
-                            â€“ {{ pack.highestPrice | currency: 'SAR':'symbol':'1.2-2' }}
+                            - {{ pack.highestPrice | currency: 'SAR':'symbol':'1.2-2' }}
                           </span>
                         }
                       </div>

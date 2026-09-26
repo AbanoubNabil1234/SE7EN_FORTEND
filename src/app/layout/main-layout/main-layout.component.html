@@ -1,4 +1,4 @@
-﻿<div
+<div
       class="h-dvh bg-[#FAF7F2] p-3 text-[#181A1D] sm:p-4"
       [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'"
       [class.font-ar]="locale.isRtl()"
@@ -29,7 +29,7 @@
               [attr.aria-label]="'common.dismiss' | t"
               (click)="notificationService.remove(toast.id)"
             >
-              âœ•
+              <i class="pi pi-times text-xs"></i>
             </button>
           </div>
         }
