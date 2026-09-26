@@ -1,0 +1,23 @@
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E8D5BE;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #C27938;
+}
+
+.product-card--selected {
+  border-color: #C27938 !important;
+  background-color: #FFF9F2 !important;
+  box-shadow: 0 1px 3px 0 rgba(194, 121, 56, 0.15);
+}

@@ -1,0 +1,789 @@
+<section
+  class="w-full space-y-4 px-3 py-3 sm:px-5 sm:py-5"
+  [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'"
+  [class.font-ar]="locale.isRtl()"
+>
+  <!-- Top Banner / Header Notice -->
+  <div class="relative overflow-hidden rounded-2xl border border-[#E8D5BE] bg-[#FBF8F4] p-4 sm:p-5 shadow-2xs">
+    <div class="flex items-start gap-3 sm:gap-4">
+      <div class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#F8EEE2] text-[#C27938] border border-amber-200">
+        <i class="pi pi-info-circle text-lg" aria-hidden="true"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <h2 class="text-sm sm:text-base font-extrabold text-[#181A1D]">
+          {{ 'productLinking.bannerTitle' | t }}
+        </h2>
+        <p class="mt-1 text-xs sm:text-sm text-[#8A735C]">
+          {{ 'productLinking.bannerDesc' | t }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Split Layout (Two Halves) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
+    
+    <!-- ========================================== -->
+    <!-- LEFT PANE: LINKED PRODUCTS (نصف المنتجات المرتبطة) -->
+    <!-- ========================================== -->
+    <div class="lg:col-span-5 flex flex-col rounded-2xl border border-[#E8D5BE] bg-white p-4 sm:p-5 shadow-xs space-y-4">
+      
+      <!-- Left Header: Title + Count Badge -->
+      <div class="flex items-center justify-between gap-3 border-b border-[#EDE0D0] pb-3.5">
+        <div class="flex items-center gap-2">
+          <h2 class="text-base sm:text-lg font-extrabold text-[#181A1D]">
+            {{ 'productLinking.linkedProductsTitle' | t }}
+          </h2>
+        </div>
+        <span class="inline-flex items-center rounded-full bg-[#F8EEE2] px-3 py-1 text-xs font-bold text-[#C27938]">
+          {{ filteredFamilies().length }} {{ 'productLinking.productsCount' | t }}
+        </span>
+      </div>
+
+      <!-- Controls Row: Filter Dropdown + Search Input -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <!-- Filter Dropdown -->
+        <div class="relative shrink-0">
+          <select
+            class="h-10 min-h-10 w-full sm:w-auto rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 pe-8 text-xs font-bold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors cursor-pointer appearance-none"
+            [ngModel]="filterMode()"
+            (ngModelChange)="setFilterMode($event)"
+            [attr.aria-label]="'productLinking.filterAction' | t"
+          >
+            <option value="all">{{ 'productLinking.allFilter' | t }}</option>
+            <option value="binary">{{ 'productLinking.filterBinary' | t }}</option>
+            <option value="ternary">{{ 'productLinking.filterTernary' | t }}</option>
+            <option value="quaternary">{{ 'productLinking.filterQuaternary' | t }}</option>
+          </select>
+          <i class="pi pi-filter absolute end-2.5 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D] pointer-events-none" aria-hidden="true"></i>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative flex-1">
+          <i class="pi pi-search absolute start-3 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D] pointer-events-none" aria-hidden="true"></i>
+          <input
+            type="search"
+            class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] ps-8 pe-3 text-xs font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors"
+            [ngModel]="searchLinkedQuery()"
+            (ngModelChange)="onLinkedQueryChange($event)"
+            [placeholder]="'productLinking.searchLinkedPlaceholder' | t"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      @if (loadingLinked()) {
+        <div class="py-12 flex flex-col items-center justify-center gap-2 text-center text-[#8A735C]">
+          <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]" aria-hidden="true"></i>
+          <span class="text-xs font-semibold">{{ 'common.pageLoading' | t }}...</span>
+        </div>
+      } @else if (filteredFamilies().length === 0) {
+        <div class="py-12 flex flex-col items-center justify-center gap-2 text-center text-[#8A735C]">
+          <i class="pi pi-inbox text-3xl text-[#D0BEAA]" aria-hidden="true"></i>
+          <p class="text-xs font-semibold">{{ 'productLinking.emptyLinkedProducts' | t }}</p>
+        </div>
+      } @else {
+        <!-- Accordion Groups Container -->
+        <div class="space-y-3.5 max-h-[72vh] overflow-y-auto pe-1 custom-scrollbar">
+
+          <!-- 1. FULLY LINKED ACCORDION (مرتبط كلياً) -->
+          @if (fullyLinkedFamilies().length > 0) {
+            <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] overflow-hidden">
+              <button
+                type="button"
+                (click)="toggleAccordion('full')"
+                class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs">
+                    <i class="pi pi-check text-[10px]" aria-hidden="true"></i>
+                  </span>
+                  <div class="min-w-0">
+                    <div class="text-xs font-extrabold text-[#181A1D]">
+                      {{ 'productLinking.fullyLinkedGroup' | t }} ({{ fullyLinkedFamilies().length }})
+                    </div>
+                    <div class="text-[10px] text-[#8A735C]">
+                      {{ 'productLinking.fullyLinkedDesc' | t }}
+                    </div>
+                  </div>
+                </div>
+                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                   [ngClass]="accordionOpen().full ? 'pi-chevron-up' : 'pi-chevron-down'"
+                   aria-hidden="true"></i>
+              </button>
+
+              @if (accordionOpen().full) {
+                <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
+                  @for (family of fullyLinkedFamilies(); track family.familyKey) {
+                    <div
+                      role="button"
+                      tabindex="0"
+                      (click)="selectFamily(family)"
+                      (keydown.enter)="selectFamily(family)"
+                      [class.border-[#C27938]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#E8D5BE] hover:border-[#C27938]/60 hover:bg-[#FBF8F4] transition-all cursor-pointer group"
+                    >
+                      <!-- Pharmacy Count Pill -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] px-2 py-1 text-[10px] font-bold text-[#C27938]">
+                        <i class="pi pi-building text-[10px]" aria-hidden="true"></i>
+                        <span>{{ getPharmacyCount(family) }} {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+                      </span>
+
+                      <!-- Thumbnail -->
+                      <img
+                        [src]="family.imageUrl | proxyImg"
+                        alt=""
+                        class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                        aria-hidden="true"
+                      />
+
+                      <!-- Details -->
+                      <div class="min-w-0 flex-1">
+                        <h3 class="text-xs font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                          {{ getDisplayName(family) }}
+                        </h3>
+                        <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#8A735C]">
+                          @if (getPackSize(family)) {
+                            <span>{{ getPackSize(family) }}</span>
+                            <span class="text-[#D0BEAA]">|</span>
+                          }
+                          @if (getBarcode(family)) {
+                            <span class="font-mono">{{ getBarcode(family) }}</span>
+                          }
+                          @if (family.groupCode) {
+                            <span class="text-[#D0BEAA]">|</span>
+                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Status Pill -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <i class="pi pi-check-circle text-[9px]" aria-hidden="true"></i>
+                        <span>{{ 'productLinking.statusFullyLinked' | t }}</span>
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- 2. PARTIALLY LINKED ACCORDION (مرتبط جزئياً) -->
+          @if (partiallyLinkedFamilies().length > 0) {
+            <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] overflow-hidden">
+              <button
+                type="button"
+                (click)="toggleAccordion('partial')"
+                class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs">
+                    <i class="pi pi-clock text-[10px]" aria-hidden="true"></i>
+                  </span>
+                  <div class="min-w-0">
+                    <div class="text-xs font-extrabold text-[#181A1D]">
+                      {{ 'productLinking.partiallyLinkedGroup' | t }} ({{ partiallyLinkedFamilies().length }})
+                    </div>
+                    <div class="text-[10px] text-[#8A735C]">
+                      {{ 'productLinking.partiallyLinkedDesc' | t }}
+                    </div>
+                  </div>
+                </div>
+                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                   [ngClass]="accordionOpen().partial ? 'pi-chevron-up' : 'pi-chevron-down'"
+                   aria-hidden="true"></i>
+              </button>
+
+              @if (accordionOpen().partial) {
+                <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
+                  @for (family of partiallyLinkedFamilies(); track family.familyKey) {
+                    <div
+                      role="button"
+                      tabindex="0"
+                      (click)="selectFamily(family)"
+                      (keydown.enter)="selectFamily(family)"
+                      [class.border-[#C27938]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#E8D5BE] hover:border-[#C27938]/60 hover:bg-[#FBF8F4] transition-all cursor-pointer group"
+                    >
+                      <!-- Pharmacy Count Pill -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] px-2 py-1 text-[10px] font-bold text-[#C27938]">
+                        <i class="pi pi-building text-[10px]" aria-hidden="true"></i>
+                        <span>{{ getPharmacyCount(family) }} {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+                      </span>
+
+                      <!-- Thumbnail -->
+                      <img
+                        [src]="family.imageUrl | proxyImg"
+                        alt=""
+                        class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                        aria-hidden="true"
+                      />
+
+                      <!-- Details -->
+                      <div class="min-w-0 flex-1">
+                        <h3 class="text-xs font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                          {{ getDisplayName(family) }}
+                        </h3>
+                        <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#8A735C]">
+                          @if (getPackSize(family)) {
+                            <span>{{ getPackSize(family) }}</span>
+                            <span class="text-[#D0BEAA]">|</span>
+                          }
+                          @if (getBarcode(family)) {
+                            <span class="font-mono">{{ getBarcode(family) }}</span>
+                          }
+                          @if (family.groupCode) {
+                            <span class="text-[#D0BEAA]">|</span>
+                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Status Pill -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                        <i class="pi pi-clock text-[9px]" aria-hidden="true"></i>
+                        <span>{{ 'productLinking.statusPartiallyLinked' | t }}</span>
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- 3. TWO PHARMACIES ACCORDION (الثنائية - في صيدليتين فقط) -->
+          @if (twoPharmaciesFamilies().length > 0) {
+            <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] overflow-hidden">
+              <button
+                type="button"
+                (click)="toggleAccordion('two')"
+                class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700 text-xs">
+                    <i class="pi pi-link text-[10px]" aria-hidden="true"></i>
+                  </span>
+                  <div class="min-w-0">
+                    <div class="text-xs font-extrabold text-[#181A1D]">
+                      {{ 'productLinking.twoPharmaciesGroup' | t }} ({{ twoPharmaciesFamilies().length }})
+                    </div>
+                    <div class="text-[10px] text-[#8A735C]">
+                      {{ 'productLinking.twoPharmaciesDesc' | t }}
+                    </div>
+                  </div>
+                </div>
+                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                   [ngClass]="accordionOpen().two ? 'pi-chevron-up' : 'pi-chevron-down'"
+                   aria-hidden="true"></i>
+              </button>
+
+              @if (accordionOpen().two) {
+                <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
+                  @for (family of twoPharmaciesFamilies(); track family.familyKey) {
+                    <div
+                      role="button"
+                      tabindex="0"
+                      (click)="selectFamily(family)"
+                      (keydown.enter)="selectFamily(family)"
+                      [class.border-[#C27938]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#E8D5BE] hover:border-[#C27938]/60 hover:bg-[#FBF8F4] transition-all cursor-pointer group"
+                    >
+                      <!-- Pharmacy Count Pill -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] px-2 py-1 text-[10px] font-bold text-[#C27938]">
+                        <i class="pi pi-building text-[10px]" aria-hidden="true"></i>
+                        <span>2 {{ 'productLinking.pharmacyBadgeCount' | t }}</span>
+                      </span>
+
+                      <!-- Thumbnail -->
+                      <img
+                        [src]="family.imageUrl | proxyImg"
+                        alt=""
+                        class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                        aria-hidden="true"
+                      />
+
+                      <!-- Details -->
+                      <div class="min-w-0 flex-1">
+                        <h3 class="text-xs font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                          {{ getDisplayName(family) }}
+                        </h3>
+                        <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#8A735C]">
+                          @if (getPackSize(family)) {
+                            <span>{{ getPackSize(family) }}</span>
+                            <span class="text-[#D0BEAA]">|</span>
+                          }
+                          @if (getBarcode(family)) {
+                            <span class="font-mono">{{ getBarcode(family) }}</span>
+                          }
+                          @if (family.groupCode) {
+                            <span class="text-[#D0BEAA]">|</span>
+                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Status Pill -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2 py-0.5 text-[10px] font-bold text-sky-700">
+                        <i class="pi pi-link text-[9px]" aria-hidden="true"></i>
+                        <span>{{ 'productLinking.statusTwoPharmacies' | t }}</span>
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- 4. THREE PHARMACIES ACCORDION (الثلاثية - في 3 صيدليات) -->
+          @if (threePharmaciesFamilies().length > 0) {
+            <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] overflow-hidden">
+              <button
+                type="button"
+                (click)="toggleAccordion('three')"
+                class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-xs">
+                    <i class="pi pi-link text-[10px]" aria-hidden="true"></i>
+                  </span>
+                  <div class="min-w-0">
+                    <div class="text-xs font-extrabold text-[#181A1D]">
+                      {{ 'productLinking.threePharmaciesGroup' | t }} ({{ threePharmaciesFamilies().length }})
+                    </div>
+                    <div class="text-[10px] text-[#8A735C]">
+                      {{ 'productLinking.threePharmaciesDesc' | t }}
+                    </div>
+                  </div>
+                </div>
+                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                   [ngClass]="accordionOpen().three ? 'pi-chevron-up' : 'pi-chevron-down'"
+                   aria-hidden="true"></i>
+              </button>
+
+              @if (accordionOpen().three) {
+                <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
+                  @for (family of threePharmaciesFamilies(); track family.familyKey) {
+                    <div
+                      role="button"
+                      tabindex="0"
+                      (click)="selectFamily(family)"
+                      (keydown.enter)="selectFamily(family)"
+                      [class.border-[#C27938]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#E8D5BE] hover:border-[#C27938]/60 hover:bg-[#FBF8F4] transition-all cursor-pointer group"
+                    >
+                      <!-- Pharmacy Count Pill -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] px-2 py-1 text-[10px] font-bold text-[#C27938]">
+                        <i class="pi pi-building text-[10px]" aria-hidden="true"></i>
+                        <span>3 {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+                      </span>
+
+                      <!-- Thumbnail -->
+                      <img
+                        [src]="family.imageUrl | proxyImg"
+                        alt=""
+                        class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                        aria-hidden="true"
+                      />
+
+                      <!-- Details -->
+                      <div class="min-w-0 flex-1">
+                        <h3 class="text-xs font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                          {{ getDisplayName(family) }}
+                        </h3>
+                        <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#8A735C]">
+                          @if (getPackSize(family)) {
+                            <span>{{ getPackSize(family) }}</span>
+                            <span class="text-[#D0BEAA]">|</span>
+                          }
+                          @if (getBarcode(family)) {
+                            <span class="font-mono">{{ getBarcode(family) }}</span>
+                          }
+                          @if (family.groupCode) {
+                            <span class="text-[#D0BEAA]">|</span>
+                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Status Pill -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                        <i class="pi pi-link text-[9px]" aria-hidden="true"></i>
+                        <span>{{ 'productLinking.statusThreePharmacies' | t }}</span>
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+      }
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- RIGHT PANE: LINKING DETAILS & UNLINKED MATCHES -->
+    <!-- ========================================== -->
+    <div class="lg:col-span-7 flex flex-col rounded-2xl border border-[#E8D5BE] bg-white p-4 sm:p-5 shadow-xs space-y-4">
+      
+      @if (!selectedFamily()) {
+        <!-- Empty Selection State -->
+        <div class="py-24 flex flex-col items-center justify-center gap-3 text-center text-[#8A735C]">
+          <span class="inline-flex size-14 items-center justify-center rounded-2xl bg-[#F8EEE2] text-[#C27938] border border-amber-200 shadow-xs">
+            <i class="pi pi-arrow-right text-2xl" [ngClass]="locale.isRtl() ? 'pi-arrow-right' : 'pi-arrow-left'" aria-hidden="true"></i>
+          </span>
+          <h3 class="text-base font-extrabold text-[#181A1D]">
+            {{ 'productLinking.detailsAndSuggestionsTitle' | t }}
+          </h3>
+          <p class="max-w-xs text-xs text-[#8A735C]">
+            {{ 'productLinking.noProductSelected' | t }}
+          </p>
+        </div>
+      } @else {
+        <!-- Right Pane Title -->
+        <div class="flex items-center justify-between gap-3 border-b border-[#EDE0D0] pb-3.5">
+          <h2 class="text-base sm:text-lg font-extrabold text-[#181A1D]">
+            {{ 'productLinking.detailsAndSuggestionsTitle' | t }}
+          </h2>
+        </div>
+
+        <!-- Selected Product Highlight Card -->
+        <div class="rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] p-3.5 sm:p-4 flex items-center justify-between gap-3.5 flex-wrap sm:flex-nowrap">
+          <div class="flex items-center gap-3 min-w-0">
+            <img
+              [src]="selectedFamily()!.imageUrl | proxyImg"
+              alt=""
+              class="size-14 sm:size-16 shrink-0 rounded-xl border border-[#E8D5BE] object-contain bg-white p-1"
+              aria-hidden="true"
+            />
+            <div class="min-w-0">
+              <h3 class="text-sm sm:text-base font-extrabold text-[#181A1D] truncate">
+                {{ getDisplayName(selectedFamily()!) }}
+              </h3>
+              <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#8A735C]">
+                @if (getPackSize(selectedFamily()!)) {
+                  <span>{{ getPackSize(selectedFamily()!) }}</span>
+                  <span class="text-[#D0BEAA]">|</span>
+                }
+                @if (getBarcode(selectedFamily()!)) {
+                  <span class="font-mono">{{ getBarcode(selectedFamily()!) }}</span>
+                }
+                @if (selectedFamily()!.groupCode) {
+                  <span class="text-[#D0BEAA]">|</span>
+                  <span class="font-mono text-[#C27938] font-bold">{{ selectedFamily()!.groupCode }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Badges on Right -->
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] border border-amber-200 px-2.5 py-1 text-xs font-bold text-[#C27938]">
+              <i class="pi pi-building text-xs" aria-hidden="true"></i>
+              <span>{{ getPharmacyCount(selectedFamily()!) }} {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Mode Tabs: Match Suggestions & Manual Search -->
+        <div class="grid grid-cols-2 gap-2 border-b border-[#EDE0D0] pb-3">
+          <button
+            type="button"
+            (click)="activeTab.set('suggestions')"
+            [class]="activeTab() === 'suggestions'
+              ? 'bg-[#C27938] text-white shadow-xs'
+              : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
+            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs sm:text-sm font-bold transition-all cursor-pointer"
+          >
+            <i class="pi pi-sparkles text-xs" aria-hidden="true"></i>
+            <span>{{ 'productLinking.tabSuggestions' | t }}</span>
+            @if (visibleSuggestions().length > 0) {
+              <span
+                [class]="activeTab() === 'suggestions' ? 'bg-white/20 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
+                class="rounded-full px-2 py-0.5 text-[10px] font-extrabold tabular-nums"
+              >
+                {{ visibleSuggestions().length }}
+              </span>
+            }
+          </button>
+
+          <button
+            type="button"
+            (click)="activeTab.set('search')"
+            [class]="activeTab() === 'search'
+              ? 'bg-[#181A1D] text-white shadow-xs'
+              : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
+            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs sm:text-sm font-bold transition-all cursor-pointer"
+          >
+            <i class="pi pi-search text-xs" aria-hidden="true"></i>
+            <span>{{ 'productLinking.tabManualSearch' | t }}</span>
+          </button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 1: SUGGESTED MATCHES (اقتراحات الربط) -->
+        <!-- ============================================== -->
+        @if (activeTab() === 'suggestions') {
+          <div class="space-y-3.5">
+            <!-- Section Title -->
+            <div>
+              <h3 class="text-sm font-extrabold text-[#181A1D]">
+                {{ 'productLinking.suggestedSectionTitle' | t }}
+              </h3>
+              <p class="text-xs text-[#8A735C]">
+                {{ 'productLinking.suggestedSectionSub' | t }}
+              </p>
+            </div>
+
+            <!-- Loading Suggestions -->
+            @if (loadingSuggestions()) {
+              <div class="py-12 flex flex-col items-center justify-center gap-2 text-center text-[#8A735C]">
+                <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]" aria-hidden="true"></i>
+                <span class="text-xs font-semibold">{{ 'productLinking.loadingSuggestions' | t }}</span>
+              </div>
+            } @else if (visibleSuggestions().length === 0) {
+              <div class="py-12 rounded-xl border border-dashed border-[#D0BEAA] flex flex-col items-center justify-center gap-2 text-center text-[#8A735C]">
+                <i class="pi pi-sparkles text-2xl text-[#D0BEAA]" aria-hidden="true"></i>
+                <p class="text-xs font-semibold">{{ 'productLinking.noSuggestionsFound' | t }}</p>
+              </div>
+            } @else {
+              <!-- Suggestions Cards List -->
+              <div class="space-y-3 max-h-[58vh] overflow-y-auto pe-1 custom-scrollbar">
+                @for (suggestion of visibleSuggestions(); track suggestion.id) {
+                  <div class="p-3.5 rounded-xl border border-[#E8D5BE] bg-white hover:border-[#C27938]/60 hover:shadow-xs transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    
+                    <!-- Left Info: Image + Name + Pharmacy -->
+                    <div class="flex items-center gap-3 min-w-0">
+                      <img
+                        [src]="suggestion.imageUrl | proxyImg"
+                        alt=""
+                        class="size-12 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                        aria-hidden="true"
+                      />
+
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h4 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate">
+                            {{ suggestion.name }}
+                          </h4>
+                          <!-- Match Percentage Badge -->
+                          <span
+                            [ngClass]="isHighMatch(suggestion.confidence) 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                              : 'bg-amber-50 text-amber-700 border-amber-200'"
+                            class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-extrabold"
+                          >
+                            <i class="pi text-[8px]" [ngClass]="isHighMatch(suggestion.confidence) ? 'pi-check' : 'pi-bolt'" aria-hidden="true"></i>
+                            <span>{{ getMatchPercent(suggestion.confidence) }}% {{ isHighMatch(suggestion.confidence) ? ('productLinking.highMatchBadge' | t) : ('productLinking.mediumMatchBadge' | t) }}</span>
+                          </span>
+                        </div>
+
+                        <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#8A735C]">
+                          @if (suggestion.packSize) {
+                            <span>{{ suggestion.packSize }}</span>
+                            <span class="text-[#D0BEAA]">|</span>
+                          }
+                          @if (suggestion.barcode) {
+                            <span class="font-mono">{{ suggestion.barcode }}</span>
+                            <span class="text-[#D0BEAA]">|</span>
+                          }
+                          <span class="inline-flex items-center gap-1 text-[#181A1D] font-bold">
+                            <i class="pi pi-building text-[10px] text-[#C27938]" aria-hidden="true"></i>
+                            <span>{{ suggestion.pharmacyName }}</span>
+                          </span>
+                          @if (suggestion.price) {
+                            <span class="text-[#D0BEAA]">|</span>
+                            <span class="font-extrabold text-[#181A1D]">{{ suggestion.price }} {{ suggestion.currency }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Right Action Buttons -->
+                    <div class="flex items-center gap-2 shrink-0 justify-end">
+                      <button
+                        type="button"
+                        (click)="confirmLinkSuggestion(suggestion)"
+                        [disabled]="linkingSuggestionId() === suggestion.id"
+                        class="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#C27938] hover:bg-[#A86427] text-white px-3.5 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-xs"
+                      >
+                        @if (linkingSuggestionId() === suggestion.id) {
+                          <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+                        } @else {
+                          <i class="pi pi-link text-xs" aria-hidden="true"></i>
+                        }
+                        <span>{{ 'productLinking.linkAction' | t }}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="ignoreSuggestion(suggestion)"
+                        class="inline-flex min-h-9 items-center justify-center gap-1 rounded-xl border border-[#E8D5BE] bg-white hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-[#8A735C] px-3 text-xs font-bold transition-all cursor-pointer"
+                        [title]="'productLinking.ignoreAction' | t"
+                      >
+                        <i class="pi pi-times text-xs" aria-hidden="true"></i>
+                        <span>{{ 'productLinking.ignoreAction' | t }}</span>
+                      </button>
+                    </div>
+
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ============================================== -->
+        <!-- TAB 2: MANUAL SEARCH (البحث اليدوي - غير المربوط فقط) -->
+        <!-- ============================================== -->
+        @if (activeTab() === 'search') {
+          <div class="space-y-3.5">
+            <!-- Section Title -->
+            <div>
+              <h3 class="text-sm font-extrabold text-[#181A1D]">
+                {{ 'productLinking.manualSearchSectionTitle' | t }}
+              </h3>
+              <p class="text-xs text-[#8A735C]">
+                {{ 'productLinking.manualSearchSectionSub' | t }}
+              </p>
+            </div>
+
+            <!-- Search Field + Filter Unlinked Only Checkbox -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div class="relative flex-1">
+                <i class="pi pi-search absolute start-3 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D] pointer-events-none" aria-hidden="true"></i>
+                <input
+                  type="search"
+                  class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] ps-8 pe-3 text-xs font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors"
+                  [ngModel]="manualSearchQuery()"
+                  (ngModelChange)="onManualQueryChange($event)"
+                  [placeholder]="'productLinking.manualSearchPlaceholder' | t"
+                  autocomplete="off"
+                />
+              </div>
+
+              <!-- Unlinked Only Toggle / Checkbox -->
+              <label class="inline-flex items-center gap-2 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 py-2 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2]/60 transition-colors cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  [checked]="unlinkedOnly()"
+                  (change)="toggleUnlinkedOnly()"
+                  class="rounded accent-[#C27938] size-4 cursor-pointer"
+                />
+                <span>{{ 'productLinking.unlinkedOnlyToggle' | t }}</span>
+              </label>
+            </div>
+
+            <!-- Search Results Section -->
+            @if (searchingManual()) {
+              <div class="py-12 flex flex-col items-center justify-center gap-2 text-center text-[#8A735C]">
+                <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]" aria-hidden="true"></i>
+                <span class="text-xs font-semibold">{{ 'productLinking.searchingProducts' | t }}</span>
+              </div>
+            } @else if (searchResults().length === 0 && manualSearchQuery().trim().length >= 2) {
+              <div class="py-12 rounded-xl border border-dashed border-[#D0BEAA] flex flex-col items-center justify-center gap-2 text-center text-[#8A735C]">
+                <i class="pi pi-search text-2xl text-[#D0BEAA]" aria-hidden="true"></i>
+                <p class="text-xs font-semibold">{{ 'productLinking.noSearchResults' | t }}</p>
+              </div>
+            } @else if (searchResults().length > 0) {
+              <div class="space-y-3">
+                <div class="text-xs font-extrabold text-[#8A735C]">
+                  {{ 'productLinking.searchResultsHeader' | t }} ({{ searchResults().length }})
+                </div>
+
+                <div class="space-y-2.5 max-h-[52vh] overflow-y-auto pe-1 custom-scrollbar">
+                  @for (hit of searchResults(); track hit.id) {
+                    <div class="p-3 rounded-xl border border-[#E8D5BE] bg-white hover:border-[#C27938]/60 hover:shadow-xs transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                      
+                      <!-- Product Info -->
+                      <div class="flex items-center gap-3 min-w-0">
+                        <img
+                          [src]="hit.imageUrl | proxyImg"
+                          alt=""
+                          class="size-12 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                          aria-hidden="true"
+                        />
+
+                        <div class="min-w-0 flex-1">
+                          <h4 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate">
+                            {{ hit.name }}
+                          </h4>
+                          <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#8A735C]">
+                            @if (hit.packSize) {
+                              <span>{{ hit.packSize }}</span>
+                              <span class="text-[#D0BEAA]">|</span>
+                            }
+                            @if (hit.barcode) {
+                              <span class="font-mono">{{ hit.barcode }}</span>
+                              <span class="text-[#D0BEAA]">|</span>
+                            }
+                            <span class="inline-flex items-center gap-1 text-[#181A1D] font-bold">
+                              <i class="pi pi-building text-[10px] text-[#C27938]" aria-hidden="true"></i>
+                              <span>{{ hit.pharmacyName }}</span>
+                            </span>
+                            @if (hit.price) {
+                              <span class="text-[#D0BEAA]">|</span>
+                              <span class="font-extrabold text-[#181A1D]">{{ hit.price }} {{ hit.currency }}</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Action Buttons: [ربط] & [عرض] -->
+                      <div class="flex items-center gap-2 shrink-0 justify-end">
+                        <button
+                          type="button"
+                          (click)="linkSearchedProduct(hit)"
+                          [disabled]="linkingManualId() === hit.id"
+                          class="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#C27938] hover:bg-[#A86427] text-white px-3.5 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-xs"
+                        >
+                          @if (linkingManualId() === hit.id) {
+                            <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+                          } @else {
+                            <i class="pi pi-link text-xs" aria-hidden="true"></i>
+                          }
+                          <span>{{ 'productLinking.linkAction' | t }}</span>
+                        </button>
+
+                        @if (hit.productUrl) {
+                          <button
+                            type="button"
+                            (click)="viewProductUrl(hit.productUrl)"
+                            class="inline-flex min-h-9 items-center justify-center gap-1 rounded-xl border border-[#E8D5BE] bg-white hover:bg-[#FBF8F4] text-[#181A1D] px-3 text-xs font-bold transition-all cursor-pointer"
+                            [title]="'productLinking.viewAction' | t"
+                          >
+                            <i class="pi pi-external-link text-xs" aria-hidden="true"></i>
+                            <span>{{ 'productLinking.viewAction' | t }}</span>
+                          </button>
+                        }
+                      </div>
+
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      }
+
+    </div>
+
+  </div>
+</section>

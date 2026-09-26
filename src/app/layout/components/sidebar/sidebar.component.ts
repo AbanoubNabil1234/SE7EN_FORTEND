@@ -32,6 +32,7 @@ export class SidebarComponent {
     { path: '/dashboard', icon: 'pi-th-large', labelKey: 'nav.dashboard', exact: true },
     { path: '/categories', icon: 'pi-sitemap', labelKey: 'nav.categories' },
     { path: '/products', icon: 'pi-box', labelKey: 'nav.products' },
+    { path: '/product-linking', icon: 'pi-link', labelKey: 'nav.productLinking' },
     { path: '/billboards', icon: 'pi-tag', labelKey: 'nav.billboards' },
     { path: '/search-pharmacies', icon: 'pi-building', labelKey: 'nav.searchPharmacies' },
     { path: '/magazines', icon: 'pi-book', labelKey: 'nav.magazines' },

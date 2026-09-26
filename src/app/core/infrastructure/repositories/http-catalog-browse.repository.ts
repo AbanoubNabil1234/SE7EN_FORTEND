@@ -249,11 +249,16 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
   searchPharmacyProducts(
     query: string,
     pharmacyCode?: string | null,
-    take: number = 30
+    take: number = 30,
+    unlinkedOnly?: boolean
   ): Observable<PharmacyProductSearchHit[]> {
     let params = new HttpParams()
       .set('q', query.trim())
       .set('take', String(take));
+
+    if (unlinkedOnly) {
+      params = params.set('unlinkedOnly', 'true');
+    }
 
     if (pharmacyCode && pharmacyCode !== 'all') {
       params = params.set('pharmacy', pharmacyCode.trim().toLowerCase());

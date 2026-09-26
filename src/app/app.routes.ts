@@ -45,6 +45,18 @@ export const routes: Routes = [
           import('./features/products/products-admin.component').then((m) => m.ProductsAdminComponent)
       },
       {
+        path: 'product-linking',
+        loadComponent: () =>
+          import('./features/products/product-linking/product-linking.component').then(
+            (m) => m.ProductLinkingComponent
+          )
+      },
+      {
+        path: 'products/linking',
+        redirectTo: 'product-linking',
+        pathMatch: 'full'
+      },
+      {
         path: 'billboards',
         loadComponent: () =>
           import('./features/billboards/billboards.component').then((m) => m.BillboardsComponent)

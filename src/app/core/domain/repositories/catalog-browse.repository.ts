@@ -33,7 +33,8 @@ export abstract class CatalogBrowseRepository {
   abstract searchPharmacyProducts(
     query: string,
     pharmacyCode?: string | null,
-    take?: number
+    take?: number,
+    unlinkedOnly?: boolean
   ): Observable<PharmacyProductSearchHit[]>;
   abstract getFamilyAiSuggestions(groupCode: string, take?: number): Observable<FamilyAiSuggestion[]>;
   abstract setPriceSyncEnabled(masterProductId: string, enabled: boolean): Observable<{ id: string; enabled: boolean }>;

@@ -18,6 +18,7 @@ const ROUTE_KEYS: Record<string, { eyebrow: string; title: string }> = {
   dashboard: { eyebrow: 'page.dashboardEyebrow', title: 'page.dashboardTitle' },
   categories: { eyebrow: 'page.categoriesEyebrow', title: 'page.categoriesTitle' },
   products: { eyebrow: 'page.productsEyebrow', title: 'page.productsTitle' },
+  'product-linking': { eyebrow: 'page.productLinkingEyebrow', title: 'page.productLinkingTitle' },
   billboards: { eyebrow: 'page.billboardsEyebrow', title: 'page.billboardsTitle' },
   'search-pharmacies': { eyebrow: 'page.searchPharmaciesEyebrow', title: 'page.searchPharmaciesTitle' },
   magazines: { eyebrow: 'page.magazinesEyebrow', title: 'page.magazinesTitle' },
