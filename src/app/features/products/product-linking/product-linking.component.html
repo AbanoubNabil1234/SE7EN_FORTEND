@@ -604,88 +604,59 @@
             <!-- ======================================================== -->
             <!-- MODE B: SPECIFIC COUNT FILTERED (1 to 9 Pharmacies)      -->
             <!-- ======================================================== -->
-            <div class="rounded-xl border border-[#E8D5BE] bg-[#FAF8F5] overflow-hidden">
-              <button
-                type="button"
-                (click)="toggleAccordion('filtered')"
-                class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
-                dir="ltr"
-              >
-                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
-                   [ngClass]="accordionOpen().filtered ? 'pi-chevron-up' : 'pi-chevron-down'"
-                   aria-hidden="true"></i>
+            <div class="space-y-2.5">
+              @for (family of filteredFamilies(); track family.familyKey) {
+                <div
+                  role="button"
+                  tabindex="0"
+                  (click)="selectFamily(family)"
+                  (keydown.enter)="selectFamily(family)"
+                  [class.border-[#E89A3C]]="selectedFamily()?.familyKey === family.familyKey"
+                  [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                  [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                  [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                  class="flex items-center gap-3 p-2.5 rounded-xl border border-[#EDE0D0] hover:border-[#C27938]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group"
+                  dir="ltr"
+                >
+                  <!-- Pharmacy Count Pill (Left) -->
+                  <span class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-1 text-xs font-bold text-[#A66324]">
+                    <i class="pi pi-building text-xs" aria-hidden="true"></i>
+                    <span>{{ getPharmacyCount(family) }} {{ getPharmacyCount(family) === 1 ? ('productLinking.pharmacyBadgeCount' | t) : ('productLinking.pharmacyBadgeCountPlural' | t) }}</span>
+                  </span>
 
-                <div class="flex items-center gap-2.5 min-w-0 text-right">
-                  <div class="min-w-0">
-                    <div class="text-xs font-extrabold text-[#181A1D]">
-                      {{ getActiveFilterLabelKey() | t }} ({{ filteredFamilies().length }})
-                    </div>
-                    <div class="text-[10px] text-[#8A735C]">
-                      {{ 'productLinking.customCountDesc' | t }}
+                  <!-- Thumbnail -->
+                  <img
+                    [src]="family.imageUrl | proxyImg"
+                    alt=""
+                    class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                    aria-hidden="true"
+                  />
+
+                  <!-- Info (Center, Right-Aligned) -->
+                  <div class="min-w-0 flex-1 text-right">
+                    <h3 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                      {{ getDisplayName(family) }}
+                    </h3>
+                    <div class="mt-0.5 flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-[#8A735C]">
+                      @if (family.groupCode) {
+                        <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                        <span class="text-[#D0BEAA]">|</span>
+                      }
+                      @if (getBarcode(family)) {
+                        <span class="font-mono">{{ getBarcode(family) }}</span>
+                      }
+                      @if (getPackSize(family)) {
+                        <span class="text-[#D0BEAA]">|</span>
+                        <span>{{ getPackSize(family) }}</span>
+                      }
                     </div>
                   </div>
-                  <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-[#C27938] text-white text-xs shadow-2xs">
-                    <i class="pi pi-filter text-[11px]" aria-hidden="true"></i>
+
+                  <!-- Status Pill (Right) -->
+                  <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-0.5 text-[10px] font-bold text-[#A66324]">
+                    <i class="pi pi-building text-[9px]" aria-hidden="true"></i>
+                    <span>{{ getPharmacyCount(family) }} {{ getPharmacyCount(family) === 1 ? ('productLinking.pharmacyBadgeCount' | t) : ('productLinking.pharmacyBadgeCountPlural' | t) }}</span>
                   </span>
-                </div>
-              </button>
-
-              @if (accordionOpen().filtered) {
-                <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
-                  @for (family of filteredFamilies(); track family.familyKey) {
-                    <div
-                      role="button"
-                      tabindex="0"
-                      (click)="selectFamily(family)"
-                      (keydown.enter)="selectFamily(family)"
-                      [class.border-[#E89A3C]]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
-                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#EDE0D0] hover:border-[#C27938]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group"
-                      dir="ltr"
-                    >
-                      <!-- Pharmacy Count Pill (Left) -->
-                      <span class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-1 text-xs font-bold text-[#A66324]">
-                        <i class="pi pi-building text-xs" aria-hidden="true"></i>
-                        <span>{{ getPharmacyCount(family) }} {{ getPharmacyCount(family) === 1 ? ('productLinking.pharmacyBadgeCount' | t) : ('productLinking.pharmacyBadgeCountPlural' | t) }}</span>
-                      </span>
-
-                      <!-- Thumbnail -->
-                      <img
-                        [src]="family.imageUrl | proxyImg"
-                        alt=""
-                        class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
-                        aria-hidden="true"
-                      />
-
-                      <!-- Info (Center, Right-Aligned) -->
-                      <div class="min-w-0 flex-1 text-right">
-                        <h3 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
-                          {{ getDisplayName(family) }}
-                        </h3>
-                        <div class="mt-0.5 flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-[#8A735C]">
-                          @if (family.groupCode) {
-                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
-                            <span class="text-[#D0BEAA]">|</span>
-                          }
-                          @if (getBarcode(family)) {
-                            <span class="font-mono">{{ getBarcode(family) }}</span>
-                          }
-                          @if (getPackSize(family)) {
-                            <span class="text-[#D0BEAA]">|</span>
-                            <span>{{ getPackSize(family) }}</span>
-                          }
-                        </div>
-                      </div>
-
-                      <!-- Status Pill (Right) -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-0.5 text-[10px] font-bold text-[#A66324]">
-                        <i class="pi pi-building text-[9px]" aria-hidden="true"></i>
-                        <span>{{ getPharmacyCount(family) }} {{ getPharmacyCount(family) === 1 ? ('productLinking.pharmacyBadgeCount' | t) : ('productLinking.pharmacyBadgeCountPlural' | t) }}</span>
-                      </span>
-                    </div>
-                  }
                 </div>
               }
             </div>
