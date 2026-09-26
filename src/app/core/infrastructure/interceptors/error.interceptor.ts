@@ -31,7 +31,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         req.url.includes(API_ENDPOINTS.AUTH_VERIFY_REGISTER_CODE) ||
         req.url.includes(API_ENDPOINTS.AUTH_RESET_PASSWORD) ||
         req.url.includes('/search/live') ||
-        req.url.includes('/catalog.xlsx')
+        req.url.includes('/catalog.xlsx') ||
+        req.url.includes('/image-proxy')
       ) {
         return throwError(() => error);
       }
