@@ -37,6 +37,12 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
   readonly loadingLinked = signal<boolean>(false);
   readonly selectedFamily = signal<CatalogFamily | null>(null);
 
+  // Pagination State
+  readonly currentPage = signal<number>(1);
+  readonly pageSize = signal<number>(20);
+  readonly totalCount = signal<number>(0);
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize())));
+
   // Filter options 1 to 9 + Show All
   readonly filterOptions = [
     { count: null, labelKey: 'productLinking.filterAll', icon: 'pi-th-large' },
@@ -138,7 +144,7 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.loadFamilies();
+    this.loadFamilies(1);
   }
 
   ngOnDestroy(): void {
@@ -147,7 +153,8 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
     this.familiesSub?.unsubscribe();
   }
 
-  loadFamilies(): void {
+  loadFamilies(page: number = 1): void {
+    this.currentPage.set(page);
     this.loadingLinked.set(true);
     const count = this.selectedCount();
     const pharmacyCount = count === null ? undefined : count;
@@ -155,15 +162,37 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
     this.familiesSub?.unsubscribe();
     this.familiesSub = this.catalog
       .listFamilies({
-        pageSize: 100,
-        pharmacyCount
+        page,
+        pageSize: this.pageSize(),
+        pharmacyCount,
+        query: this.searchLinkedQuery().trim() || undefined
       })
       .pipe(finalize(() => this.loadingLinked.set(false)))
       .subscribe({
-        next: (page) => {
-          this.families.set(page.data || []);
-          if (!this.selectedFamily() && page.data.length > 0) {
-            this.selectFamily(page.data[0]);
+        next: (res) => {
+          this.families.set(res.data || []);
+          this.totalCount.set(res.total || 0);
+          this.currentPage.set(res.page || page);
+
+          // Keep accordion groups expanded by default
+          this.accordionOpen.set({
+            full: true,
+            partial: true,
+            three: true,
+            two: true,
+            single: true,
+            filtered: true
+          });
+
+          const current = this.selectedFamily();
+          if (res.data?.length > 0) {
+            const stillExists = current && res.data.some((f) => f.familyKey === current.familyKey);
+            if (!stillExists) {
+              this.selectFamily(res.data[0]);
+            }
+          } else {
+            this.selectedFamily.set(null);
+            this.suggestions.set([]);
           }
         },
         error: () => {
@@ -173,6 +202,20 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
           );
         }
       });
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages() && page !== this.currentPage()) {
+      this.loadFamilies(page);
+    }
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage() - 1);
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage() + 1);
   }
 
   toggleFilter(): void {
@@ -186,7 +229,8 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
   selectFilter(count: number | null): void {
     this.selectedCount.set(count);
     this.isFilterOpen.set(false);
-    this.loadFamilies();
+    this.currentPage.set(1);
+    this.loadFamilies(1);
   }
 
   getActiveFilterLabelKey(): string {
@@ -198,6 +242,11 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
 
   onLinkedQueryChange(query: string): void {
     this.searchLinkedQuery.set(query);
+    if (this.linkedDebounceTimer) clearTimeout(this.linkedDebounceTimer);
+    this.linkedDebounceTimer = setTimeout(() => {
+      this.currentPage.set(1);
+      this.loadFamilies(1);
+    }, 300);
   }
 
   toggleAccordion(section: 'full' | 'partial' | 'three' | 'two' | 'single' | 'filtered'): void {

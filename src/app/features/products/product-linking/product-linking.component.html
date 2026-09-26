@@ -35,7 +35,7 @@
       <div class="flex items-center justify-between gap-3 border-b border-[#EDE0D0] pb-3.5" dir="ltr">
         <!-- Count Badge on Left -->
         <span class="inline-flex items-center rounded-lg bg-[#FAF5EE] border border-[#E8D5BE] px-3 py-1 text-xs font-bold text-[#8A735C]">
-          {{ filteredFamilies().length }} {{ 'productLinking.productsCount' | t }}
+          {{ totalCount() }} {{ 'productLinking.productsCount' | t }}
         </span>
 
         <!-- Title on Right -->
@@ -70,7 +70,8 @@
           @if (isFilterOpen()) {
             <div class="fixed inset-0 z-40" (click)="closeFilter()"></div>
             <div
-              class="absolute start-0 top-full mt-2 w-64 rounded-2xl border border-[#E8D5BE] bg-white p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150"
+              class="absolute top-full mt-2 w-64 max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E8D5BE] bg-white p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150"
+              style="left: 0; right: auto;"
               [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'"
             >
               <div class="px-3 py-2 border-b border-[#EDE0D0] text-xs font-extrabold text-[#8A735C]">
@@ -694,6 +695,47 @@
         </div>
       }
 
+      <!-- Pagination Controls (السابق / التالي / أرقام الصفحات) -->
+      @if (totalCount() > 0) {
+        <div class="mt-auto pt-3 border-t border-[#EDE0D0] flex items-center justify-between gap-2 flex-wrap text-xs" dir="ltr">
+          <!-- Previous Page Button -->
+          <button
+            type="button"
+            (click)="prevPage()"
+            [disabled]="currentPage() <= 1 || loadingLinked()"
+            class="h-8 min-h-8 inline-flex items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-[#FAF8F5] px-3 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+            [attr.aria-label]="'productLinking.pagePrev' | t"
+          >
+            <i class="pi" [ngClass]="locale.isRtl() ? 'pi-chevron-right' : 'pi-chevron-left'" aria-hidden="true"></i>
+            <span>{{ 'productLinking.pagePrev' | t }}</span>
+          </button>
+
+          <!-- Page Indicator & Total -->
+          <div class="flex items-center gap-1.5 font-bold text-[#8A735C]">
+            <span>{{ 'productLinking.pageLabel' | t }}</span>
+            <span class="rounded-lg bg-[#FAF5EE] border border-[#E8D5BE] px-2.5 py-0.5 font-mono text-xs text-[#C27938]">{{ currentPage() }}</span>
+            <span>{{ 'productLinking.pageOf' | t }}</span>
+            <span class="font-mono text-xs text-[#181A1D]">{{ totalPages() }}</span>
+            <span class="text-[#D0BEAA]">|</span>
+            <span class="text-[11px] font-medium text-[#8A735C]">
+              ({{ totalCount() }} {{ 'productLinking.productsCount' | t }})
+            </span>
+          </div>
+
+          <!-- Next Page Button -->
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="currentPage() >= totalPages() || loadingLinked()"
+            class="h-8 min-h-8 inline-flex items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-[#FAF8F5] px-3 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+            [attr.aria-label]="'productLinking.pageNext' | t"
+          >
+            <span>{{ 'productLinking.pageNext' | t }}</span>
+            <i class="pi" [ngClass]="locale.isRtl() ? 'pi-chevron-left' : 'pi-chevron-right'" aria-hidden="true"></i>
+          </button>
+        </div>
+      }
+
     </div>
 
     <!-- ========================================== -->
@@ -848,7 +890,21 @@
                             <i class="pi text-[8px]" [ngClass]="isHighMatch(suggestion.confidence) ? 'pi-check' : 'pi-bolt'" aria-hidden="true"></i>
                             <span>{{ getMatchPercent(suggestion.confidence) }}% {{ isHighMatch(suggestion.confidence) ? ('productLinking.highMatchBadge' | t) : ('productLinking.mediumMatchBadge' | t) }}</span>
                           </span>
+
+                          @if (suggestion.matchMethod === 'AI_MODEL_CROSS_ENCODER') {
+                            <span class="inline-flex items-center gap-1 rounded-full bg-purple-50 border border-purple-200 px-2 py-0.5 text-[10px] font-extrabold text-purple-700">
+                              <i class="pi pi-sparkles text-[8px]" aria-hidden="true"></i>
+                              <span>{{ 'productLinking.aiModelSuggestionBadge' | t }}</span>
+                            </span>
+                          }
                         </div>
+
+                        @if (suggestion.decisionReason) {
+                          <div class="mt-1 text-[11px] text-purple-700 font-medium">
+                            <i class="pi pi-sparkles text-[10px] me-1" aria-hidden="true"></i>
+                            <span>{{ suggestion.decisionReason }}</span>
+                          </div>
+                        }
 
                         <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#8A735C]">
                           @if (suggestion.packSize) {

@@ -320,7 +320,14 @@ export const messagesAr: MessageTree = {
     searchingProducts: 'جاري البحث في الصيدليات...',
     loadError: 'حدث خطأ في تحميل البيانات',
     productsCount: 'منتج',
-    emptyLinkedProducts: 'لا توجد منتجات مطابقة لشرط التصفية الحالية'
+    emptyLinkedProducts: 'لا توجد منتجات مطابقة لشرط التصفية الحالية',
+    pagePrev: 'السابق',
+    pageNext: 'التالي',
+    pageOf: 'من',
+    pageLabel: 'صفحة',
+    totalProducts: 'إجمالي',
+    showingProducts: 'عرض',
+    aiModelSuggestionBadge: 'اقتراح الذكاء الاصطناعي (AI Model)'
   },
   searchPharmacies: {
     badge: 'تطبيق العميل',
@@ -1716,7 +1723,14 @@ export const messagesEn: MessageTree = {
     searchingProducts: 'Searching pharmacies...',
     loadError: 'Failed to load data',
     productsCount: 'products',
-    emptyLinkedProducts: 'No products found matching the current filter'
+    emptyLinkedProducts: 'No products found matching the current filter',
+    pagePrev: 'Previous',
+    pageNext: 'Next',
+    pageOf: 'of',
+    pageLabel: 'Page',
+    totalProducts: 'Total',
+    showingProducts: 'Showing',
+    aiModelSuggestionBadge: 'AI Model Suggestion'
   },
   searchPharmacies: {
     badge: 'Customer app',
