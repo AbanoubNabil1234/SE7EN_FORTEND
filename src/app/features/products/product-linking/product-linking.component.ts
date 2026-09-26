@@ -113,15 +113,15 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
     });
   });
 
-  // Grouped families for accordion sections
+  // Grouped families for accordion sections (total system pharmacies = 9)
   readonly fullyLinkedFamilies = computed(() =>
-    this.filteredFamilies().filter((f) => this.getPharmacyCount(f) >= 12)
+    this.filteredFamilies().filter((f) => this.getPharmacyCount(f) >= 9)
   );
 
   readonly partiallyLinkedFamilies = computed(() =>
     this.filteredFamilies().filter((f) => {
       const count = this.getPharmacyCount(f);
-      return count >= 4 && count < 12;
+      return count >= 4 && count < 9;
     })
   );
 
