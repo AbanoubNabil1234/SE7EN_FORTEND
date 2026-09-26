@@ -260,6 +260,17 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
     this.selectedFamily.set(family);
     this.ignoredSuggestionIds.set(new Set());
     this.loadSuggestions(family);
+    if (!family.groupCode) {
+      this.catalog.getFamilyByKey(family.familyKey).subscribe({
+        next: (full) => {
+          if (full?.groupCode) {
+            family.groupCode = full.groupCode;
+            this.selectedFamily.set({ ...family, groupCode: full.groupCode, packs: full.packs || family.packs });
+          }
+        },
+        error: () => {}
+      });
+    }
     if (this.manualSearchQuery().trim()) {
       this.executeManualSearch();
     }
@@ -283,7 +294,7 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
 
   confirmLinkSuggestion(suggestion: FamilyAiSuggestion): void {
     const family = this.selectedFamily();
-    const groupCode = family?.groupCode;
+    const groupCode = family?.groupCode || family?.familyKey;
     if (!family || !groupCode) return;
 
     this.linkingSuggestionId.set(suggestion.id);
@@ -291,19 +302,25 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
       .linkByGroupCode(suggestion.id, groupCode)
       .pipe(finalize(() => this.linkingSuggestionId.set(null)))
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.notifications.showSuccess(
             this.i18n.t('productLinking.linkedSuccessfully'),
             suggestion.name
           );
+          if (res?.code && !family.groupCode) {
+            family.groupCode = res.code;
+          }
           // Remove linked item from suggestions
           this.suggestions.update((prev) => prev.filter((s) => s.id !== suggestion.id));
           // Reload current family
           this.refreshSelectedFamily(family.familyKey);
         },
-        error: () => {
+        error: (err) => {
+          const msg = err?.error?.code === 'same_pharmacy_in_family'
+            ? this.i18n.t('productLinking.samePharmacyConflict')
+            : this.i18n.t('productLinking.linkedFailed');
           this.notifications.showError(
-            this.i18n.t('productLinking.linkedFailed'),
+            msg,
             this.i18n.t('productLinking.title')
           );
         }
@@ -357,7 +374,7 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
 
   linkSearchedProduct(hit: PharmacyProductSearchHit): void {
     const family = this.selectedFamily();
-    const groupCode = family?.groupCode;
+    const groupCode = family?.groupCode || family?.familyKey;
     if (!family || !groupCode) return;
 
     this.linkingManualId.set(hit.id);
@@ -365,19 +382,25 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
       .linkByGroupCode(hit.id, groupCode)
       .pipe(finalize(() => this.linkingManualId.set(null)))
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.notifications.showSuccess(
             this.i18n.t('productLinking.linkedSuccessfully'),
             hit.name
           );
+          if (res?.code && !family.groupCode) {
+            family.groupCode = res.code;
+          }
           // Remove from search results
           this.searchResults.update((prev) => prev.filter((h) => h.id !== hit.id));
           // Refresh selected family
           this.refreshSelectedFamily(family.familyKey);
         },
-        error: () => {
+        error: (err) => {
+          const msg = err?.error?.code === 'same_pharmacy_in_family'
+            ? this.i18n.t('productLinking.samePharmacyConflict')
+            : this.i18n.t('productLinking.linkedFailed');
           this.notifications.showError(
-            this.i18n.t('productLinking.linkedFailed'),
+            msg,
             this.i18n.t('productLinking.title')
           );
         }
