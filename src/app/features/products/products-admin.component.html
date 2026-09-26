@@ -300,7 +300,7 @@
 
                 <div class="flex flex-wrap items-center gap-1">
                   <code class="inline-block rounded-md bg-[#181A1D] px-1.5 py-1 font-mono text-[11px] font-bold text-white">
-                    {{ family.groupCode || 'â€”' }}
+                    {{ family.groupCode || '—' }}
                   </code>
                   @if (family.groupCode) {
                     <button
@@ -360,7 +360,7 @@
                     </div>
                   } @else {
                     <span class="font-mono text-xs font-bold tabular-nums text-[#181A1D]" dir="ltr">
-                      {{ cardBarcode(family) || 'â€”' }}
+                      {{ cardBarcode(family) || '—' }}
                     </span>
                   }
                 </div>
