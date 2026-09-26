@@ -315,45 +315,56 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
     const groupCode = family?.groupCode || family?.familyKey;
     if (!family || !groupCode) return;
 
+    // Snapshot state for rollback in case of error
+    const prevSuggestions = this.suggestions();
+    const prevSelectedFamily = this.selectedFamily();
+    const prevFamilies = this.families();
+
+    // 1. Optimistically remove from suggestions immediately (0ms)
+    this.suggestions.update((prev) => prev.filter((s) => s.id !== suggestion.id));
+
+    // 2. Optimistically add offer to selectedFamily and families list immediately (0ms)
+    const newOffer: CatalogOffer = {
+      pharmacyProductId: suggestion.id,
+      pharmacyCode: suggestion.pharmacyCode,
+      pharmacyName: suggestion.pharmacyName,
+      listingName: suggestion.name,
+      englishListingName: suggestion.englishName || null,
+      productUrl: suggestion.productUrl || null,
+      imageUrl: suggestion.imageUrl || null,
+      price: suggestion.price || 0,
+      oldPrice: suggestion.oldPrice || null,
+      discountPercent: null,
+      currency: suggestion.currency || 'SAR',
+      availability: 'InStock',
+      packSize: suggestion.packSize || '',
+      barcode: suggestion.barcode || '',
+      matchMethod: suggestion.matchMethod || 'MANUAL_LINK'
+    };
+    this.addOfferLocally(newOffer, family.groupCode);
+
+    // 3. Immediate success feedback
+    this.notifications.showSuccess(
+      this.i18n.t('productLinking.linkedSuccessfully'),
+      suggestion.name
+    );
+
+    // 4. Background network request (non-blocking)
     this.linkingSuggestionId.set(suggestion.id);
     this.catalog
       .linkByGroupCode(suggestion.id, groupCode)
       .pipe(finalize(() => this.linkingSuggestionId.set(null)))
       .subscribe({
         next: (res) => {
-          this.notifications.showSuccess(
-            this.i18n.t('productLinking.linkedSuccessfully'),
-            suggestion.name
-          );
           if (res?.code && !family.groupCode) {
             family.groupCode = res.code;
           }
-          // Remove linked item from suggestions
-          this.suggestions.update((prev) => prev.filter((s) => s.id !== suggestion.id));
-
-          // Optimistically add the new offer to selectedFamily immediately
-          const newOffer: CatalogOffer = {
-            pharmacyProductId: suggestion.id,
-            pharmacyCode: suggestion.pharmacyCode,
-            pharmacyName: suggestion.pharmacyName,
-            listingName: suggestion.name,
-            englishListingName: suggestion.englishName || null,
-            productUrl: suggestion.productUrl || null,
-            imageUrl: suggestion.imageUrl || null,
-            price: suggestion.price || 0,
-            oldPrice: suggestion.oldPrice || null,
-            discountPercent: null,
-            currency: suggestion.currency || 'SAR',
-            availability: 'InStock',
-            packSize: suggestion.packSize || '',
-            barcode: suggestion.barcode || '',
-            matchMethod: suggestion.matchMethod || 'MANUAL_LINK'
-          };
-
-          this.addOfferLocally(newOffer, res?.code || family.groupCode);
-          this.refreshSelectedFamily(family.familyKey);
         },
         error: (err) => {
+          // Rollback on failure
+          this.suggestions.set(prevSuggestions);
+          this.selectedFamily.set(prevSelectedFamily);
+          this.families.set(prevFamilies);
           const msg = err?.error?.code === 'same_pharmacy_in_family'
             ? this.i18n.t('productLinking.samePharmacyConflict')
             : this.i18n.t('productLinking.linkedFailed');
@@ -415,45 +426,56 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
     const groupCode = family?.groupCode || family?.familyKey;
     if (!family || !groupCode) return;
 
+    // Snapshot state for rollback in case of error
+    const prevSearchResults = this.searchResults();
+    const prevSelectedFamily = this.selectedFamily();
+    const prevFamilies = this.families();
+
+    // 1. Optimistically remove from search results immediately (0ms)
+    this.searchResults.update((prev) => prev.filter((h) => h.id !== hit.id));
+
+    // 2. Optimistically add offer to selectedFamily and families list immediately (0ms)
+    const newOffer: CatalogOffer = {
+      pharmacyProductId: hit.id,
+      pharmacyCode: hit.pharmacyCode,
+      pharmacyName: hit.pharmacyName,
+      listingName: hit.name,
+      englishListingName: hit.englishName || null,
+      productUrl: hit.productUrl || null,
+      imageUrl: hit.imageUrl || null,
+      price: hit.price || 0,
+      oldPrice: null,
+      discountPercent: null,
+      currency: hit.currency || 'SAR',
+      availability: 'InStock',
+      packSize: hit.packSize || '',
+      barcode: hit.barcode || '',
+      matchMethod: 'MANUAL_LINK'
+    };
+    this.addOfferLocally(newOffer, family.groupCode);
+
+    // 3. Immediate success feedback
+    this.notifications.showSuccess(
+      this.i18n.t('productLinking.linkedSuccessfully'),
+      hit.name
+    );
+
+    // 4. Background network request (non-blocking)
     this.linkingManualId.set(hit.id);
     this.catalog
       .linkByGroupCode(hit.id, groupCode)
       .pipe(finalize(() => this.linkingManualId.set(null)))
       .subscribe({
         next: (res) => {
-          this.notifications.showSuccess(
-            this.i18n.t('productLinking.linkedSuccessfully'),
-            hit.name
-          );
           if (res?.code && !family.groupCode) {
             family.groupCode = res.code;
           }
-          // Remove from search results
-          this.searchResults.update((prev) => prev.filter((h) => h.id !== hit.id));
-
-          // Optimistically add the new offer to selectedFamily immediately
-          const newOffer: CatalogOffer = {
-            pharmacyProductId: hit.id,
-            pharmacyCode: hit.pharmacyCode,
-            pharmacyName: hit.pharmacyName,
-            listingName: hit.name,
-            englishListingName: hit.englishName || null,
-            productUrl: hit.productUrl || null,
-            imageUrl: hit.imageUrl || null,
-            price: hit.price || 0,
-            oldPrice: null,
-            discountPercent: null,
-            currency: hit.currency || 'SAR',
-            availability: 'InStock',
-            packSize: hit.packSize || '',
-            barcode: hit.barcode || '',
-            matchMethod: 'MANUAL_LINK'
-          };
-
-          this.addOfferLocally(newOffer, res?.code || family.groupCode);
-          this.refreshSelectedFamily(family.familyKey);
         },
         error: (err) => {
+          // Rollback on failure
+          this.searchResults.set(prevSearchResults);
+          this.selectedFamily.set(prevSelectedFamily);
+          this.families.set(prevFamilies);
           const msg = err?.error?.code === 'same_pharmacy_in_family'
             ? this.i18n.t('productLinking.samePharmacyConflict')
             : this.i18n.t('productLinking.linkedFailed');
@@ -477,60 +499,67 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
     });
     if (!confirmed) return;
 
+    // Snapshot state for rollback in case of error
+    const prevSelectedFamily = this.selectedFamily();
+    const prevFamilies = this.families();
+
+    // 1. Optimistically remove offer immediately (0ms)
+    this.selectedFamily.update((fam) => {
+      if (!fam) return null;
+      return {
+        ...fam,
+        packs: fam.packs.map((p) => {
+          const remaining = (p.offers || []).filter((o) => o.pharmacyProductId !== id);
+          return {
+            ...p,
+            offers: remaining,
+            pharmacyCount: remaining.length
+          };
+        })
+      };
+    });
+
+    const currentFam = this.selectedFamily();
+    if (currentFam) {
+      this.families.update((list) =>
+        list.map((f) => {
+          const isMatch =
+            f.familyKey === currentFam.familyKey ||
+            (f.groupCode && currentFam.groupCode && f.groupCode === currentFam.groupCode) ||
+            f.packs.some((p) => currentFam.packs.some((cp) => cp.masterId === p.masterId));
+          if (!isMatch) return f;
+          return {
+            ...f,
+            packs: f.packs.map((p) => {
+              const remaining = (p.offers || []).filter((o) => o.pharmacyProductId !== id);
+              return {
+                ...p,
+                offers: remaining,
+                pharmacyCount: remaining.length
+              };
+            })
+          };
+        })
+      );
+    }
+
+    // 2. Immediate success notification
+    this.notifications.showSuccess(
+      this.i18n.t('productLinking.unlinkedSuccessfully'),
+      offer.listingName || offer.pharmacyName || ''
+    );
+
+    // 3. Background network request (non-blocking)
     this.unlinkingOfferId.set(id);
     this.catalog
       .unlinkOffer(id)
       .pipe(finalize(() => this.unlinkingOfferId.set(null)))
       .subscribe({
-        next: () => {
-          this.notifications.showSuccess(
-            this.i18n.t('productLinking.unlinkedSuccessfully'),
-            offer.listingName || offer.pharmacyName || ''
-          );
-
-          // Remove offer locally from selectedFamily
-          this.selectedFamily.update((fam) => {
-            if (!fam) return null;
-            return {
-              ...fam,
-              packs: fam.packs.map((p) => {
-                const remaining = (p.offers || []).filter((o) => o.pharmacyProductId !== id);
-                return {
-                  ...p,
-                  offers: remaining,
-                  pharmacyCount: remaining.length
-                };
-              })
-            };
-          });
-
-          // Also remove offer locally from families list
-          const currentFam = this.selectedFamily();
-          if (currentFam) {
-            this.families.update((list) =>
-              list.map((f) => {
-                const isMatch =
-                  f.familyKey === currentFam.familyKey ||
-                  (f.groupCode && currentFam.groupCode && f.groupCode === currentFam.groupCode) ||
-                  f.packs.some((p) => currentFam.packs.some((cp) => cp.masterId === p.masterId));
-                if (!isMatch) return f;
-                return {
-                  ...f,
-                  packs: f.packs.map((p) => {
-                    const remaining = (p.offers || []).filter((o) => o.pharmacyProductId !== id);
-                    return {
-                      ...p,
-                      offers: remaining,
-                      pharmacyCount: remaining.length
-                    };
-                  })
-                };
-              })
-            );
-            this.refreshSelectedFamily(currentFam.familyKey);
-          }
-        },
+        next: () => {},
         error: () => {
+          // Rollback on failure
+          this.selectedFamily.set(prevSelectedFamily);
+          this.families.set(prevFamilies);
           this.notifications.showError(
             this.i18n.t('productLinking.unlinkedFailed'),
             this.i18n.t('productLinking.title')

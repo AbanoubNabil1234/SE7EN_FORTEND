@@ -38,7 +38,11 @@ export class QuickAddProductModalComponent {
   readonly isOpen = input<boolean>(false);
 
   readonly close = output<void>();
-  readonly productAdded = output<{ pharmacyProductId: string; groupCode: string }>();
+  readonly productAdded = output<{
+    pharmacyProductId: string;
+    groupCode: string;
+    hit?: PharmacyProductSearchHit;
+  }>();
   readonly familyMerged = output<GroupCodeMergeResult>();
 
   readonly searchQuery = signal<string>('');
@@ -268,7 +272,8 @@ export class QuickAddProductModalComponent {
           this.notifications.showSuccess(this.i18n.t('quickAdd.addedSuccess'), hit.name);
           this.productAdded.emit({
             pharmacyProductId: hit.id,
-            groupCode: res.code
+            groupCode: res.code,
+            hit
           });
           // Update hit's manualGroupCode locally
           this.hits.update((list) =>

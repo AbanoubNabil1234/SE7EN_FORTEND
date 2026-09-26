@@ -8,6 +8,7 @@ import {
   CatalogFamily,
   CatalogOffer,
   CatalogPack,
+  PharmacyProductSearchHit,
   catalogFamilyTitle,
   catalogListingKey,
   catalogOfferTitle,
@@ -426,22 +427,27 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       this.notifications.showError(this.i18n.t('productsAdmin.codeRequired'), this.i18n.t('productsAdmin.link'));
       return;
     }
+
+    const prevFamilies = this.families();
+    // 1. Optimistically remove from current list/card (0ms)
+    this.removeOfferLocally(id);
+    this.notifications.showSuccess(this.i18n.t('productsAdmin.linkedOk'), code);
+
+    // 2. Background API request (non-blocking)
     this.linkingId.set(id);
     this.catalog
       .linkByGroupCode(id, code)
       .pipe(finalize(() => this.linkingId.set(null)))
       .subscribe({
         next: (res) => {
-          this.removeOfferLocally(id);
-          this.notifications.showSuccess(this.i18n.t('productsAdmin.linkedOk'), res.code);
           this.loadPharmacyDistribution();
           if (family?.familyKey) {
-            this.refreshFamilyInPlace(family.familyKey);
-          } else {
-            this.reloadKeepingSelection();
+            this.refreshFamilyInPlace(family.familyKey, family, res.code, true);
           }
         },
         error: () => {
+          // Rollback on error
+          this.families.set(prevFamilies);
           this.notifications.showError(
             this.i18n.t('productsAdmin.linkedFail'),
             this.i18n.t('productsAdmin.link')
@@ -461,25 +467,31 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     });
     if (!confirmed) return;
 
+    // Snapshot state for rollback in case of error
+    const prevFamilies = this.families();
+
+    // 1. Optimistically remove locally immediately (0ms)
+    this.removeOfferLocally(id);
+    this.notifications.showSuccess(
+      this.i18n.t('productsAdmin.unlinkedOk'),
+      this.pharmacyLabel(offer)
+    );
+
+    // 2. Background network request (non-blocking, NO full-page reload)
     this.unlinkingId.set(id);
     this.catalog
       .unlinkOffer(id)
       .pipe(finalize(() => this.unlinkingId.set(null)))
       .subscribe({
         next: () => {
-          this.removeOfferLocally(id);
-          this.notifications.showSuccess(
-            this.i18n.t('productsAdmin.unlinkedOk'),
-            this.pharmacyLabel(offer)
-          );
           this.loadPharmacyDistribution();
           if (family?.familyKey) {
-            this.refreshFamilyInPlace(family.familyKey);
-          } else {
-            this.reloadKeepingSelection();
+            this.refreshFamilyInPlace(family.familyKey, family, undefined, true);
           }
         },
         error: () => {
+          // Rollback on failure
+          this.families.set(prevFamilies);
           this.notifications.showError(
             this.i18n.t('productsAdmin.unlinkedFail'),
             this.i18n.t('productsAdmin.unlink')
@@ -508,12 +520,45 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     );
   }
 
-  private refreshFamilyInPlace(familyKey: string, oldFamily?: CatalogFamily | null, newGroupCode?: string): void {
+  private addOfferLocally(familyKey: string, offer: CatalogOffer): void {
+    this.families.update((current) =>
+      current.map((fam) => {
+        const isMatch = fam.familyKey === familyKey;
+        if (!isMatch) return fam;
+        return {
+          ...fam,
+          packs: fam.packs.map((pack, idx) => {
+            if (idx === 0) {
+              const existing = pack.offers.filter((o) => o.pharmacyProductId !== offer.pharmacyProductId);
+              const offers = [...existing, offer];
+              const lowest = Math.min(...offers.map((o) => o.price));
+              const highest = Math.max(...offers.map((o) => o.price));
+              return {
+                ...pack,
+                offers,
+                pharmacyCount: offers.length,
+                lowestPrice: lowest > 0 ? lowest : pack.lowestPrice,
+                highestPrice: highest > 0 ? highest : pack.highestPrice
+              };
+            }
+            return pack;
+          })
+        };
+      })
+    );
+  }
+
+  private refreshFamilyInPlace(
+    familyKey: string,
+    oldFamily?: CatalogFamily | null,
+    newGroupCode?: string,
+    silent = true
+  ): void {
     if (!familyKey) return;
     this.catalog.getFamilyByKey(familyKey).subscribe({
       next: (freshFamily) => {
         if (!freshFamily) {
-          this.reloadKeepingSelection();
+          if (!silent) this.reloadKeepingSelection();
           return;
         }
         const freshCards = flattenFamilyPacks([freshFamily]);
@@ -534,7 +579,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
         );
       },
       error: () => {
-        this.reloadKeepingSelection();
+        if (!silent) this.reloadKeepingSelection();
       }
     });
   }
@@ -549,18 +594,36 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     this.quickAddFamily.set(null);
   }
 
-  onQuickProductAdded(event?: { pharmacyProductId: string; groupCode: string }): void {
+  onQuickProductAdded(event?: { pharmacyProductId: string; groupCode: string; hit?: PharmacyProductSearchHit }): void {
     const fam = this.quickAddFamily();
     this.closeQuickAdd();
+    if (fam && event?.hit) {
+      const newOffer: CatalogOffer = {
+        pharmacyProductId: event.hit.id,
+        pharmacyCode: event.hit.pharmacyCode,
+        pharmacyName: event.hit.pharmacyName,
+        listingName: event.hit.name,
+        englishListingName: event.hit.englishName || null,
+        productUrl: event.hit.productUrl || null,
+        imageUrl: event.hit.imageUrl || null,
+        price: event.hit.price || 0,
+        oldPrice: event.hit.oldPrice || null,
+        discountPercent: null,
+        currency: event.hit.currency || 'SAR',
+        availability: 'InStock',
+        packSize: event.hit.packSize || '',
+        barcode: event.hit.barcode || '',
+        matchMethod: 'MANUAL_LINK'
+      };
+      this.addOfferLocally(fam.familyKey, newOffer);
+      if (fam.familyKey) {
+        this.openOfferKeys.update((keys) => new Set([...keys, fam.familyKey]));
+      }
+    }
     this.loadPharmacyDistribution();
     const keyToRefresh = fam?.familyKey || event?.groupCode;
     if (keyToRefresh) {
-      if (fam?.familyKey) {
-        this.openOfferKeys.update((keys) => new Set([...keys, fam.familyKey]));
-      }
-      this.refreshFamilyInPlace(keyToRefresh, fam, event?.groupCode);
-    } else {
-      this.reloadKeepingSelection();
+      this.refreshFamilyInPlace(keyToRefresh, fam, event?.groupCode, true);
     }
   }
 

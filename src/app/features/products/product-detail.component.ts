@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../core/domain/repositories/catalog-browse.repository';
-import { CatalogFamily, CatalogOffer, CatalogPack, catalogFamilyTitle, catalogPackTitle, familyMatchType, isAiMatch, isConfirmedMatch } from '../../core/domain/models/catalog-family.model';
+import { CatalogFamily, CatalogOffer, CatalogPack, PharmacyProductSearchHit, catalogFamilyTitle, catalogPackTitle, familyMatchType, isAiMatch, isConfirmedMatch } from '../../core/domain/models/catalog-family.model';
 import {
   pharmacyDisplayName,
   pharmacyLogo as resolvePharmacyLogo
@@ -167,17 +167,24 @@ export class ProductDetailComponent implements OnInit {
       this.notifications.showError(this.i18n.t('productDetail.codeRequired'), this.i18n.t('productDetail.link'));
       return;
     }
+
+    const prevFamily = this.family();
+    // 1. Optimistically remove from current list
+    this.removeOfferLocally(id);
+    this.notifications.showSuccess(this.i18n.t('productDetail.linkedOk'), code);
+
+    // 2. Background API call
     this.linkingId.set(id);
     this.catalog
       .linkByGroupCode(id, code)
       .pipe(finalize(() => this.linkingId.set(null)))
       .subscribe({
-        next: (res) => {
-          this.notifications.showSuccess(this.i18n.t('productDetail.linkedOk'), res.code);
+        next: () => {
           const key = this.family()?.familyKey;
-          if (key) this.load(key);
+          if (key) this.silentRefresh(key);
         },
         error: () => {
+          this.family.set(prevFamily);
           this.notifications.showError(this.i18n.t('productDetail.linkedFail'), this.i18n.t('productDetail.link'));
         }
       });
@@ -194,21 +201,29 @@ export class ProductDetailComponent implements OnInit {
     });
     if (!confirmed) return;
 
+    // Snapshot state for rollback in case of error
+    const prevFamily = this.family();
+
+    // 1. Optimistically remove locally immediately (0ms)
+    this.removeOfferLocally(id);
+    this.notifications.showSuccess(
+      this.i18n.t('productDetail.unlinkedOk'),
+      this.pharmacyLabel(offer)
+    );
+
+    // 2. Background API call (non-blocking, NO full-page reload)
     this.unlinkingId.set(id);
     this.catalog
       .unlinkOffer(id)
       .pipe(finalize(() => this.unlinkingId.set(null)))
       .subscribe({
         next: () => {
-          this.removeOfferLocally(id);
-          this.notifications.showSuccess(
-            this.i18n.t('productDetail.unlinkedOk'),
-            this.pharmacyLabel(offer)
-          );
           const key = this.family()?.familyKey;
-          if (key) this.load(key);
+          if (key) this.silentRefresh(key);
         },
         error: () => {
+          // Rollback
+          this.family.set(prevFamily);
           this.notifications.showError(
             this.i18n.t('productDetail.unlinkedFail'),
             this.i18n.t('productDetail.unlink')
@@ -234,6 +249,27 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  private addOfferLocally(newOffer: CatalogOffer): void {
+    this.family.update((f) => {
+      if (!f) return null;
+      return {
+        ...f,
+        packs: f.packs.map((pack, idx) => {
+          if (idx === 0) {
+            const existing = pack.offers.filter((o) => o.pharmacyProductId !== newOffer.pharmacyProductId);
+            const offers = [...existing, newOffer];
+            return {
+              ...pack,
+              offers,
+              pharmacyCount: offers.length
+            };
+          }
+          return pack;
+        })
+      };
+    });
+  }
+
   openQuickAdd(): void {
     this.isQuickAddOpen.set(true);
   }
@@ -242,10 +278,31 @@ export class ProductDetailComponent implements OnInit {
     this.isQuickAddOpen.set(false);
   }
 
-  onQuickProductAdded(event?: { pharmacyProductId: string; groupCode: string }): void {
+  onQuickProductAdded(event?: { pharmacyProductId: string; groupCode: string; hit?: PharmacyProductSearchHit }): void {
     this.closeQuickAdd();
-    const key = this.family()?.familyKey || event?.groupCode;
-    if (key) this.load(key);
+    const fam = this.family();
+    if (fam && event?.hit) {
+      const newOffer: CatalogOffer = {
+        pharmacyProductId: event.hit.id,
+        pharmacyCode: event.hit.pharmacyCode,
+        pharmacyName: event.hit.pharmacyName,
+        listingName: event.hit.name,
+        englishListingName: event.hit.englishName || null,
+        productUrl: event.hit.productUrl || null,
+        imageUrl: event.hit.imageUrl || null,
+        price: event.hit.price || 0,
+        oldPrice: event.hit.oldPrice || null,
+        discountPercent: null,
+        currency: event.hit.currency || 'SAR',
+        availability: 'InStock',
+        packSize: event.hit.packSize || '',
+        barcode: event.hit.barcode || '',
+        matchMethod: 'MANUAL_LINK'
+      };
+      this.addOfferLocally(newOffer);
+    }
+    const key = fam?.familyKey || event?.groupCode;
+    if (key) this.silentRefresh(key);
   }
 
   private applyFamily(family: CatalogFamily): void {
@@ -253,6 +310,15 @@ export class ProductDetailComponent implements OnInit {
     const stillThere = prev && family.packs.some((p) => p.masterId === prev);
     this.family.set(family);
     this.selectedMasterId.set(stillThere ? prev : family.packs[0]?.masterId ?? null);
+  }
+
+  private silentRefresh(familyKey: string): void {
+    this.catalog.getFamilyByKey(familyKey).subscribe({
+      next: (family) => {
+        if (family) this.applyFamily(family);
+      },
+      error: () => {}
+    });
   }
 
   private load(familyKey: string): void {
