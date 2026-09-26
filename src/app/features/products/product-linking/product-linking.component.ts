@@ -30,23 +30,42 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
   private readonly notifications = inject(NotificationService);
 
   // Filter & Search for Linked Products (Left Pane)
-  readonly filterMode = signal<LinkingFilterMode>('all');
+  readonly selectedCount = signal<number | null>(null);
+  readonly isFilterOpen = signal<boolean>(false);
   readonly searchLinkedQuery = signal<string>('');
   readonly families = signal<CatalogFamily[]>([]);
   readonly loadingLinked = signal<boolean>(false);
   readonly selectedFamily = signal<CatalogFamily | null>(null);
 
+  // Filter options 1 to 9 + Show All
+  readonly filterOptions = [
+    { count: null, labelKey: 'productLinking.filterAll', icon: 'pi-th-large' },
+    { count: 1, labelKey: 'productLinking.filterPharmacyCount1', icon: 'pi-building' },
+    { count: 2, labelKey: 'productLinking.filterPharmacyCount2', icon: 'pi-link' },
+    { count: 3, labelKey: 'productLinking.filterPharmacyCount3', icon: 'pi-link' },
+    { count: 4, labelKey: 'productLinking.filterPharmacyCount4', icon: 'pi-building' },
+    { count: 5, labelKey: 'productLinking.filterPharmacyCount5', icon: 'pi-building' },
+    { count: 6, labelKey: 'productLinking.filterPharmacyCount6', icon: 'pi-building' },
+    { count: 7, labelKey: 'productLinking.filterPharmacyCount7', icon: 'pi-building' },
+    { count: 8, labelKey: 'productLinking.filterPharmacyCount8', icon: 'pi-building' },
+    { count: 9, labelKey: 'productLinking.filterPharmacyCount9', icon: 'pi-building' },
+  ];
+
   // Accordion toggle states
   readonly accordionOpen = signal<{
     full: boolean;
     partial: boolean;
-    two: boolean;
     three: boolean;
+    two: boolean;
+    single: boolean;
+    filtered: boolean;
   }>({
     full: true,
     partial: true,
+    three: true,
     two: true,
-    three: true
+    single: true,
+    filtered: true
   });
 
   // Right Pane Tabs
@@ -100,12 +119,16 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
     })
   );
 
+  readonly threePharmaciesFamilies = computed(() =>
+    this.filteredFamilies().filter((f) => this.getPharmacyCount(f) === 3)
+  );
+
   readonly twoPharmaciesFamilies = computed(() =>
     this.filteredFamilies().filter((f) => this.getPharmacyCount(f) === 2)
   );
 
-  readonly threePharmaciesFamilies = computed(() =>
-    this.filteredFamilies().filter((f) => this.getPharmacyCount(f) === 3)
+  readonly singlePharmacyFamilies = computed(() =>
+    this.filteredFamilies().filter((f) => this.getPharmacyCount(f) === 1)
   );
 
   // Visible suggestions excluding ignored
@@ -126,17 +149,13 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
 
   loadFamilies(): void {
     this.loadingLinked.set(true);
-    let pharmacyCount: number | undefined;
-
-    const mode = this.filterMode();
-    if (mode === 'binary') pharmacyCount = 2;
-    else if (mode === 'ternary') pharmacyCount = 3;
-    else if (mode === 'quaternary') pharmacyCount = 4;
+    const count = this.selectedCount();
+    const pharmacyCount = count === null ? undefined : count;
 
     this.familiesSub?.unsubscribe();
     this.familiesSub = this.catalog
       .listFamilies({
-        pageSize: 60,
+        pageSize: 100,
         pharmacyCount
       })
       .pipe(finalize(() => this.loadingLinked.set(false)))
@@ -156,17 +175,32 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
       });
   }
 
-  setFilterMode(mode: LinkingFilterMode): void {
-    if (this.filterMode() === mode) return;
-    this.filterMode.set(mode);
+  toggleFilter(): void {
+    this.isFilterOpen.update((v) => !v);
+  }
+
+  closeFilter(): void {
+    this.isFilterOpen.set(false);
+  }
+
+  selectFilter(count: number | null): void {
+    this.selectedCount.set(count);
+    this.isFilterOpen.set(false);
     this.loadFamilies();
+  }
+
+  getActiveFilterLabelKey(): string {
+    const c = this.selectedCount();
+    if (c === null) return 'productLinking.filterAll';
+    const opt = this.filterOptions.find((o) => o.count === c);
+    return opt ? opt.labelKey : 'productLinking.filterAction';
   }
 
   onLinkedQueryChange(query: string): void {
     this.searchLinkedQuery.set(query);
   }
 
-  toggleAccordion(section: 'full' | 'partial' | 'two' | 'three'): void {
+  toggleAccordion(section: 'full' | 'partial' | 'three' | 'two' | 'single' | 'filtered'): void {
     this.accordionOpen.update((prev) => ({
       ...prev,
       [section]: !prev[section]

@@ -20,50 +20,93 @@
     </div>
   </div>
 
-  <!-- Main Split Layout (Two Halves) -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
+  <!-- Main Split Layout (Two Halves: Linked Products LEFT, Details RIGHT) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start" dir="ltr">
     
     <!-- ========================================== -->
-    <!-- LEFT PANE: LINKED PRODUCTS (نصف المنتجات المرتبطة) -->
+    <!-- LEFT PANE: LINKED PRODUCTS (المنتجات المرتبطة) -->
     <!-- ========================================== -->
-    <div class="lg:col-span-5 flex flex-col rounded-2xl border border-[#E8D5BE] bg-white p-4 sm:p-5 shadow-xs space-y-4">
+    <div
+      class="lg:col-span-5 flex flex-col rounded-2xl border border-[#E8D5BE] bg-white p-4 sm:p-5 shadow-xs space-y-4"
+      [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'"
+    >
       
-      <!-- Left Header: Title + Count Badge -->
-      <div class="flex items-center justify-between gap-3 border-b border-[#EDE0D0] pb-3.5">
-        <div class="flex items-center gap-2">
-          <h2 class="text-base sm:text-lg font-extrabold text-[#181A1D]">
-            {{ 'productLinking.linkedProductsTitle' | t }}
-          </h2>
-        </div>
-        <span class="inline-flex items-center rounded-full bg-[#F8EEE2] px-3 py-1 text-xs font-bold text-[#C27938]">
+      <!-- Left Header: Count Badge on Left + Title on Right (matching mockup) -->
+      <div class="flex items-center justify-between gap-3 border-b border-[#EDE0D0] pb-3.5" dir="ltr">
+        <!-- Count Badge on Left -->
+        <span class="inline-flex items-center rounded-lg bg-[#FAF5EE] border border-[#E8D5BE] px-3 py-1 text-xs font-bold text-[#8A735C]">
           {{ filteredFamilies().length }} {{ 'productLinking.productsCount' | t }}
         </span>
+
+        <!-- Title on Right -->
+        <h2 class="text-base sm:text-lg font-extrabold text-[#181A1D]">
+          {{ 'productLinking.linkedProductsTitle' | t }}
+        </h2>
       </div>
 
-      <!-- Controls Row: Filter Dropdown + Search Input -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-        <!-- Filter Dropdown -->
+      <!-- Controls Row: Filter Button on Left + Search Input on Right (matching mockup) -->
+      <div class="flex items-center gap-2.5 relative" dir="ltr">
+        <!-- Filter Button with Interactive Popover -->
         <div class="relative shrink-0">
-          <select
-            class="h-10 min-h-10 w-full sm:w-auto rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 pe-8 text-xs font-bold text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors cursor-pointer appearance-none"
-            [ngModel]="filterMode()"
-            (ngModelChange)="setFilterMode($event)"
+          <button
+            type="button"
+            (click)="toggleFilter()"
+            [class.bg-[#C27938]]="selectedCount() !== null"
+            [class.text-white]="selectedCount() !== null"
+            [class.border-[#C27938]]="selectedCount() !== null"
+            [class.bg-[#FAF8F5]]="selectedCount() === null"
+            [class.text-[#181A1D]]="selectedCount() === null"
+            class="h-10 min-h-10 inline-flex items-center gap-2 rounded-xl border border-[#E8D5BE] px-3.5 text-xs font-bold transition-all cursor-pointer hover:bg-[#F8EEE2]/80 shadow-2xs"
             [attr.aria-label]="'productLinking.filterAction' | t"
           >
-            <option value="all">{{ 'productLinking.allFilter' | t }}</option>
-            <option value="binary">{{ 'productLinking.filterBinary' | t }}</option>
-            <option value="ternary">{{ 'productLinking.filterTernary' | t }}</option>
-            <option value="quaternary">{{ 'productLinking.filterQuaternary' | t }}</option>
-          </select>
-          <i class="pi pi-filter absolute end-2.5 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D] pointer-events-none" aria-hidden="true"></i>
+            <i class="pi pi-filter text-xs" aria-hidden="true"></i>
+            <span>{{ 'productLinking.filterAction' | t }}</span>
+            @if (selectedCount() !== null) {
+              <span class="size-2 rounded-full bg-white animate-pulse"></span>
+            }
+          </button>
+
+          <!-- Dropdown Popover (1..9 pharmacies + Show All) -->
+          @if (isFilterOpen()) {
+            <div class="fixed inset-0 z-40" (click)="closeFilter()"></div>
+            <div
+              class="absolute start-0 top-full mt-2 w-64 rounded-2xl border border-[#E8D5BE] bg-white p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150"
+              [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'"
+            >
+              <div class="px-3 py-2 border-b border-[#EDE0D0] text-xs font-extrabold text-[#8A735C]">
+                {{ 'productLinking.filterDropdownTitle' | t }}
+              </div>
+
+              <div class="mt-1 max-h-60 overflow-y-auto space-y-1 custom-scrollbar pe-1">
+                @for (opt of filterOptions; track opt.count) {
+                  <button
+                    type="button"
+                    (click)="selectFilter(opt.count)"
+                    [class.bg-[#FFF9F2]]="selectedCount() === opt.count"
+                    [class.text-[#C27938]]="selectedCount() === opt.count"
+                    [class.font-extrabold]="selectedCount() === opt.count"
+                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs text-[#181A1D] hover:bg-[#FAF5EE] transition-colors cursor-pointer text-start"
+                  >
+                    <div class="flex items-center gap-2 min-w-0">
+                      <i [class]="'pi ' + opt.icon + ' text-xs'" [class.text-[#C27938]]="selectedCount() === opt.count" aria-hidden="true"></i>
+                      <span class="truncate">{{ opt.labelKey | t }}</span>
+                    </div>
+                    @if (selectedCount() === opt.count) {
+                      <i class="pi pi-check text-xs text-[#C27938]" aria-hidden="true"></i>
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          }
         </div>
 
         <!-- Search Input -->
         <div class="relative flex-1">
-          <i class="pi pi-search absolute start-3 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D] pointer-events-none" aria-hidden="true"></i>
+          <i class="pi pi-search absolute end-3 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D] pointer-events-none" aria-hidden="true"></i>
           <input
             type="search"
-            class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] ps-8 pe-3 text-xs font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors"
+            class="h-10 min-h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FAF8F5] ps-3 pe-8 text-xs font-medium text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white hover:bg-[#F8EEE2]/60 transition-colors text-right"
             [ngModel]="searchLinkedQuery()"
             (ngModelChange)="onLinkedQueryChange($event)"
             [placeholder]="'productLinking.searchLinkedPlaceholder' | t"
@@ -71,6 +114,24 @@
           />
         </div>
       </div>
+
+      <!-- Active Filter Chip Banner (when a specific count filter is chosen) -->
+      @if (selectedCount() !== null) {
+        <div class="flex items-center justify-between rounded-xl bg-[#FAF5EE] border border-[#E8D5BE] px-3 py-1.5 text-xs text-[#8A735C]">
+          <div class="flex items-center gap-1.5 font-bold text-[#C27938]">
+            <i class="pi pi-filter text-[11px]" aria-hidden="true"></i>
+            <span>{{ getActiveFilterLabelKey() | t }}</span>
+          </div>
+          <button
+            type="button"
+            (click)="selectFilter(null)"
+            class="inline-flex items-center gap-1 text-[11px] font-extrabold text-[#8A735C] hover:text-[#C27938] transition-colors cursor-pointer"
+          >
+            <i class="pi pi-times text-[10px]" aria-hidden="true"></i>
+            <span>{{ 'productLinking.filterAll' | t }}</span>
+          </button>
+        </div>
+      }
 
       <!-- Loading State -->
       @if (loadingLinked()) {
@@ -87,50 +148,506 @@
         <!-- Accordion Groups Container -->
         <div class="space-y-3.5 max-h-[72vh] overflow-y-auto pe-1 custom-scrollbar">
 
-          <!-- 1. FULLY LINKED ACCORDION (مرتبط كلياً) -->
-          @if (fullyLinkedFamilies().length > 0) {
-            <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] overflow-hidden">
+          <!-- ======================================================== -->
+          <!-- MODE A: "عرض الكل" (Show All) -> Categorized Groups       -->
+          <!-- ======================================================== -->
+          @if (selectedCount() === null) {
+
+            <!-- 1. FULLY LINKED (مرتبط كلياً) -->
+            @if (fullyLinkedFamilies().length > 0) {
+              <div class="rounded-xl border border-[#CDE9D6] bg-[#EAF7EE]/60 overflow-hidden">
+                <button
+                  type="button"
+                  (click)="toggleAccordion('full')"
+                  class="w-full flex items-center justify-between p-3 text-start hover:bg-[#EAF7EE] transition-colors cursor-pointer"
+                  dir="ltr"
+                >
+                  <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                     [ngClass]="accordionOpen().full ? 'pi-chevron-up' : 'pi-chevron-down'"
+                     aria-hidden="true"></i>
+
+                  <div class="flex items-center gap-2.5 min-w-0 text-right">
+                    <div class="min-w-0">
+                      <div class="text-xs font-extrabold text-[#181A1D]">
+                        {{ 'productLinking.fullyLinkedGroup' | t }} ({{ fullyLinkedFamilies().length }})
+                      </div>
+                      <div class="text-[10px] text-[#5A7E64]">
+                        {{ 'productLinking.fullyLinkedDesc' | t }}
+                      </div>
+                    </div>
+                    <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-xs shadow-2xs">
+                      <i class="pi pi-check text-[11px]" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                </button>
+
+                @if (accordionOpen().full) {
+                  <div class="p-2 space-y-2 border-t border-[#CDE9D6] bg-white">
+                    @for (family of fullyLinkedFamilies(); track family.familyKey) {
+                      <div
+                        role="button"
+                        tabindex="0"
+                        (click)="selectFamily(family)"
+                        (keydown.enter)="selectFamily(family)"
+                        [class.border-[#E89A3C]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                        class="flex items-center gap-3 p-2.5 rounded-xl border border-[#EDE0D0] hover:border-[#C27938]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group"
+                        dir="ltr"
+                      >
+                        <!-- Pharmacy Count Pill (Left) -->
+                        <span class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-1 text-xs font-bold text-[#A66324]">
+                          <i class="pi pi-building text-xs" aria-hidden="true"></i>
+                          <span>{{ getPharmacyCount(family) }} {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+                        </span>
+
+                        <!-- Thumbnail -->
+                        <img
+                          [src]="family.imageUrl | proxyImg"
+                          alt=""
+                          class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                          aria-hidden="true"
+                        />
+
+                        <!-- Info (Center, Right-Aligned) -->
+                        <div class="min-w-0 flex-1 text-right">
+                          <h3 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                            {{ getDisplayName(family) }}
+                          </h3>
+                          <div class="mt-0.5 flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-[#8A735C]">
+                            @if (family.groupCode) {
+                              <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                              <span class="text-[#D0BEAA]">|</span>
+                            }
+                            @if (getBarcode(family)) {
+                              <span class="font-mono">{{ getBarcode(family) }}</span>
+                            }
+                            @if (getPackSize(family)) {
+                              <span class="text-[#D0BEAA]">|</span>
+                              <span>{{ getPackSize(family) }}</span>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- Status Pill (Right) -->
+                        <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                          <i class="pi pi-check text-[9px]" aria-hidden="true"></i>
+                          <span>{{ 'productLinking.statusFullyLinked' | t }}</span>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- 2. PARTIALLY LINKED (مرتبط جزئياً) -->
+            @if (partiallyLinkedFamilies().length > 0) {
+              <div class="rounded-xl border border-[#F7DFBF] bg-[#FDF4E9]/60 overflow-hidden">
+                <button
+                  type="button"
+                  (click)="toggleAccordion('partial')"
+                  class="w-full flex items-center justify-between p-3 text-start hover:bg-[#FDF4E9] transition-colors cursor-pointer"
+                  dir="ltr"
+                >
+                  <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                     [ngClass]="accordionOpen().partial ? 'pi-chevron-up' : 'pi-chevron-down'"
+                     aria-hidden="true"></i>
+
+                  <div class="flex items-center gap-2.5 min-w-0 text-right">
+                    <div class="min-w-0">
+                      <div class="text-xs font-extrabold text-[#181A1D]">
+                        {{ 'productLinking.partiallyLinkedGroup' | t }} ({{ partiallyLinkedFamilies().length }})
+                      </div>
+                      <div class="text-[10px] text-[#936639]">
+                        {{ 'productLinking.partiallyLinkedDesc' | t }}
+                      </div>
+                    </div>
+                    <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-amber-600 text-white text-xs shadow-2xs">
+                      <i class="pi pi-clock text-[11px]" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                </button>
+
+                @if (accordionOpen().partial) {
+                  <div class="p-2 space-y-2 border-t border-[#F7DFBF] bg-white">
+                    @for (family of partiallyLinkedFamilies(); track family.familyKey) {
+                      <div
+                        role="button"
+                        tabindex="0"
+                        (click)="selectFamily(family)"
+                        (keydown.enter)="selectFamily(family)"
+                        [class.border-[#E89A3C]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                        class="flex items-center gap-3 p-2.5 rounded-xl border border-[#EDE0D0] hover:border-[#C27938]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group"
+                        dir="ltr"
+                      >
+                        <!-- Pharmacy Count Pill (Left) -->
+                        <span class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-1 text-xs font-bold text-[#A66324]">
+                          <i class="pi pi-building text-xs" aria-hidden="true"></i>
+                          <span>{{ getPharmacyCount(family) }} {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+                        </span>
+
+                        <!-- Thumbnail -->
+                        <img
+                          [src]="family.imageUrl | proxyImg"
+                          alt=""
+                          class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                          aria-hidden="true"
+                        />
+
+                        <!-- Info (Center, Right-Aligned) -->
+                        <div class="min-w-0 flex-1 text-right">
+                          <h3 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                            {{ getDisplayName(family) }}
+                          </h3>
+                          <div class="mt-0.5 flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-[#8A735C]">
+                            @if (family.groupCode) {
+                              <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                              <span class="text-[#D0BEAA]">|</span>
+                            }
+                            @if (getBarcode(family)) {
+                              <span class="font-mono">{{ getBarcode(family) }}</span>
+                            }
+                            @if (getPackSize(family)) {
+                              <span class="text-[#D0BEAA]">|</span>
+                              <span>{{ getPackSize(family) }}</span>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- Status Pill (Right) -->
+                        <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[10px] font-bold text-amber-700">
+                          <i class="pi pi-clock text-[9px]" aria-hidden="true"></i>
+                          <span>{{ 'productLinking.statusPartiallyLinked' | t }}</span>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- 3. THREE PHARMACIES (مربوط في 3 صيدليات) -->
+            @if (threePharmaciesFamilies().length > 0) {
+              <div class="rounded-xl border border-[#E9D5FF] bg-[#F3E8FF]/50 overflow-hidden">
+                <button
+                  type="button"
+                  (click)="toggleAccordion('three')"
+                  class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F3E8FF] transition-colors cursor-pointer"
+                  dir="ltr"
+                >
+                  <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                     [ngClass]="accordionOpen().three ? 'pi-chevron-up' : 'pi-chevron-down'"
+                     aria-hidden="true"></i>
+
+                  <div class="flex items-center gap-2.5 min-w-0 text-right">
+                    <div class="min-w-0">
+                      <div class="text-xs font-extrabold text-[#181A1D]">
+                        {{ 'productLinking.threePharmaciesGroup' | t }} ({{ threePharmaciesFamilies().length }})
+                      </div>
+                      <div class="text-[10px] text-[#7E57C2]">
+                        {{ 'productLinking.threePharmaciesDesc' | t }}
+                      </div>
+                    </div>
+                    <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white text-xs shadow-2xs">
+                      <i class="pi pi-link text-[11px]" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                </button>
+
+                @if (accordionOpen().three) {
+                  <div class="p-2 space-y-2 border-t border-[#E9D5FF] bg-white">
+                    @for (family of threePharmaciesFamilies(); track family.familyKey) {
+                      <div
+                        role="button"
+                        tabindex="0"
+                        (click)="selectFamily(family)"
+                        (keydown.enter)="selectFamily(family)"
+                        [class.border-[#E89A3C]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                        class="flex items-center gap-3 p-2.5 rounded-xl border border-[#EDE0D0] hover:border-[#C27938]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group"
+                        dir="ltr"
+                      >
+                        <!-- Pharmacy Count Pill (Left) -->
+                        <span class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-1 text-xs font-bold text-[#A66324]">
+                          <i class="pi pi-building text-xs" aria-hidden="true"></i>
+                          <span>3 {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+                        </span>
+
+                        <!-- Thumbnail -->
+                        <img
+                          [src]="family.imageUrl | proxyImg"
+                          alt=""
+                          class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                          aria-hidden="true"
+                        />
+
+                        <!-- Info (Center, Right-Aligned) -->
+                        <div class="min-w-0 flex-1 text-right">
+                          <h3 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                            {{ getDisplayName(family) }}
+                          </h3>
+                          <div class="mt-0.5 flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-[#8A735C]">
+                            @if (family.groupCode) {
+                              <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                              <span class="text-[#D0BEAA]">|</span>
+                            }
+                            @if (getBarcode(family)) {
+                              <span class="font-mono">{{ getBarcode(family) }}</span>
+                            }
+                            @if (getPackSize(family)) {
+                              <span class="text-[#D0BEAA]">|</span>
+                              <span>{{ getPackSize(family) }}</span>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- Status Pill (Right) -->
+                        <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                          <i class="pi pi-link text-[9px]" aria-hidden="true"></i>
+                          <span>{{ 'productLinking.statusThreePharmacies' | t }}</span>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- 4. TWO PHARMACIES (مربوط في صيدليتين فقط) -->
+            @if (twoPharmaciesFamilies().length > 0) {
+              <div class="rounded-xl border border-[#D0E4FA] bg-[#EDF5FD]/60 overflow-hidden">
+                <button
+                  type="button"
+                  (click)="toggleAccordion('two')"
+                  class="w-full flex items-center justify-between p-3 text-start hover:bg-[#EDF5FD] transition-colors cursor-pointer"
+                  dir="ltr"
+                >
+                  <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                     [ngClass]="accordionOpen().two ? 'pi-chevron-up' : 'pi-chevron-down'"
+                     aria-hidden="true"></i>
+
+                  <div class="flex items-center gap-2.5 min-w-0 text-right">
+                    <div class="min-w-0">
+                      <div class="text-xs font-extrabold text-[#181A1D]">
+                        {{ 'productLinking.twoPharmaciesGroup' | t }} ({{ twoPharmaciesFamilies().length }})
+                      </div>
+                      <div class="text-[10px] text-[#4A7BB0]">
+                        {{ 'productLinking.twoPharmaciesDesc' | t }}
+                      </div>
+                    </div>
+                    <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-sky-600 text-white text-xs shadow-2xs">
+                      <i class="pi pi-link text-[11px]" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                </button>
+
+                @if (accordionOpen().two) {
+                  <div class="p-2 space-y-2 border-t border-[#D0E4FA] bg-white">
+                    @for (family of twoPharmaciesFamilies(); track family.familyKey) {
+                      <div
+                        role="button"
+                        tabindex="0"
+                        (click)="selectFamily(family)"
+                        (keydown.enter)="selectFamily(family)"
+                        [class.border-[#E89A3C]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                        class="flex items-center gap-3 p-2.5 rounded-xl border border-[#EDE0D0] hover:border-[#C27938]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group"
+                        dir="ltr"
+                      >
+                        <!-- Pharmacy Count Pill (Left) -->
+                        <span class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-1 text-xs font-bold text-[#A66324]">
+                          <i class="pi pi-building text-xs" aria-hidden="true"></i>
+                          <span>2 {{ 'productLinking.pharmacyBadgeCount' | t }}</span>
+                        </span>
+
+                        <!-- Thumbnail -->
+                        <img
+                          [src]="family.imageUrl | proxyImg"
+                          alt=""
+                          class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                          aria-hidden="true"
+                        />
+
+                        <!-- Info (Center, Right-Aligned) -->
+                        <div class="min-w-0 flex-1 text-right">
+                          <h3 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                            {{ getDisplayName(family) }}
+                          </h3>
+                          <div class="mt-0.5 flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-[#8A735C]">
+                            @if (family.groupCode) {
+                              <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                              <span class="text-[#D0BEAA]">|</span>
+                            }
+                            @if (getBarcode(family)) {
+                              <span class="font-mono">{{ getBarcode(family) }}</span>
+                            }
+                            @if (getPackSize(family)) {
+                              <span class="text-[#D0BEAA]">|</span>
+                              <span>{{ getPackSize(family) }}</span>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- Status Pill (Right) -->
+                        <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-0.5 text-[10px] font-bold text-sky-700">
+                          <i class="pi pi-link text-[9px]" aria-hidden="true"></i>
+                          <span>{{ 'productLinking.statusTwoPharmacies' | t }}</span>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- 5. SINGLE PHARMACY (مربوط في صيدلية واحدة فقط) -->
+            @if (singlePharmacyFamilies().length > 0) {
+              <div class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] overflow-hidden">
+                <button
+                  type="button"
+                  (click)="toggleAccordion('single')"
+                  class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F1F5F9] transition-colors cursor-pointer"
+                  dir="ltr"
+                >
+                  <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                     [ngClass]="accordionOpen().single ? 'pi-chevron-up' : 'pi-chevron-down'"
+                     aria-hidden="true"></i>
+
+                  <div class="flex items-center gap-2.5 min-w-0 text-right">
+                    <div class="min-w-0">
+                      <div class="text-xs font-extrabold text-[#181A1D]">
+                        {{ 'productLinking.singlePharmacyGroup' | t }} ({{ singlePharmacyFamilies().length }})
+                      </div>
+                      <div class="text-[10px] text-[#64748B]">
+                        {{ 'productLinking.singlePharmacyDesc' | t }}
+                      </div>
+                    </div>
+                    <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-600 text-white text-xs shadow-2xs">
+                      <i class="pi pi-building text-[11px]" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                </button>
+
+                @if (accordionOpen().single) {
+                  <div class="p-2 space-y-2 border-t border-[#E2E8F0] bg-white">
+                    @for (family of singlePharmacyFamilies(); track family.familyKey) {
+                      <div
+                        role="button"
+                        tabindex="0"
+                        (click)="selectFamily(family)"
+                        (keydown.enter)="selectFamily(family)"
+                        [class.border-[#E89A3C]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
+                        [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
+                        class="flex items-center gap-3 p-2.5 rounded-xl border border-[#EDE0D0] hover:border-[#C27938]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group"
+                        dir="ltr"
+                      >
+                        <!-- Pharmacy Count Pill (Left) -->
+                        <span class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-1 text-xs font-bold text-[#A66324]">
+                          <i class="pi pi-building text-xs" aria-hidden="true"></i>
+                          <span>1 {{ 'productLinking.pharmacyBadgeCount' | t }}</span>
+                        </span>
+
+                        <!-- Thumbnail -->
+                        <img
+                          [src]="family.imageUrl | proxyImg"
+                          alt=""
+                          class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
+                          aria-hidden="true"
+                        />
+
+                        <!-- Info (Center, Right-Aligned) -->
+                        <div class="min-w-0 flex-1 text-right">
+                          <h3 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                            {{ getDisplayName(family) }}
+                          </h3>
+                          <div class="mt-0.5 flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-[#8A735C]">
+                            @if (family.groupCode) {
+                              <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                              <span class="text-[#D0BEAA]">|</span>
+                            }
+                            @if (getBarcode(family)) {
+                              <span class="font-mono">{{ getBarcode(family) }}</span>
+                            }
+                            @if (getPackSize(family)) {
+                              <span class="text-[#D0BEAA]">|</span>
+                              <span>{{ getPackSize(family) }}</span>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- Status Pill (Right) -->
+                        <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-slate-700">
+                          <i class="pi pi-building text-[9px]" aria-hidden="true"></i>
+                          <span>{{ 'productLinking.statusSinglePharmacy' | t }}</span>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+          } @else {
+
+            <!-- ======================================================== -->
+            <!-- MODE B: SPECIFIC COUNT FILTERED (1 to 9 Pharmacies)      -->
+            <!-- ======================================================== -->
+            <div class="rounded-xl border border-[#E8D5BE] bg-[#FAF8F5] overflow-hidden">
               <button
                 type="button"
-                (click)="toggleAccordion('full')"
+                (click)="toggleAccordion('filtered')"
                 class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
+                dir="ltr"
               >
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs">
-                    <i class="pi pi-check text-[10px]" aria-hidden="true"></i>
-                  </span>
+                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
+                   [ngClass]="accordionOpen().filtered ? 'pi-chevron-up' : 'pi-chevron-down'"
+                   aria-hidden="true"></i>
+
+                <div class="flex items-center gap-2.5 min-w-0 text-right">
                   <div class="min-w-0">
                     <div class="text-xs font-extrabold text-[#181A1D]">
-                      {{ 'productLinking.fullyLinkedGroup' | t }} ({{ fullyLinkedFamilies().length }})
+                      {{ getActiveFilterLabelKey() | t }} ({{ filteredFamilies().length }})
                     </div>
                     <div class="text-[10px] text-[#8A735C]">
-                      {{ 'productLinking.fullyLinkedDesc' | t }}
+                      {{ 'productLinking.customCountDesc' | t }}
                     </div>
                   </div>
+                  <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-[#C27938] text-white text-xs shadow-2xs">
+                    <i class="pi pi-filter text-[11px]" aria-hidden="true"></i>
+                  </span>
                 </div>
-                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
-                   [ngClass]="accordionOpen().full ? 'pi-chevron-up' : 'pi-chevron-down'"
-                   aria-hidden="true"></i>
               </button>
 
-              @if (accordionOpen().full) {
+              @if (accordionOpen().filtered) {
                 <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
-                  @for (family of fullyLinkedFamilies(); track family.familyKey) {
+                  @for (family of filteredFamilies(); track family.familyKey) {
                     <div
                       role="button"
                       tabindex="0"
                       (click)="selectFamily(family)"
                       (keydown.enter)="selectFamily(family)"
-                      [class.border-[#C27938]]="selectedFamily()?.familyKey === family.familyKey"
+                      [class.border-[#E89A3C]]="selectedFamily()?.familyKey === family.familyKey"
                       [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
                       [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
                       [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
-                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#E8D5BE] hover:border-[#C27938]/60 hover:bg-[#FBF8F4] transition-all cursor-pointer group"
+                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#EDE0D0] hover:border-[#C27938]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group"
+                      dir="ltr"
                     >
-                      <!-- Pharmacy Count Pill -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] px-2 py-1 text-[10px] font-bold text-[#C27938]">
-                        <i class="pi pi-building text-[10px]" aria-hidden="true"></i>
-                        <span>{{ getPharmacyCount(family) }} {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+                      <!-- Pharmacy Count Pill (Left) -->
+                      <span class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-1 text-xs font-bold text-[#A66324]">
+                        <i class="pi pi-building text-xs" aria-hidden="true"></i>
+                        <span>{{ getPharmacyCount(family) }} {{ getPharmacyCount(family) === 1 ? ('productLinking.pharmacyBadgeCount' | t) : ('productLinking.pharmacyBadgeCountPlural' | t) }}</span>
                       </span>
 
                       <!-- Thumbnail -->
@@ -141,294 +658,37 @@
                         aria-hidden="true"
                       />
 
-                      <!-- Details -->
-                      <div class="min-w-0 flex-1">
-                        <h3 class="text-xs font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
+                      <!-- Info (Center, Right-Aligned) -->
+                      <div class="min-w-0 flex-1 text-right">
+                        <h3 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
                           {{ getDisplayName(family) }}
                         </h3>
-                        <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#8A735C]">
-                          @if (getPackSize(family)) {
-                            <span>{{ getPackSize(family) }}</span>
+                        <div class="mt-0.5 flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-[#8A735C]">
+                          @if (family.groupCode) {
+                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
                             <span class="text-[#D0BEAA]">|</span>
                           }
                           @if (getBarcode(family)) {
                             <span class="font-mono">{{ getBarcode(family) }}</span>
                           }
-                          @if (family.groupCode) {
+                          @if (getPackSize(family)) {
                             <span class="text-[#D0BEAA]">|</span>
-                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
+                            <span>{{ getPackSize(family) }}</span>
                           }
                         </div>
                       </div>
 
-                      <!-- Status Pill -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                        <i class="pi pi-check-circle text-[9px]" aria-hidden="true"></i>
-                        <span>{{ 'productLinking.statusFullyLinked' | t }}</span>
+                      <!-- Status Pill (Right) -->
+                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#FAF3EA] border border-[#EEDBCA] px-2.5 py-0.5 text-[10px] font-bold text-[#A66324]">
+                        <i class="pi pi-building text-[9px]" aria-hidden="true"></i>
+                        <span>{{ getPharmacyCount(family) }} {{ getPharmacyCount(family) === 1 ? ('productLinking.pharmacyBadgeCount' | t) : ('productLinking.pharmacyBadgeCountPlural' | t) }}</span>
                       </span>
                     </div>
                   }
                 </div>
               }
             </div>
-          }
 
-          <!-- 2. PARTIALLY LINKED ACCORDION (مرتبط جزئياً) -->
-          @if (partiallyLinkedFamilies().length > 0) {
-            <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] overflow-hidden">
-              <button
-                type="button"
-                (click)="toggleAccordion('partial')"
-                class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
-              >
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs">
-                    <i class="pi pi-clock text-[10px]" aria-hidden="true"></i>
-                  </span>
-                  <div class="min-w-0">
-                    <div class="text-xs font-extrabold text-[#181A1D]">
-                      {{ 'productLinking.partiallyLinkedGroup' | t }} ({{ partiallyLinkedFamilies().length }})
-                    </div>
-                    <div class="text-[10px] text-[#8A735C]">
-                      {{ 'productLinking.partiallyLinkedDesc' | t }}
-                    </div>
-                  </div>
-                </div>
-                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
-                   [ngClass]="accordionOpen().partial ? 'pi-chevron-up' : 'pi-chevron-down'"
-                   aria-hidden="true"></i>
-              </button>
-
-              @if (accordionOpen().partial) {
-                <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
-                  @for (family of partiallyLinkedFamilies(); track family.familyKey) {
-                    <div
-                      role="button"
-                      tabindex="0"
-                      (click)="selectFamily(family)"
-                      (keydown.enter)="selectFamily(family)"
-                      [class.border-[#C27938]]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
-                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#E8D5BE] hover:border-[#C27938]/60 hover:bg-[#FBF8F4] transition-all cursor-pointer group"
-                    >
-                      <!-- Pharmacy Count Pill -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] px-2 py-1 text-[10px] font-bold text-[#C27938]">
-                        <i class="pi pi-building text-[10px]" aria-hidden="true"></i>
-                        <span>{{ getPharmacyCount(family) }} {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
-                      </span>
-
-                      <!-- Thumbnail -->
-                      <img
-                        [src]="family.imageUrl | proxyImg"
-                        alt=""
-                        class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
-                        aria-hidden="true"
-                      />
-
-                      <!-- Details -->
-                      <div class="min-w-0 flex-1">
-                        <h3 class="text-xs font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
-                          {{ getDisplayName(family) }}
-                        </h3>
-                        <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#8A735C]">
-                          @if (getPackSize(family)) {
-                            <span>{{ getPackSize(family) }}</span>
-                            <span class="text-[#D0BEAA]">|</span>
-                          }
-                          @if (getBarcode(family)) {
-                            <span class="font-mono">{{ getBarcode(family) }}</span>
-                          }
-                          @if (family.groupCode) {
-                            <span class="text-[#D0BEAA]">|</span>
-                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
-                          }
-                        </div>
-                      </div>
-
-                      <!-- Status Pill -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                        <i class="pi pi-clock text-[9px]" aria-hidden="true"></i>
-                        <span>{{ 'productLinking.statusPartiallyLinked' | t }}</span>
-                      </span>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-
-          <!-- 3. TWO PHARMACIES ACCORDION (الثنائية - في صيدليتين فقط) -->
-          @if (twoPharmaciesFamilies().length > 0) {
-            <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] overflow-hidden">
-              <button
-                type="button"
-                (click)="toggleAccordion('two')"
-                class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
-              >
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700 text-xs">
-                    <i class="pi pi-link text-[10px]" aria-hidden="true"></i>
-                  </span>
-                  <div class="min-w-0">
-                    <div class="text-xs font-extrabold text-[#181A1D]">
-                      {{ 'productLinking.twoPharmaciesGroup' | t }} ({{ twoPharmaciesFamilies().length }})
-                    </div>
-                    <div class="text-[10px] text-[#8A735C]">
-                      {{ 'productLinking.twoPharmaciesDesc' | t }}
-                    </div>
-                  </div>
-                </div>
-                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
-                   [ngClass]="accordionOpen().two ? 'pi-chevron-up' : 'pi-chevron-down'"
-                   aria-hidden="true"></i>
-              </button>
-
-              @if (accordionOpen().two) {
-                <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
-                  @for (family of twoPharmaciesFamilies(); track family.familyKey) {
-                    <div
-                      role="button"
-                      tabindex="0"
-                      (click)="selectFamily(family)"
-                      (keydown.enter)="selectFamily(family)"
-                      [class.border-[#C27938]]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
-                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#E8D5BE] hover:border-[#C27938]/60 hover:bg-[#FBF8F4] transition-all cursor-pointer group"
-                    >
-                      <!-- Pharmacy Count Pill -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] px-2 py-1 text-[10px] font-bold text-[#C27938]">
-                        <i class="pi pi-building text-[10px]" aria-hidden="true"></i>
-                        <span>2 {{ 'productLinking.pharmacyBadgeCount' | t }}</span>
-                      </span>
-
-                      <!-- Thumbnail -->
-                      <img
-                        [src]="family.imageUrl | proxyImg"
-                        alt=""
-                        class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
-                        aria-hidden="true"
-                      />
-
-                      <!-- Details -->
-                      <div class="min-w-0 flex-1">
-                        <h3 class="text-xs font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
-                          {{ getDisplayName(family) }}
-                        </h3>
-                        <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#8A735C]">
-                          @if (getPackSize(family)) {
-                            <span>{{ getPackSize(family) }}</span>
-                            <span class="text-[#D0BEAA]">|</span>
-                          }
-                          @if (getBarcode(family)) {
-                            <span class="font-mono">{{ getBarcode(family) }}</span>
-                          }
-                          @if (family.groupCode) {
-                            <span class="text-[#D0BEAA]">|</span>
-                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
-                          }
-                        </div>
-                      </div>
-
-                      <!-- Status Pill -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-200 px-2 py-0.5 text-[10px] font-bold text-sky-700">
-                        <i class="pi pi-link text-[9px]" aria-hidden="true"></i>
-                        <span>{{ 'productLinking.statusTwoPharmacies' | t }}</span>
-                      </span>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-
-          <!-- 4. THREE PHARMACIES ACCORDION (الثلاثية - في 3 صيدليات) -->
-          @if (threePharmaciesFamilies().length > 0) {
-            <div class="rounded-xl border border-[#EDE0D0] bg-[#FAF8F5] overflow-hidden">
-              <button
-                type="button"
-                (click)="toggleAccordion('three')"
-                class="w-full flex items-center justify-between p-3 text-start hover:bg-[#F5EFE6] transition-colors cursor-pointer"
-              >
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-xs">
-                    <i class="pi pi-link text-[10px]" aria-hidden="true"></i>
-                  </span>
-                  <div class="min-w-0">
-                    <div class="text-xs font-extrabold text-[#181A1D]">
-                      {{ 'productLinking.threePharmaciesGroup' | t }} ({{ threePharmaciesFamilies().length }})
-                    </div>
-                    <div class="text-[10px] text-[#8A735C]">
-                      {{ 'productLinking.threePharmaciesDesc' | t }}
-                    </div>
-                  </div>
-                </div>
-                <i class="pi text-xs text-[#8A735C] transition-transform duration-200"
-                   [ngClass]="accordionOpen().three ? 'pi-chevron-up' : 'pi-chevron-down'"
-                   aria-hidden="true"></i>
-              </button>
-
-              @if (accordionOpen().three) {
-                <div class="p-2 space-y-2 border-t border-[#EDE0D0] bg-white">
-                  @for (family of threePharmaciesFamilies(); track family.familyKey) {
-                    <div
-                      role="button"
-                      tabindex="0"
-                      (click)="selectFamily(family)"
-                      (keydown.enter)="selectFamily(family)"
-                      [class.border-[#C27938]]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.bg-[#FFF9F2]]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.ring-2]="selectedFamily()?.familyKey === family.familyKey"
-                      [class.ring-[#C27938]/20]="selectedFamily()?.familyKey === family.familyKey"
-                      class="flex items-center gap-3 p-2.5 rounded-xl border border-[#E8D5BE] hover:border-[#C27938]/60 hover:bg-[#FBF8F4] transition-all cursor-pointer group"
-                    >
-                      <!-- Pharmacy Count Pill -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] px-2 py-1 text-[10px] font-bold text-[#C27938]">
-                        <i class="pi pi-building text-[10px]" aria-hidden="true"></i>
-                        <span>3 {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
-                      </span>
-
-                      <!-- Thumbnail -->
-                      <img
-                        [src]="family.imageUrl | proxyImg"
-                        alt=""
-                        class="size-11 shrink-0 rounded-lg border border-[#EDE0D0] object-contain bg-white p-0.5"
-                        aria-hidden="true"
-                      />
-
-                      <!-- Details -->
-                      <div class="min-w-0 flex-1">
-                        <h3 class="text-xs font-extrabold text-[#181A1D] truncate group-hover:text-[#C27938] transition-colors">
-                          {{ getDisplayName(family) }}
-                        </h3>
-                        <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#8A735C]">
-                          @if (getPackSize(family)) {
-                            <span>{{ getPackSize(family) }}</span>
-                            <span class="text-[#D0BEAA]">|</span>
-                          }
-                          @if (getBarcode(family)) {
-                            <span class="font-mono">{{ getBarcode(family) }}</span>
-                          }
-                          @if (family.groupCode) {
-                            <span class="text-[#D0BEAA]">|</span>
-                            <span class="font-mono text-[#C27938] font-bold">{{ family.groupCode }}</span>
-                          }
-                        </div>
-                      </div>
-
-                      <!-- Status Pill -->
-                      <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
-                        <i class="pi pi-link text-[9px]" aria-hidden="true"></i>
-                        <span>{{ 'productLinking.statusThreePharmacies' | t }}</span>
-                      </span>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
           }
 
         </div>
@@ -437,9 +697,12 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- RIGHT PANE: LINKING DETAILS & UNLINKED MATCHES -->
+    <!-- RIGHT PANE: LINKING DETAILS & UNLINKED MATCHES (تفاصيل الربط والإقتراحات) -->
     <!-- ========================================== -->
-    <div class="lg:col-span-7 flex flex-col rounded-2xl border border-[#E8D5BE] bg-white p-4 sm:p-5 shadow-xs space-y-4">
+    <div
+      class="lg:col-span-7 flex flex-col rounded-2xl border border-[#E8D5BE] bg-white p-4 sm:p-5 shadow-xs space-y-4"
+      [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'"
+    >
       
       @if (!selectedFamily()) {
         <!-- Empty Selection State -->
@@ -491,11 +754,11 @@
             </div>
           </div>
 
-          <!-- Badges on Right -->
+          <!-- Pharmacy Count Pill -->
           <div class="flex items-center gap-2 shrink-0">
             <span class="inline-flex items-center gap-1 rounded-lg bg-[#F8EEE2] border border-amber-200 px-2.5 py-1 text-xs font-bold text-[#C27938]">
               <i class="pi pi-building text-xs" aria-hidden="true"></i>
-              <span>{{ getPharmacyCount(selectedFamily()!) }} {{ 'productLinking.pharmacyBadgeCountPlural' | t }}</span>
+              <span>{{ getPharmacyCount(selectedFamily()!) }} {{ getPharmacyCount(selectedFamily()!) === 1 ? ('productLinking.pharmacyBadgeCount' | t) : ('productLinking.pharmacyBadgeCountPlural' | t) }}</span>
             </span>
           </div>
         </div>
@@ -535,12 +798,9 @@
           </button>
         </div>
 
-        <!-- ============================================== -->
-        <!-- TAB 1: SUGGESTED MATCHES (اقتراحات الربط) -->
-        <!-- ============================================== -->
+        <!-- TAB 1: SUGGESTED MATCHES -->
         @if (activeTab() === 'suggestions') {
           <div class="space-y-3.5">
-            <!-- Section Title -->
             <div>
               <h3 class="text-sm font-extrabold text-[#181A1D]">
                 {{ 'productLinking.suggestedSectionTitle' | t }}
@@ -550,7 +810,6 @@
               </p>
             </div>
 
-            <!-- Loading Suggestions -->
             @if (loadingSuggestions()) {
               <div class="py-12 flex flex-col items-center justify-center gap-2 text-center text-[#8A735C]">
                 <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]" aria-hidden="true"></i>
@@ -562,7 +821,6 @@
                 <p class="text-xs font-semibold">{{ 'productLinking.noSuggestionsFound' | t }}</p>
               </div>
             } @else {
-              <!-- Suggestions Cards List -->
               <div class="space-y-3 max-h-[58vh] overflow-y-auto pe-1 custom-scrollbar">
                 @for (suggestion of visibleSuggestions(); track suggestion.id) {
                   <div class="p-3.5 rounded-xl border border-[#E8D5BE] bg-white hover:border-[#C27938]/60 hover:shadow-xs transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -581,7 +839,6 @@
                           <h4 class="text-xs sm:text-sm font-extrabold text-[#181A1D] truncate">
                             {{ suggestion.name }}
                           </h4>
-                          <!-- Match Percentage Badge -->
                           <span
                             [ngClass]="isHighMatch(suggestion.confidence) 
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
@@ -614,7 +871,7 @@
                       </div>
                     </div>
 
-                    <!-- Right Action Buttons -->
+                    <!-- Action Buttons -->
                     <div class="flex items-center gap-2 shrink-0 justify-end">
                       <button
                         type="button"
@@ -648,12 +905,9 @@
           </div>
         }
 
-        <!-- ============================================== -->
-        <!-- TAB 2: MANUAL SEARCH (البحث اليدوي - غير المربوط فقط) -->
-        <!-- ============================================== -->
+        <!-- TAB 2: MANUAL SEARCH -->
         @if (activeTab() === 'search') {
           <div class="space-y-3.5">
-            <!-- Section Title -->
             <div>
               <h3 class="text-sm font-extrabold text-[#181A1D]">
                 {{ 'productLinking.manualSearchSectionTitle' | t }}
@@ -744,7 +998,7 @@
                         </div>
                       </div>
 
-                      <!-- Action Buttons: [ربط] & [عرض] -->
+                      <!-- Action Buttons -->
                       <div class="flex items-center gap-2 shrink-0 justify-end">
                         <button
                           type="button"
