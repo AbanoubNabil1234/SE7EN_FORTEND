@@ -98,7 +98,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly query = signal('');
   readonly categorySlug = signal('');
   readonly brand = signal('');
-  readonly sort = signal<CatalogFamilySort>('nameAsc');
+  readonly sort = signal<CatalogFamilySort>('pharmaciesDesc');
   readonly page = signal(1);
   readonly total = signal(0);
   readonly loading = signal(false);
@@ -321,7 +321,10 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   onSortChange(value: string): void {
-    this.sort.set(value === 'nameDesc' ? 'nameDesc' : 'nameAsc');
+    const s: CatalogFamilySort =
+      value === 'pharmaciesDesc' ? 'pharmaciesDesc' :
+      value === 'nameDesc' ? 'nameDesc' : 'nameAsc';
+    this.sort.set(s);
     this.reload();
   }
 
