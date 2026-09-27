@@ -1,7 +1,8 @@
 import { TranslatePipe } from '../../pipes/translate.pipe';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { MultiPharmacyDepthPoint } from '../../../core/domain/models/dashboard.model';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-overlap-depth-chart',
@@ -13,6 +14,7 @@ import { MultiPharmacyDepthPoint } from '../../../core/domain/models/dashboard.m
   templateUrl: './overlap-depth-chart.component.html'
 })
 export class OverlapDepthChartComponent {
+  private readonly i18n = inject(I18nService);
   readonly data = input<MultiPharmacyDepthPoint[]>([]);
 
   readonly totalMultiProducts = computed(() => {
@@ -20,9 +22,20 @@ export class OverlapDepthChartComponent {
     return list.reduce((sum, item) => sum + item.masterProductCount, 0);
   });
 
+  readonly maxPharmacyCount = computed(() => {
+    const list = this.data();
+    if (list.length === 0) return 0;
+    return Math.max(...list.map((p) => p.pharmacyCount));
+  });
+
+  readonly fullCoverageItem = computed(() => {
+    const list = this.data();
+    const max = this.maxPharmacyCount();
+    return list.find((p) => p.pharmacyCount === max) ?? null;
+  });
+
   readonly fullCoverageCount = computed(() => {
-    const item = this.data().find((p) => p.pharmacyCount === 8);
-    return item?.masterProductCount ?? 0;
+    return this.fullCoverageItem()?.masterProductCount ?? 0;
   });
 
   readonly computedItems = computed(() => {
@@ -30,17 +43,22 @@ export class OverlapDepthChartComponent {
     if (list.length === 0) return [];
 
     const maxCount = Math.max(...list.map((p) => p.masterProductCount), 1);
+    const maxPharm = this.maxPharmacyCount();
 
     return list.map((item) => {
-      const isFull = item.pharmacyCount === 8;
+      const isFull = item.pharmacyCount === maxPharm;
       const isHigh = item.pharmacyCount >= 5;
 
-      const label =
-        item.pharmacyCount === 2
-          ? '2'
-          : item.pharmacyCount === 8
-            ? '8'
-            : `${item.pharmacyCount}`;
+      let label = '';
+      if (item.pharmacyCount === 2) {
+        label = this.i18n.t('charts.marketOverlap.twoPharmacies');
+      } else if (isFull) {
+        label = `${item.pharmacyCount} ${this.i18n.t('charts.marketOverlap.allPharmacies')}`;
+      } else if (item.pharmacyCount === 8) {
+        label = this.i18n.t('charts.marketOverlap.eightPharmacies');
+      } else {
+        label = `${item.pharmacyCount} ${this.i18n.t('charts.marketOverlap.nPharmacies')}`;
+      }
 
       const badgeClass = isFull
         ? 'bg-amber-500 text-white'

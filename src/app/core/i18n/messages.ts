@@ -1386,10 +1386,11 @@ export const messagesAr: MessageTree = {
       title: 'عمق تغطية وتنافس السوق',
       competingProducts: 'منتج متنافس',
       subtitle: 'توزيع المنتجات المتطابقة بحسب عدد الصيدليات المتنافسة عليها في نفس الوقت',
-      fullCoverage: 'منتج متاح بجميع الـ 8 صيدليات',
+      fullCoverage: 'منتج متاح بجميع الصيدليات',
       productWord: 'منتج',
       twoPharmacies: 'صيدليتان (تنافس ثنائي)',
-      eightPharmacies: '8 صيدليات (تغطية السوق بالكامل)',
+      eightPharmacies: '8 صيدليات (تغطية متقدمة)',
+      allPharmacies: 'صيدليات (تغطية السوق بالكامل)',
       nPharmacies: 'صيدليات متنافسة'
     },
     trendChart: {
@@ -2740,10 +2741,11 @@ export const messagesEn: MessageTree = {
       title: 'Market Overlap & Competition Depth',
       competingProducts: 'competing products',
       subtitle: 'Distribution of matched products by number of competing pharmacies',
-      fullCoverage: 'products available in all 8 pharmacies',
+      fullCoverage: 'products available in all pharmacies',
       productWord: 'products',
       twoPharmacies: '2 Pharmacies (Dual Competition)',
-      eightPharmacies: '8 Pharmacies (Full Market Coverage)',
+      eightPharmacies: '8 Pharmacies (High Coverage)',
+      allPharmacies: 'Pharmacies (Full Market Coverage)',
       nPharmacies: 'Competing Pharmacies'
     },
     trendChart: {
