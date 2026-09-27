@@ -1188,14 +1188,19 @@ export const messagesAr: MessageTree = {
     },
     categories: {
       Catalog: 'الكتالوج والمطابقة',
+      CATALOG_MATCHING: 'مطابقة وربط الكتالوج',
       MatchReview: 'مراجعة المطابقة والجودة',
+      MATCH_REVIEW: 'مراجعة المطابقة والجودة',
       Categories: 'التصنيفات',
+      CATEGORY_EDIT: 'تعديل التصنيفات',
       Deals: 'أفضل العروض',
       Auth: 'المصادقة والمستخدمين',
       Scraping: 'تحديث الأسعار والمزامنة',
       Pharmacies: 'الصيدليات',
       Products: 'المنتجات والأسعار',
+      PRODUCT_EDIT: 'تعديل المنتجات والأسعار',
       Platform: 'إعدادات المنصة والمحتوى',
+      SETTINGS: 'إعدادات المنصة والعروض',
       Alerts: 'التنبيهات والرقابة',
       System: 'النظام والوظائف الخلفية'
     }
@@ -2537,14 +2542,19 @@ export const messagesEn: MessageTree = {
     },
     categories: {
       Catalog: 'Catalog & Linking',
+      CATALOG_MATCHING: 'Catalog Matching & Linking',
       MatchReview: 'Match Quality',
+      MATCH_REVIEW: 'Match Quality Review',
       Categories: 'Categories',
+      CATEGORY_EDIT: 'Category Edits',
       Deals: 'Best Deals',
       Auth: 'Authentication & Users',
       Scraping: 'Scraping & Ingestion',
       Pharmacies: 'Pharmacies',
       Products: 'Products & Pricing',
+      PRODUCT_EDIT: 'Product & Price Edits',
       Platform: 'Platform & Content',
+      SETTINGS: 'Platform Settings',
       Alerts: 'Alerts & Incidents',
       System: 'System & Background Jobs'
     }

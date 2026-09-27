@@ -391,16 +391,21 @@ export class AuditLogsComponent implements OnInit, OnDestroy {
       case 'Pharmacies':
         return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
       case 'Products':
+      case 'PRODUCT_EDIT':
         return 'bg-amber-50 text-amber-800 border border-amber-200';
       case 'Catalog':
+      case 'CATALOG_MATCHING':
         return 'bg-[#F8EEE2] text-[#C27938] border border-[#E8D5BE]';
       case 'MatchReview':
+      case 'MATCH_REVIEW':
         return 'bg-purple-50 text-purple-700 border border-purple-200';
       case 'Categories':
+      case 'CATEGORY_EDIT':
         return 'bg-teal-50 text-teal-700 border border-teal-200';
       case 'Deals':
         return 'bg-rose-50 text-rose-700 border border-rose-200';
       case 'Platform':
+      case 'SETTINGS':
         return 'bg-violet-50 text-violet-700 border border-violet-200';
       case 'Alerts':
         return 'bg-orange-50 text-orange-700 border border-orange-200';
@@ -418,8 +423,12 @@ export class AuditLogsComponent implements OnInit, OnDestroy {
   }
 
   getCategoryLabel(category: string): string {
+    if (!category) return '';
     const key = `auditLogs.categories.${category}`;
     const res = this.i18n.t(key);
-    return res !== key ? res : category;
+    if (res !== key) return res;
+    const upperKey = `auditLogs.categories.${category.toUpperCase()}`;
+    const upperRes = this.i18n.t(upperKey);
+    return upperRes !== upperKey ? upperRes : category;
   }
 }
