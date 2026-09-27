@@ -27,6 +27,8 @@ export const API_ENDPOINTS = {
   AUTH_VERIFY_RESET_CODE: '/api/v1/auth/verify-reset-code',
   AUTH_RESET_PASSWORD: '/api/v1/auth/reset-password',
   AUTH_CHANGE_PASSWORD: '/api/v1/auth/change-password',
+  AUTH_REFRESH_TOKEN: '/api/v1/auth/refresh-token',
+  AUTH_REVOKE_TOKEN: '/api/v1/auth/revoke-token',
   BILLBOARDS: '/api/v1/billboards',
   BILLBOARD: (id: string) => `/api/v1/billboards/${id}`,
   BILLBOARD_IMAGE: '/api/v1/billboards/image',

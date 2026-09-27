@@ -6,22 +6,31 @@ import { NotificationService } from '../../services/notification.service';
 import { I18nService } from '../../i18n/i18n.service';
 import { API_ENDPOINTS } from '../http/api-endpoints.constants';
 import { LocalStorageService } from '../storage/local-storage.service';
+import { TokenRefreshService, IS_RETRIED_REQUEST } from '../services/token-refresh.service';
+import { User } from '../../domain/models/user.model';
 
 const AUTH_USER_KEY = 'se7en_auth_user';
 
 /**
  * Functional Error Interceptor: Intercepts HTTP errors and surfaces user-friendly alerts.
- * Redirects to /login and clears stored session when 401 Unauthorized occurs on authenticated routes.
+ * Seamlessly refreshes expired access tokens via RefreshToken on 401 Unauthorized.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const notificationService = inject(NotificationService);
   const i18n = inject(I18nService);
   const router = inject(Router);
   const storage = inject(LocalStorageService);
+  const tokenRefreshService = inject(TokenRefreshService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Logout and auth flow errors are handled by their own forms/actions; never auto-redirect here.
+      // 1. If 401 occurs on the refresh-token endpoint itself, the refresh token is invalid/expired -> logout immediately
+      if (req.url.includes(API_ENDPOINTS.AUTH_REFRESH_TOKEN)) {
+        tokenRefreshService.logoutAndRedirect();
+        return throwError(() => error);
+      }
+
+      // 2. Auth flow errors and non-critical endpoints bypass auto-refresh/redirect
       if (
         req.url.includes(API_ENDPOINTS.AUTH_LOGOUT) ||
         req.url.includes(API_ENDPOINTS.AUTH_LOGIN) ||
@@ -37,14 +46,27 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      let message = i18n.t('common.networkError');
+      // 3. If 401 Unauthorized occurs on an authenticated route
       if (error.status === 401) {
-        message = i18n.t('common.sessionExpired');
-        storage.removeItem(AUTH_USER_KEY);
-        if (!router.url.includes('/login')) {
-          router.navigate(['/login']);
+        // If we already attempted refresh once for this request, do not loop
+        if (req.context.get(IS_RETRIED_REQUEST)) {
+          tokenRefreshService.logoutAndRedirect();
+          return throwError(() => error);
         }
-      } else if (error.status === 403) {
+
+        const user = storage.getItem<User>(AUTH_USER_KEY);
+        if (user?.refreshToken) {
+          return tokenRefreshService.handle401(req, next);
+        }
+
+        // No refresh token available in storage -> session expired
+        tokenRefreshService.logoutAndRedirect();
+        return throwError(() => error);
+      }
+
+      // 4. Other HTTP errors (403, 500, etc.)
+      let message = i18n.t('common.networkError');
+      if (error.status === 403) {
         message = i18n.t('common.forbiddenError');
       } else if (error.error?.message) {
         message = error.error.message;
@@ -54,4 +76,5 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     })
   );
 };
+
 

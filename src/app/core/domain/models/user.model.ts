@@ -8,11 +8,15 @@ export interface User {
   phone?: string | null;
   avatarUrl?: string;
   token?: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
 }
 
 export interface AuthTokenResponse {
   accessToken: string;
   expiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
   user: {
     id: string;
     email: string;
@@ -24,3 +28,4 @@ export interface AuthTokenResponse {
     isActive: boolean;
   };
 }
+

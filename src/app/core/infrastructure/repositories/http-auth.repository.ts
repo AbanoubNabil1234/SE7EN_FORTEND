@@ -55,10 +55,26 @@ export class HttpAuthRepository extends AuthRepository {
     );
   }
 
+  refreshToken(): Observable<User> {
+    const cached = this.storage.getItem<User>(AUTH_USER_KEY);
+    if (!cached?.refreshToken) {
+      this.storage.removeItem(AUTH_USER_KEY);
+      return of(null as unknown as User);
+    }
+    return this.http
+      .post<AuthTokenResponse>(API_ENDPOINTS.AUTH_REFRESH_TOKEN, {
+        refreshToken: cached.refreshToken
+      })
+      .pipe(
+        map((res) => this.toUserFromToken(res)),
+        tap((user) => this.storage.setItem(AUTH_USER_KEY, user))
+      );
+  }
+
   updateProfile(payload: UpdateProfilePayload): Observable<User> {
     const cached = this.storage.getItem<User>(AUTH_USER_KEY);
     return this.http.put<AuthUserDto>(API_ENDPOINTS.AUTH_ME, payload).pipe(
-      map((dto) => this.toUserFromDto(dto, cached?.token)),
+      map((dto) => this.toUserFromDto(dto, cached?.token, cached?.refreshToken, cached?.refreshTokenExpiresAt)),
       tap((user) => this.storage.setItem(AUTH_USER_KEY, user))
     );
   }
@@ -73,12 +89,14 @@ export class HttpAuthRepository extends AuthRepository {
       this.storage.removeItem(AUTH_USER_KEY);
       return of(void 0);
     }
-    // Keep token until after the request so the auth interceptor can attach Bearer.
-    return this.http.post<void>(API_ENDPOINTS.AUTH_LOGOUT, {}).pipe(
-      map(() => void 0),
-      catchError(() => of(void 0)),
-      tap(() => this.storage.removeItem(AUTH_USER_KEY))
-    );
+    // Send refreshToken if available so the server revokes it
+    return this.http
+      .post<void>(API_ENDPOINTS.AUTH_LOGOUT, { refreshToken: cached.refreshToken })
+      .pipe(
+        map(() => void 0),
+        catchError(() => of(void 0)),
+        tap(() => this.storage.removeItem(AUTH_USER_KEY))
+      );
   }
 
   forgotPassword(payload: ForgotPasswordPayload): Observable<void> {
@@ -100,10 +118,20 @@ export class HttpAuthRepository extends AuthRepository {
   }
 
   private toUserFromToken(res: AuthTokenResponse): User {
-    return this.toUserFromDto(res.user, res.accessToken);
+    return this.toUserFromDto(
+      res.user,
+      res.accessToken,
+      res.refreshToken,
+      res.refreshTokenExpiresAt
+    );
   }
 
-  private toUserFromDto(dto: AuthUserDto, token?: string): User {
+  private toUserFromDto(
+    dto: AuthUserDto,
+    token?: string,
+    refreshToken?: string,
+    refreshTokenExpiresAt?: string
+  ): User {
     return {
       id: dto.id,
       email: dto.email,
@@ -112,7 +140,10 @@ export class HttpAuthRepository extends AuthRepository {
       lastName: dto.lastName,
       role: dto.role === 'Admin' ? 'Admin' : 'Customer',
       phone: dto.phone,
-      token
+      token,
+      refreshToken,
+      refreshTokenExpiresAt
     };
   }
 }
+
