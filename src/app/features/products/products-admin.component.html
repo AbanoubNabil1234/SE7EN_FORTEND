@@ -502,7 +502,7 @@
                     }
                   </div>
 
-                  @if (selectedPack(family)?.requiresPackReview) {
+                  @if (selectedPack(family)?.requiresPackReview && !family.groupCode) {
                     <p class="mb-2 text-sm font-semibold text-amber-800">{{ 'productsAdmin.packReview' | t }}</p>
                   }
                   <div class="space-y-2">

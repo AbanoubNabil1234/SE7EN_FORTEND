@@ -132,7 +132,7 @@ export class ProductDetailComponent implements OnInit {
   }
 
   isConfirmedFamily(f: CatalogFamily): boolean {
-    return isConfirmedMatch(familyMatchType(f));
+    return Boolean(f.groupCode) || isConfirmedMatch(familyMatchType(f));
   }
 
   displayPackSize(packSize: string | null | undefined): string {

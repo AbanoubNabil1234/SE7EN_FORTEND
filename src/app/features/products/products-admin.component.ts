@@ -839,6 +839,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   matchLabelKey(family: CatalogFamily): string {
+    if (family.groupCode) {
+      return 'productsAdmin.matchConfirmed';
+    }
     switch (matchStatus(family)) {
       case 'Exact':
         return 'productsAdmin.matchConfirmed';
@@ -852,6 +855,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   matchBadgeClass(family: CatalogFamily): string {
+    if (family.groupCode) {
+      return 'rounded-full bg-[#E8F5EE] px-2 py-0.5 text-[11px] font-bold text-[#1B7A45]';
+    }
     switch (matchStatus(family)) {
       case 'Exact':
         return 'rounded-full bg-[#E8F5EE] px-2 py-0.5 text-[11px] font-bold text-[#1B7A45]';
