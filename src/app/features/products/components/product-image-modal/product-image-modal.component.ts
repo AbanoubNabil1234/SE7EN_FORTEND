@@ -52,6 +52,7 @@ export class ProductImageModalComponent {
   readonly selectedFile = signal<File | null>(null);
   readonly selectedFilePreview = signal<string | null>(null);
   readonly urlInput = signal<string>('');
+  readonly urlPreviewFailed = signal<boolean>(false);
 
   readonly submitting = signal<boolean>(false);
   readonly statusMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -78,6 +79,7 @@ export class ProductImageModalComponent {
             this.selectedFile.set(null);
             this.selectedFilePreview.set(null);
             this.urlInput.set('');
+            this.urlPreviewFailed.set(false);
             this.statusMessage.set(null);
             if (targetId) {
               this.loadImages(targetId);
@@ -90,6 +92,7 @@ export class ProductImageModalComponent {
           this.selectedFile.set(null);
           this.selectedFilePreview.set(null);
           this.urlInput.set('');
+          this.urlPreviewFailed.set(false);
           this.statusMessage.set(null);
         }
       },
@@ -208,6 +211,7 @@ export class ProductImageModalComponent {
     if (file) {
       this.processFile(file);
     }
+    input.value = '';
   }
 
   onFileDropped(event: DragEvent): void {
@@ -363,6 +367,19 @@ export class ProductImageModalComponent {
           });
         }
       });
+  }
+
+  onUrlInputChange(val: string): void {
+    this.urlInput.set(val);
+    this.urlPreviewFailed.set(false);
+  }
+
+  onUrlPreviewError(): void {
+    this.urlPreviewFailed.set(true);
+  }
+
+  onUrlPreviewLoad(): void {
+    this.urlPreviewFailed.set(false);
   }
 
   formatFileSize(bytes: number): string {

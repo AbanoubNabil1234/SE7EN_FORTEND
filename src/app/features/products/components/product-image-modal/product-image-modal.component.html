@@ -72,6 +72,7 @@
                     [src]="resolveApiUrl(currentPreviewImage())"
                     [alt]="displayTitle()"
                     class="size-full object-contain p-1"
+                    referrerpolicy="no-referrer"
                     (error)="onImgFallback($event)"
                   />
                 } @else {
@@ -207,6 +208,7 @@
                             [alt]="img.pharmacyName"
                             class="size-full object-contain transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
+                            referrerpolicy="no-referrer"
                             (error)="onImgFallback($event)"
                           />
 
@@ -240,21 +242,19 @@
               <div class="space-y-4">
                 <input
                   #fileInput
+                  id="product-modal-file-upload"
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
-                  class="hidden"
+                  class="sr-only"
                   [disabled]="submitting()"
                   (change)="onFilePicked($event)"
                 />
 
                 <div class="flex flex-col items-center justify-center">
-                  <div
-                    (click)="fileInput.click()"
+                  <label
+                    for="product-modal-file-upload"
                     (dragover)="$event.preventDefault()"
                     (drop)="onFileDropped($event)"
-                    role="button"
-                    tabindex="0"
-                    (keydown.enter)="fileInput.click()"
                     class="relative size-44 overflow-hidden rounded-2xl border-2 border-dashed border-[#E8D5BE] hover:border-[#C27938] bg-[#FBF8F4] hover:bg-[#F8EEE2]/60 dark:border-neutral-700 dark:bg-neutral-950 dark:hover:border-[#C27938] flex items-center justify-center group shadow-inner cursor-pointer transition-colors"
                   >
                     @if (selectedFilePreview()) {
@@ -270,7 +270,7 @@
                         <span class="text-[10px] text-[#8A735C] dark:text-neutral-400 mt-1 block">{{ 'productImageModal.uploadFormats' | t }}</span>
                       </div>
                     }
-                  </div>
+                  </label>
 
                   @if (selectedFile()) {
                     <div class="mt-2.5 flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -286,15 +286,15 @@
                 </div>
 
                 <div class="space-y-2">
-                  <button
-                    type="button"
-                    (click)="fileInput.click()"
-                    [disabled]="submitting()"
+                  <label
+                    for="product-modal-file-upload"
+                    [class.opacity-50]="submitting()"
+                    [class.pointer-events-none]="submitting()"
                     class="flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-750"
                   >
                     <i class="pi pi-folder-open text-base text-[#C27938]"></i>
                     <span>{{ (selectedFile() ? 'productImageModal.changeFile' : 'productImageModal.browseFile') | t }}</span>
-                  </button>
+                  </label>
                   <p class="text-center text-[11px] text-[#8A735C] dark:text-neutral-400">
                     {{ 'productImageModal.webpHint' | t }}
                   </p>
@@ -330,7 +330,7 @@
                     <input
                       type="url"
                       [ngModel]="urlInput()"
-                      (ngModelChange)="urlInput.set($event)"
+                      (ngModelChange)="onUrlInputChange($event)"
                       placeholder="https://example.com/product-image.jpg"
                       class="w-full rounded-xl border border-[#EDE0D0] dark:border-neutral-700 bg-[#FBF8F4] dark:bg-neutral-800 px-3.5 py-2.5 text-xs text-[#181A1D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C27938]/40"
                       [disabled]="submitting()"
@@ -338,7 +338,7 @@
                     @if (urlInput()) {
                       <button
                         type="button"
-                        (click)="urlInput.set('')"
+                        (click)="onUrlInputChange('')"
                         class="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
                       >
                         <i class="pi pi-times"></i>
@@ -357,10 +357,19 @@
                         [src]="urlInput().trim()"
                         alt="URL Preview"
                         class="size-full object-contain"
-                        (error)="onImgFallback($event)"
+                        referrerpolicy="no-referrer"
+                        (error)="onUrlPreviewError()"
+                        (load)="onUrlPreviewLoad()"
                       />
                     </div>
-                    <span class="text-[11px] font-bold text-[#8A735C] mt-2">{{ 'productImageModal.previewUrl' | t }}</span>
+                    @if (urlPreviewFailed()) {
+                      <p class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2 text-center flex items-center justify-center gap-1.5 px-2">
+                        <i class="pi pi-exclamation-triangle text-xs"></i>
+                        <span>{{ 'productImageModal.urlPreviewWarning' | t }}</span>
+                      </p>
+                    } @else {
+                      <span class="text-[11px] font-bold text-[#8A735C] mt-2">{{ 'productImageModal.previewUrl' | t }}</span>
+                    }
                   </div>
 
                   <button
