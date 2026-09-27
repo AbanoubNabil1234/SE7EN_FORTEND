@@ -10,14 +10,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const storage = inject(LocalStorageService);
   const user = storage.getItem<User>('se7en_auth_user');
 
+  let headers = req.headers;
+
   if (user?.token) {
-    const cloned = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${user.token}`
-      }
-    });
-    return next(cloned);
+    headers = headers.set('Authorization', `Bearer ${user.token}`);
   }
 
-  return next(req);
+  if (req.url.includes('/api/v1/admin/') || req.url.includes('/admin/')) {
+    headers = headers.set('X-Admin-Key', 'se7en_admin_key_2026_pharmacy');
+  }
+
+  return next(req.clone({ headers }));
 };

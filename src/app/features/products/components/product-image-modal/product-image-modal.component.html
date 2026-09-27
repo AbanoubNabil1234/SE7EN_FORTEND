@@ -156,7 +156,7 @@
                   <span class="text-[11px] text-[#8A735C] dark:text-neutral-400">{{ 'productImageModal.pharmacyOffersHint' | t }}</span>
                 </div>
 
-                @if (loadingImages()) {
+                @if (loadingImages() && !imagesData()) {
                   <div class="flex flex-col items-center justify-center py-10 text-[#C27938]">
                     <i class="pi pi-spin pi-spinner text-2xl mb-2"></i>
                     <span class="text-xs font-bold">{{ 'productImageModal.loadingImages' | t }}</span>
@@ -168,6 +168,12 @@
                     <p class="text-[11px] mt-1">{{ 'productImageModal.noImagesHint' | t }}</p>
                   </div>
                 } @else {
+                  @if (loadingImages()) {
+                    <div class="flex items-center justify-center gap-2 py-1 text-xs font-bold text-[#C27938]">
+                      <i class="pi pi-spin pi-spinner text-sm"></i>
+                      <span>{{ 'productImageModal.loadingImages' | t }}</span>
+                    </div>
+                  }
                   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     @for (img of pharmacyOfferImages(); track img.pharmacyProductId) {
                       <div
@@ -232,9 +238,24 @@
             <!-- Tab 2: Upload from Device -->
             @if (activeTab() === 'upload') {
               <div class="space-y-4">
+                <input
+                  #fileInput
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  class="hidden"
+                  [disabled]="submitting()"
+                  (change)="onFilePicked($event)"
+                />
+
                 <div class="flex flex-col items-center justify-center">
                   <div
-                    class="relative size-44 overflow-hidden rounded-2xl border-2 border-dashed border-[#E8D5BE] bg-[#FBF8F4] dark:border-neutral-700 dark:bg-neutral-950 flex items-center justify-center group shadow-inner"
+                    (click)="fileInput.click()"
+                    (dragover)="$event.preventDefault()"
+                    (drop)="onFileDropped($event)"
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="fileInput.click()"
+                    class="relative size-44 overflow-hidden rounded-2xl border-2 border-dashed border-[#E8D5BE] hover:border-[#C27938] bg-[#FBF8F4] hover:bg-[#F8EEE2]/60 dark:border-neutral-700 dark:bg-neutral-950 dark:hover:border-[#C27938] flex items-center justify-center group shadow-inner cursor-pointer transition-colors"
                   >
                     @if (selectedFilePreview()) {
                       <img
@@ -243,8 +264,8 @@
                         class="size-full object-contain p-2"
                       />
                     } @else {
-                      <div class="text-center p-4 text-[#A68B6D]">
-                        <i class="pi pi-upload text-3xl mb-1.5 block opacity-60 text-[#C27938]"></i>
+                      <div class="text-center p-4 text-[#A68B6D] group-hover:text-[#C27938] transition-colors pointer-events-none">
+                        <i class="pi pi-upload text-3xl mb-1.5 block opacity-60 group-hover:opacity-100 text-[#C27938] transition-all group-hover:scale-110"></i>
                         <span class="text-xs font-bold block text-[#181A1D] dark:text-neutral-200">{{ 'productImageModal.uploadTitle' | t }}</span>
                         <span class="text-[10px] text-[#8A735C] dark:text-neutral-400 mt-1 block">{{ 'productImageModal.uploadFormats' | t }}</span>
                       </div>
@@ -265,17 +286,15 @@
                 </div>
 
                 <div class="space-y-2">
-                  <label class="flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-750">
+                  <button
+                    type="button"
+                    (click)="fileInput.click()"
+                    [disabled]="submitting()"
+                    class="flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 text-xs font-bold text-[#181A1D] hover:bg-[#F8EEE2] transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-750"
+                  >
                     <i class="pi pi-folder-open text-base text-[#C27938]"></i>
                     <span>{{ (selectedFile() ? 'productImageModal.changeFile' : 'productImageModal.browseFile') | t }}</span>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      class="sr-only"
-                      [disabled]="submitting()"
-                      (change)="onFilePicked($event)"
-                    />
-                  </label>
+                  </button>
                   <p class="text-center text-[11px] text-[#8A735C] dark:text-neutral-400">
                     {{ 'productImageModal.webpHint' | t }}
                   </p>
@@ -310,7 +329,8 @@
                   <div class="relative">
                     <input
                       type="url"
-                      [(ngModel)]="urlInput"
+                      [ngModel]="urlInput()"
+                      (ngModelChange)="urlInput.set($event)"
                       placeholder="https://example.com/product-image.jpg"
                       class="w-full rounded-xl border border-[#EDE0D0] dark:border-neutral-700 bg-[#FBF8F4] dark:bg-neutral-800 px-3.5 py-2.5 text-xs text-[#181A1D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C27938]/40"
                       [disabled]="submitting()"
@@ -330,11 +350,11 @@
                   </p>
                 </div>
 
-                @if (urlInput()) {
+                @if (urlInput().trim()) {
                   <div class="flex flex-col items-center justify-center p-3 rounded-2xl border border-[#EDE0D0] bg-[#FBF8F4]/60 dark:border-neutral-800 dark:bg-neutral-950">
                     <div class="size-32 rounded-xl bg-white dark:bg-neutral-900 overflow-hidden flex items-center justify-center border border-[#EDE0D0] p-1">
                       <img
-                        [src]="urlInput()"
+                        [src]="urlInput().trim()"
                         alt="URL Preview"
                         class="size-full object-contain"
                         (error)="onImgFallback($event)"

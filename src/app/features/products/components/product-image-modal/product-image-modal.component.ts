@@ -58,6 +58,9 @@ export class ProductImageModalComponent {
 
   readonly resolveApiUrl = resolveApiUrl;
 
+  private lastOpened = false;
+  private lastLoadedMasterId: string | null = null;
+
   constructor() {
     effect(
       () => {
@@ -67,15 +70,27 @@ export class ProductImageModalComponent {
 
         if (open && fam) {
           const targetId = initId || fam.packs[0]?.masterId || null;
-          this.activeMasterId.set(targetId);
-          this.activeTab.set('offers');
+          if (!this.lastOpened || (targetId && targetId !== this.lastLoadedMasterId)) {
+            this.lastOpened = true;
+            this.lastLoadedMasterId = targetId;
+            this.activeMasterId.set(targetId);
+            this.activeTab.set('offers');
+            this.selectedFile.set(null);
+            this.selectedFilePreview.set(null);
+            this.urlInput.set('');
+            this.statusMessage.set(null);
+            if (targetId) {
+              this.loadImages(targetId);
+            }
+          }
+        } else if (!open && this.lastOpened) {
+          this.lastOpened = false;
+          this.lastLoadedMasterId = null;
+          this.imagesData.set(null);
           this.selectedFile.set(null);
           this.selectedFilePreview.set(null);
           this.urlInput.set('');
           this.statusMessage.set(null);
-          if (targetId) {
-            this.loadImages(targetId);
-          }
         }
       },
       { allowSignalWrites: true }
@@ -125,6 +140,7 @@ export class ProductImageModalComponent {
   selectMaster(masterId: string): void {
     if (this.submitting() || this.activeMasterId() === masterId) return;
     this.activeMasterId.set(masterId);
+    this.lastLoadedMasterId = masterId;
     this.selectedFile.set(null);
     this.selectedFilePreview.set(null);
     this.urlInput.set('');
@@ -166,6 +182,13 @@ export class ProductImageModalComponent {
             type: 'success',
             text: this.i18n.t('productImageModal.setSuccess')
           });
+          const cur = this.imagesData();
+          if (cur) {
+            this.imagesData.set({
+              ...cur,
+              customImageUrl: res.imageUrl || img.imageUrl
+            });
+          }
           this.loadImages(masterId);
           this.imageChanged.emit({ masterId, imageUrl: res.imageUrl });
           this.notifications.showSuccess(this.i18n.t('productImageModal.setSuccess'));
@@ -182,8 +205,21 @@ export class ProductImageModalComponent {
   onFilePicked(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
+    if (file) {
+      this.processFile(file);
+    }
+  }
 
+  onFileDropped(event: DragEvent): void {
+    event.preventDefault();
+    if (this.submitting()) return;
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      this.processFile(file);
+    }
+  }
+
+  private processFile(file: File): void {
     if (!file.type.startsWith('image/')) {
       this.statusMessage.set({
         type: 'error',
@@ -230,6 +266,13 @@ export class ProductImageModalComponent {
             type: 'success',
             text: this.i18n.t('productImageModal.uploadSuccess')
           });
+          const cur = this.imagesData();
+          if (cur) {
+            this.imagesData.set({
+              ...cur,
+              customImageUrl: res.imageUrl
+            });
+          }
           this.clearSelectedFile();
           this.loadImages(masterId);
           this.imageChanged.emit({ masterId, imageUrl: res.imageUrl });
@@ -261,6 +304,13 @@ export class ProductImageModalComponent {
             type: 'success',
             text: this.i18n.t('productImageModal.urlSuccess')
           });
+          const cur = this.imagesData();
+          if (cur) {
+            this.imagesData.set({
+              ...cur,
+              customImageUrl: res.imageUrl || url
+            });
+          }
           this.urlInput.set('');
           this.loadImages(masterId);
           this.imageChanged.emit({ masterId, imageUrl: res.imageUrl });
@@ -295,6 +345,13 @@ export class ProductImageModalComponent {
             type: 'success',
             text: this.i18n.t('productImageModal.restoreSuccess')
           });
+          const cur = this.imagesData();
+          if (cur) {
+            this.imagesData.set({
+              ...cur,
+              customImageUrl: null
+            });
+          }
           this.loadImages(masterId);
           this.imageChanged.emit({ masterId, imageUrl: null });
           this.notifications.showInfo(this.i18n.t('productImageModal.restoreSuccess'));
