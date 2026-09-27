@@ -148,7 +148,7 @@ export function packHeroImage(pack: CatalogPack): string | null {
 }
 
 export function familyHeroImage(family: CatalogFamily): string | null {
-  return pickHeroImage(family.packs.flatMap((pack) => pack.offers)) ?? family.imageUrl;
+  return family.imageUrl || pickHeroImage(family.packs.flatMap((pack) => pack.offers));
 }
 
 function pickHeroImage(offers: CatalogOffer[]): string | null {
@@ -260,6 +260,7 @@ export interface ProductPharmacyImageOption {
 export interface ProductImagesResponse {
   masterId: string;
   customImageUrl: string | null;
+  customImageSourceUrl?: string | null;
   pharmacyImages: ProductPharmacyImageOption[];
 }
 

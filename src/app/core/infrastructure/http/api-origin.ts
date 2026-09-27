@@ -11,10 +11,9 @@ export function resolveApiUrl(url: string | null | undefined): string | null {
   const trimmed = url.trim();
   if (!trimmed) return null;
   if (/^(https?:|data:|blob:)/i.test(trimmed)) return trimmed;
-  if (trimmed.startsWith('assets/')) return trimmed;
+  if (trimmed.startsWith('assets/') || trimmed.startsWith('/assets/')) return trimmed;
   if (trimmed.startsWith('/')) {
-    const origin = API_ORIGIN || 'https://api.se-7en.com';
-    return `${origin}${trimmed}`;
+    return API_ORIGIN ? `${API_ORIGIN}${trimmed}` : trimmed;
   }
   return trimmed;
 }

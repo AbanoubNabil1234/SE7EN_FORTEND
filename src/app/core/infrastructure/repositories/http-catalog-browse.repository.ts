@@ -401,6 +401,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
         map((raw) => ({
           masterId: raw.masterId,
           customImageUrl: raw.customImageUrl ? resolveApiUrl(raw.customImageUrl) || raw.customImageUrl : null,
+          customImageSourceUrl: (raw as Record<string, unknown>)['customImageSourceUrl'] as string | null ?? null,
           pharmacyImages: (raw.pharmacyImages || []).map((img) => ({
             ...img,
             imageUrl: resolveApiUrl(img.imageUrl) || img.imageUrl

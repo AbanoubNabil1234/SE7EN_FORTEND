@@ -39,8 +39,8 @@ export function proxyImageUrl(url: string | null | undefined): string | null {
   try {
     const parsed = new URL(trimmed);
     if (PROXY_HOSTS.has(parsed.hostname)) {
-      const origin = API_ORIGIN || 'https://api.se-7en.com';
-      return `${origin}/api/v1/image-proxy?url=${encodeURIComponent(trimmed)}`;
+      const prefix = API_ORIGIN ? API_ORIGIN : '';
+      return `${prefix}/api/v1/image-proxy?url=${encodeURIComponent(trimmed)}`;
     }
   } catch {
     // Not a valid absolute URL — return as-is
