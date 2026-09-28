@@ -1,0 +1,416 @@
+<div class="space-y-6" [class.is-rtl]="locale.isRtl()">
+  <!-- Header / Action bar -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-carbon-900 dark:text-white">
+        {{ 'notifications.title' | t }}
+      </h1>
+      <p class="mt-1 text-sm text-carbon-600 dark:text-carbon-400">
+        {{ 'notifications.subtitle' | t }}
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="openBroadcastModal()"
+      class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-brand hover:bg-brand-600 active:scale-95 transition-all"
+    >
+      <i class="pi pi-send text-xs" aria-hidden="true"></i>
+      <span>{{ 'notifications.broadcastBtn' | t }}</span>
+    </button>
+  </div>
+
+  <!-- KPI / Stats Summary Bar -->
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+    <div class="rounded-2xl border border-carbon-200/80 bg-white p-4 shadow-sm dark:border-carbon-800 dark:bg-carbon-900">
+      <div class="text-xs font-medium text-carbon-500 dark:text-carbon-400">
+        {{ 'notifications.totalSent' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-carbon-900 dark:text-white tabular-nums">
+        {{ totalCount() }}
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 shadow-sm">
+      <div class="text-xs font-medium text-emerald-500">
+        {{ 'notifications.couponCount' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-emerald-400 tabular-nums">
+        {{ stats().coupons }}
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4 shadow-sm">
+      <div class="text-xs font-medium text-purple-400">
+        {{ 'notifications.magazineCount' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-purple-300 tabular-nums">
+        {{ stats().magazines }}
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 shadow-sm">
+      <div class="text-xs font-medium text-amber-400">
+        {{ 'notifications.billboardCount' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-amber-300 tabular-nums">
+        {{ stats().billboards }}
+      </div>
+    </div>
+
+    <div class="col-span-2 sm:col-span-4 lg:col-span-1 rounded-2xl border border-sky-500/20 bg-sky-500/5 p-4 shadow-sm">
+      <div class="text-xs font-medium text-sky-400">
+        {{ 'notifications.systemCount' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-sky-300 tabular-nums">
+        {{ stats().system }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="flex flex-col gap-3 rounded-2xl border border-carbon-200/80 bg-white p-4 shadow-sm dark:border-carbon-800 dark:bg-carbon-900 sm:flex-row sm:items-center sm:justify-between">
+    <!-- Type Pills -->
+    <div class="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+      <button
+        type="button"
+        (click)="onTypeChange('all')"
+        [class]="selectedType() === 'all'
+          ? 'bg-brand-500 text-white font-bold shadow-sm'
+          : 'bg-carbon-100 dark:bg-carbon-800 text-carbon-700 dark:text-carbon-300 hover:bg-carbon-200 dark:hover:bg-carbon-700'"
+        class="rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all"
+      >
+        {{ 'notifications.filterAll' | t }}
+      </button>
+
+      <button
+        type="button"
+        (click)="onTypeChange('coupon')"
+        [class]="selectedType() === 'coupon'
+          ? 'bg-emerald-600 text-white font-bold shadow-sm'
+          : 'bg-carbon-100 dark:bg-carbon-800 text-carbon-700 dark:text-carbon-300 hover:bg-carbon-200 dark:hover:bg-carbon-700'"
+        class="rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all"
+      >
+        {{ 'notifications.filterCoupons' | t }}
+      </button>
+
+      <button
+        type="button"
+        (click)="onTypeChange('magazine')"
+        [class]="selectedType() === 'magazine'
+          ? 'bg-purple-600 text-white font-bold shadow-sm'
+          : 'bg-carbon-100 dark:bg-carbon-800 text-carbon-700 dark:text-carbon-300 hover:bg-carbon-200 dark:hover:bg-carbon-700'"
+        class="rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all"
+      >
+        {{ 'notifications.filterMagazines' | t }}
+      </button>
+
+      <button
+        type="button"
+        (click)="onTypeChange('billboard')"
+        [class]="selectedType() === 'billboard'
+          ? 'bg-amber-600 text-white font-bold shadow-sm'
+          : 'bg-carbon-100 dark:bg-carbon-800 text-carbon-700 dark:text-carbon-300 hover:bg-carbon-200 dark:hover:bg-carbon-700'"
+        class="rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all"
+      >
+        {{ 'notifications.filterBillboards' | t }}
+      </button>
+
+      <button
+        type="button"
+        (click)="onTypeChange('price_drop')"
+        [class]="selectedType() === 'price_drop'
+          ? 'bg-rose-600 text-white font-bold shadow-sm'
+          : 'bg-carbon-100 dark:bg-carbon-800 text-carbon-700 dark:text-carbon-300 hover:bg-carbon-200 dark:hover:bg-carbon-700'"
+        class="rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all"
+      >
+        {{ 'notifications.filterPriceDrops' | t }}
+      </button>
+
+      <button
+        type="button"
+        (click)="onTypeChange('system')"
+        [class]="selectedType() === 'system'
+          ? 'bg-sky-600 text-white font-bold shadow-sm'
+          : 'bg-carbon-100 dark:bg-carbon-800 text-carbon-700 dark:text-carbon-300 hover:bg-carbon-200 dark:hover:bg-carbon-700'"
+        class="rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all"
+      >
+        {{ 'notifications.filterSystem' | t }}
+      </button>
+    </div>
+
+    <!-- Search box -->
+    <div class="relative w-full sm:w-72">
+      <i class="pi pi-search absolute top-1/2 -translate-y-1/2 text-carbon-400 text-xs"
+         [ngClass]="locale.isRtl() ? 'right-3' : 'left-3'"
+         aria-hidden="true"></i>
+      <input
+        type="text"
+        [placeholder]="'notifications.searchPlaceholder' | t"
+        (input)="onSearch($any($event.target).value)"
+        class="w-full rounded-xl border border-carbon-200 bg-carbon-50/50 py-2 text-xs text-carbon-900 placeholder:text-carbon-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-carbon-800 dark:bg-carbon-950 dark:text-white"
+        [ngClass]="locale.isRtl() ? 'pr-9 pl-3' : 'pl-9 pr-3'"
+      />
+    </div>
+  </div>
+
+  <!-- Notifications List Table -->
+  <div class="overflow-hidden rounded-2xl border border-carbon-200/80 bg-white shadow-sm dark:border-carbon-800 dark:bg-carbon-900">
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center p-12 text-carbon-500 dark:text-carbon-400">
+        <i class="pi pi-spin pi-spinner text-2xl text-brand-500 mb-2" aria-hidden="true"></i>
+        <span class="text-xs font-medium">{{ 'common.pageLoading' | t }}</span>
+      </div>
+    } @else if (items().length === 0) {
+      <div class="flex flex-col items-center justify-center p-16 text-center">
+        <div class="flex size-14 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-500 mb-4">
+          <i class="pi pi-bell text-2xl" aria-hidden="true"></i>
+        </div>
+        <h3 class="text-base font-bold text-carbon-900 dark:text-white">
+          {{ 'notifications.emptyTitle' | t }}
+        </h3>
+        <p class="mt-1 text-xs text-carbon-500 dark:text-carbon-400 max-w-sm">
+          {{ 'notifications.emptySubtitle' | t }}
+        </p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-start text-xs">
+          <thead class="border-b border-carbon-200/70 bg-carbon-50/50 text-[11px] font-bold uppercase tracking-wider text-carbon-500 dark:border-carbon-800 dark:bg-carbon-950/60 dark:text-carbon-400">
+            <tr>
+              <th scope="col" class="px-4 py-3.5 text-start">{{ 'notifications.colType' | t }}</th>
+              <th scope="col" class="px-4 py-3.5 text-start">{{ 'notifications.colTitle' | t }}</th>
+              <th scope="col" class="px-4 py-3.5 text-start">{{ 'notifications.colBody' | t }}</th>
+              <th scope="col" class="px-4 py-3.5 text-start">{{ 'notifications.colTarget' | t }}</th>
+              <th scope="col" class="px-4 py-3.5 text-start">{{ 'notifications.colDate' | t }}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-carbon-100 dark:divide-carbon-800/60 font-medium">
+            @for (item of items(); track item.id) {
+              <tr class="hover:bg-carbon-50/80 dark:hover:bg-carbon-800/40 transition-colors">
+                <!-- Type Badge -->
+                <td class="whitespace-nowrap px-4 py-3">
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold"
+                    [ngClass]="getTypeBadgeClass(item.type)"
+                  >
+                    <i class="pi text-[10px]"
+                       [ngClass]="item.type === 'coupon' ? 'pi-ticket' : item.type === 'magazine' ? 'pi-book' : item.type === 'billboard' ? 'pi-tag' : item.type === 'price_drop' ? 'pi-dollar' : 'pi-info-circle'"
+                       aria-hidden="true"></i>
+                    {{ getTypeLabelKey(item.type) | t }}
+                  </span>
+                </td>
+
+                <!-- Title (Bilingual display) -->
+                <td class="px-4 py-3 max-w-xs">
+                  <div class="font-bold text-carbon-900 dark:text-white truncate" [title]="locale.locale() === 'ar' ? item.titleAr : item.titleEn">
+                    {{ locale.locale() === 'ar' ? item.titleAr : item.titleEn }}
+                  </div>
+                  <div class="text-[10px] text-carbon-400 truncate">
+                    {{ locale.locale() === 'ar' ? item.titleEn : item.titleAr }}
+                  </div>
+                </td>
+
+                <!-- Body preview -->
+                <td class="px-4 py-3 max-w-sm">
+                  <div class="line-clamp-2 text-carbon-600 dark:text-carbon-300 text-[11px]" [title]="locale.locale() === 'ar' ? item.bodyAr : item.bodyEn">
+                    {{ locale.locale() === 'ar' ? item.bodyAr : item.bodyEn }}
+                  </div>
+                  @if (item.deepLink) {
+                    <div class="mt-1 flex items-center gap-1 text-[10px] text-brand-500">
+                      <i class="pi pi-link text-[9px]" aria-hidden="true"></i>
+                      <span class="truncate max-w-[200px]">{{ item.deepLink }}</span>
+                    </div>
+                  }
+                </td>
+
+                <!-- Target Audience -->
+                <td class="whitespace-nowrap px-4 py-3 text-carbon-500 dark:text-carbon-400">
+                  <span class="inline-flex items-center gap-1 rounded-md bg-carbon-100 dark:bg-carbon-800 px-2 py-0.5 text-[10px] font-semibold text-carbon-600 dark:text-carbon-300">
+                    <i class="pi pi-users text-[9px]" aria-hidden="true"></i>
+                    {{ item.targetUserId ? item.targetUserId : ('notifications.allUsers' | t) }}
+                  </span>
+                </td>
+
+                <!-- Sent Date -->
+                <td class="whitespace-nowrap px-4 py-3 text-carbon-500 dark:text-carbon-400 text-[11px] tabular-nums">
+                  {{ formatDate(item.createdAtUtc) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Broadcast Notification Modal Dialog -->
+  @if (modalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#181A1D]/60 backdrop-blur-sm">
+      <div
+        class="w-full max-w-xl rounded-2xl border border-carbon-200 bg-white p-6 shadow-2xl dark:border-carbon-800 dark:bg-carbon-900 transition-all max-h-[90vh] overflow-y-auto"
+        [class.is-rtl]="locale.isRtl()"
+      >
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-carbon-100 dark:border-carbon-800">
+          <div class="flex items-center gap-3">
+            <div class="flex size-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
+              <i class="pi pi-send text-lg" aria-hidden="true"></i>
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-carbon-900 dark:text-white">
+                {{ 'notifications.modalTitle' | t }}
+              </h2>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="closeBroadcastModal()"
+            [disabled]="saving()"
+            class="p-2 text-carbon-400 hover:text-carbon-600 dark:hover:text-carbon-200 rounded-lg hover:bg-carbon-100 dark:hover:bg-carbon-800 transition-colors"
+            [attr.aria-label]="'common.close' | t"
+          >
+            <i class="pi pi-times text-sm" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <!-- Form -->
+        <form [formGroup]="broadcastForm" (ngSubmit)="submitBroadcast()" class="mt-4 space-y-4">
+          <!-- Notification Type -->
+          <div>
+            <label class="block text-xs font-bold text-carbon-700 dark:text-carbon-300 mb-1.5">
+              {{ 'notifications.typeLabel' | t }}
+            </label>
+            <select
+              formControlName="type"
+              class="w-full rounded-xl border border-carbon-200 bg-carbon-50 px-3 py-2 text-xs text-carbon-900 focus:border-brand-500 focus:outline-none dark:border-carbon-800 dark:bg-carbon-950 dark:text-white"
+            >
+              <option value="system">{{ 'notifications.typeSystem' | t }}</option>
+              <option value="coupon">{{ 'notifications.typeCoupon' | t }}</option>
+              <option value="magazine">{{ 'notifications.typeMagazine' | t }}</option>
+              <option value="billboard">{{ 'notifications.typeBillboard' | t }}</option>
+              <option value="price_drop">{{ 'notifications.typePriceDrop' | t }}</option>
+            </select>
+          </div>
+
+          <!-- Titles (Ar & En) -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label class="block text-xs font-bold text-carbon-700 dark:text-carbon-300 mb-1.5">
+                {{ 'notifications.titleArLabel' | t }} *
+              </label>
+              <input
+                type="text"
+                formControlName="titleAr"
+                dir="rtl"
+                class="w-full rounded-xl border border-carbon-200 bg-carbon-50 px-3 py-2 text-xs text-carbon-900 focus:border-brand-500 focus:outline-none dark:border-carbon-800 dark:bg-carbon-950 dark:text-white"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-carbon-700 dark:text-carbon-300 mb-1.5">
+                {{ 'notifications.titleEnLabel' | t }} *
+              </label>
+              <input
+                type="text"
+                formControlName="titleEn"
+                dir="ltr"
+                class="w-full rounded-xl border border-carbon-200 bg-carbon-50 px-3 py-2 text-xs text-carbon-900 focus:border-brand-500 focus:outline-none dark:border-carbon-800 dark:bg-carbon-950 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <!-- Bodies (Ar & En) -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label class="block text-xs font-bold text-carbon-700 dark:text-carbon-300 mb-1.5">
+                {{ 'notifications.bodyArLabel' | t }} *
+              </label>
+              <textarea
+                formControlName="bodyAr"
+                rows="3"
+                dir="rtl"
+                class="w-full rounded-xl border border-carbon-200 bg-carbon-50 px-3 py-2 text-xs text-carbon-900 focus:border-brand-500 focus:outline-none dark:border-carbon-800 dark:bg-carbon-950 dark:text-white resize-none"
+              ></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-carbon-700 dark:text-carbon-300 mb-1.5">
+                {{ 'notifications.bodyEnLabel' | t }} *
+              </label>
+              <textarea
+                formControlName="bodyEn"
+                rows="3"
+                dir="ltr"
+                class="w-full rounded-xl border border-carbon-200 bg-carbon-50 px-3 py-2 text-xs text-carbon-900 focus:border-brand-500 focus:outline-none dark:border-carbon-800 dark:bg-carbon-950 dark:text-white resize-none"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Deep Link & Image URL -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label class="block text-xs font-bold text-carbon-700 dark:text-carbon-300 mb-1.5">
+                {{ 'notifications.deepLinkLabel' | t }}
+              </label>
+              <input
+                type="text"
+                formControlName="deepLink"
+                placeholder="se7en://..."
+                dir="ltr"
+                class="w-full rounded-xl border border-carbon-200 bg-carbon-50 px-3 py-2 text-xs text-carbon-900 focus:border-brand-500 focus:outline-none dark:border-carbon-800 dark:bg-carbon-950 dark:text-white"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-carbon-700 dark:text-carbon-300 mb-1.5">
+                {{ 'notifications.imageUrlLabel' | t }}
+              </label>
+              <input
+                type="text"
+                formControlName="imageUrl"
+                placeholder="https://..."
+                dir="ltr"
+                class="w-full rounded-xl border border-carbon-200 bg-carbon-50 px-3 py-2 text-xs text-carbon-900 focus:border-brand-500 focus:outline-none dark:border-carbon-800 dark:bg-carbon-950 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <!-- Send FCM Push Checkbox -->
+          <div class="flex items-center gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="sendPushCheck"
+              formControlName="sendPush"
+              class="size-4 rounded text-brand-500 focus:ring-brand-500 dark:bg-carbon-950 border-carbon-300 dark:border-carbon-700"
+            />
+            <label for="sendPushCheck" class="text-xs font-medium text-carbon-700 dark:text-carbon-300 cursor-pointer">
+              {{ 'notifications.sendPushLabel' | t }}
+            </label>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-carbon-100 dark:border-carbon-800">
+            <button
+              type="button"
+              (click)="closeBroadcastModal()"
+              [disabled]="saving()"
+              class="rounded-xl px-4 py-2 text-xs font-semibold text-carbon-600 hover:bg-carbon-100 dark:text-carbon-400 dark:hover:bg-carbon-800 transition-colors"
+            >
+              {{ 'common.cancel' | t }}
+            </button>
+            <button
+              type="submit"
+              [disabled]="saving()"
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-5 py-2 text-xs font-semibold text-white shadow-brand hover:bg-brand-600 disabled:opacity-50 transition-all"
+            >
+              @if (saving()) {
+                <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+              } @else {
+                <i class="pi pi-send text-xs" aria-hidden="true"></i>
+              }
+              <span>{{ 'notifications.broadcastBtn' | t }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

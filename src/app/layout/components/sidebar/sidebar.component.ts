@@ -42,7 +42,8 @@ export class SidebarComponent {
     { path: '/coupons', icon: 'pi-ticket', labelKey: 'nav.coupons', permission: 'coupons.view' },
     { path: '/match-review', icon: 'pi-check-square', labelKey: 'nav.matchReview', permission: 'match_review.view' },
     { path: '/best-deals', icon: 'pi-shopping-bag', labelKey: 'nav.bestDeals', permission: 'best_deals.view' },
-    { path: '/users', icon: 'pi-users', labelKey: 'nav.users', permission: 'users.view' }
+    { path: '/users', icon: 'pi-users', labelKey: 'nav.users', permission: 'users.view' },
+    { path: '/notifications', icon: 'pi-bell', labelKey: 'nav.notifications', permission: 'dashboard.view' }
   ];
 
   readonly mainNav = computed(() => {

@@ -133,6 +133,13 @@ export const routes: Routes = [
           import('./features/users/users.component').then((m) => m.UsersComponent)
       },
       {
+        path: 'notifications',
+        canActivate: [permissionGuard],
+        data: { permission: 'dashboard.view' },
+        loadComponent: () =>
+          import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent)
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/auth/profile/profile.component').then((m) => m.ProfileComponent)
