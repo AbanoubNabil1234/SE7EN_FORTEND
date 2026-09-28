@@ -102,6 +102,60 @@
               }
             </div>
 
+
+            @if (conflict(); as c) {
+              <!-- Conflict Panel -->
+              <div class="rounded-xl border border-rose-200 bg-rose-50/70 p-3.5 space-y-2.5">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-exclamation-triangle text-rose-600 text-sm shrink-0"></i>
+                  <span class="text-xs font-bold text-rose-700">
+                    {{ 'productsAdmin.mergeConflictPharmacy' | t }}
+                  </span>
+                </div>
+
+                <!-- Conflicting pharmacy badge -->
+                <div class="flex items-center gap-2">
+                  @if (pharmacyLogo(c.pharmacyCode); as logo) {
+                    <img [src]="logo" [alt]="c.pharmacyName ?? ''" class="size-5 object-contain rounded" />
+                  } @else {
+                    <span class="inline-flex size-5 items-center justify-center rounded bg-rose-100 text-rose-600">
+                      <i class="pi pi-building text-[10px]"></i>
+                    </span>
+                  }
+                  <span class="text-sm font-bold text-rose-800">
+                    {{ c.pharmacyName ?? c.pharmacyCode ?? '—' }}
+                  </span>
+                  @if (c.pharmacyCode) {
+                    <span class="rounded bg-rose-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-rose-600">
+                      {{ c.pharmacyCode }}
+                    </span>
+                  }
+                </div>
+
+                <p class="text-[11px] text-rose-700 leading-relaxed">
+                  {{ 'productsAdmin.mergeConflictUnlinkHint' | t }}
+                </p>
+
+                @if (c.conflictingPharmacyProductId) {
+                  <button
+                    type="button"
+                    class="inline-flex w-full items-center justify-center gap-2 min-h-9 rounded-lg bg-rose-600 px-4 text-xs font-extrabold text-white shadow-xs hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    (click)="onUnlinkAndRetry()"
+                    [disabled]="unlinking() || loading()"
+                    id="unlink-and-retry-btn"
+                  >
+                    @if (unlinking()) {
+                      <i class="pi pi-spin pi-spinner text-xs"></i>
+                      <span>{{ 'productsAdmin.mergeConflictUnlinking' | t }}</span>
+                    } @else {
+                      <i class="pi pi-link-slash text-xs"></i>
+                      <span>{{ 'productsAdmin.mergeConflictUnlink' | t }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+
             <!-- Warning Notice -->
             <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 flex items-start gap-2.5">
               <i class="pi pi-info-circle text-amber-600 text-sm mt-0.5 shrink-0"></i>

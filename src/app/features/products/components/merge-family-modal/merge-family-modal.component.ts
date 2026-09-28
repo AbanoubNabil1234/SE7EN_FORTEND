@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, switchMap } from 'rxjs';
 import { CatalogBrowseRepository } from '../../../../core/domain/repositories/catalog-browse.repository';
 import {
   CatalogFamily,
@@ -13,6 +13,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+
+interface PharmacyConflict {
+  pharmacyCode: string | null;
+  pharmacyName: string | null;
+  conflictingPharmacyProductId: string | null;
+}
 
 @Component({
   selector: 'app-merge-family-modal',
@@ -34,7 +40,9 @@ export class MergeFamilyModalComponent {
 
   readonly targetCode = signal<string>('');
   readonly loading = signal<boolean>(false);
+  readonly unlinking = signal<boolean>(false);
   readonly inputError = signal<string | null>(null);
+  readonly conflict = signal<PharmacyConflict | null>(null);
 
   readonly isRtl = computed(() => this.localeService.locale() === 'ar');
 
@@ -53,6 +61,7 @@ export class MergeFamilyModalComponent {
   onTargetCodeChange(value: string): void {
     const cleaned = (value || '').trim().toUpperCase();
     this.targetCode.set(cleaned);
+    this.conflict.set(null);
     this.validateTargetCode(cleaned);
   }
 
@@ -73,7 +82,7 @@ export class MergeFamilyModalComponent {
   readonly canMerge = computed(() => {
     const code = this.targetCode().trim();
     const sourceCode = (this.sourceFamily()?.groupCode || '').trim();
-    return !!code && !!sourceCode && code.toUpperCase() !== sourceCode.toUpperCase() && !this.inputError();
+    return !!code && !!sourceCode && code.toUpperCase() !== sourceCode.toUpperCase() && !this.inputError() && !this.unlinking();
   });
 
   pharmacyLogo(code: string | null | undefined): string | null {
@@ -81,9 +90,10 @@ export class MergeFamilyModalComponent {
   }
 
   onClose(): void {
-    if (this.loading()) return;
+    if (this.loading() || this.unlinking()) return;
     this.targetCode.set('');
     this.inputError.set(null);
+    this.conflict.set(null);
     this.close.emit();
   }
 
@@ -95,6 +105,7 @@ export class MergeFamilyModalComponent {
     if (!sourceCode || !target) return;
     if (!this.validateTargetCode(target)) return;
 
+    this.conflict.set(null);
     this.loading.set(true);
     this.catalog
       .mergeGroups(sourceCode, target)
@@ -107,14 +118,70 @@ export class MergeFamilyModalComponent {
           );
           this.targetCode.set('');
           this.inputError.set(null);
+          this.conflict.set(null);
           this.merged.emit(result);
         },
         error: (err) => {
           if (err?.status === 409 || err?.error?.code === 'same_pharmacy_in_family') {
-            this.notifications.showError(
-              this.i18n.t('productsAdmin.mergeConflictError'),
-              this.i18n.t('productsAdmin.mergeGroup')
-            );
+            const conflictData: PharmacyConflict = {
+              pharmacyCode: err?.error?.conflictingPharmacyCode ?? null,
+              pharmacyName: err?.error?.conflictingPharmacyName ?? null,
+              conflictingPharmacyProductId: err?.error?.conflictingPharmacyProductId ?? null
+            };
+            this.conflict.set(conflictData);
+            this.inputError.set(this.i18n.t('productsAdmin.mergeConflictError'));
+          } else {
+            const msg = err?.error?.message || this.i18n.t('productsAdmin.mergeFailed');
+            this.notifications.showError(msg, this.i18n.t('productsAdmin.mergeGroup'));
+            this.inputError.set(msg);
+          }
+        }
+      });
+  }
+
+  onUnlinkAndRetry(): void {
+    const conflictInfo = this.conflict();
+    if (!conflictInfo?.conflictingPharmacyProductId) return;
+
+    const source = this.sourceFamily();
+    const sourceCode = (source?.groupCode || '').trim();
+    const target = this.targetCode().trim();
+
+    this.unlinking.set(true);
+    this.inputError.set(this.i18n.t('productsAdmin.mergeConflictUnlinking'));
+
+    this.catalog
+      .unlinkOffer(conflictInfo.conflictingPharmacyProductId)
+      .pipe(
+        finalize(() => this.unlinking.set(false)),
+        switchMap(() => {
+          this.inputError.set(this.i18n.t('productsAdmin.mergeConflictUnlinkedRetrying'));
+          this.conflict.set(null);
+          this.loading.set(true);
+          return this.catalog.mergeGroups(sourceCode, target).pipe(
+            finalize(() => this.loading.set(false))
+          );
+        })
+      )
+      .subscribe({
+        next: (result) => {
+          this.notifications.showSuccess(
+            this.i18n.t('productsAdmin.mergedOk'),
+            `${sourceCode} ➔ ${result.targetCode}`
+          );
+          this.targetCode.set('');
+          this.inputError.set(null);
+          this.conflict.set(null);
+          this.merged.emit(result);
+        },
+        error: (err) => {
+          if (err?.status === 409 || err?.error?.code === 'same_pharmacy_in_family') {
+            const conflictData: PharmacyConflict = {
+              pharmacyCode: err?.error?.conflictingPharmacyCode ?? null,
+              pharmacyName: err?.error?.conflictingPharmacyName ?? null,
+              conflictingPharmacyProductId: err?.error?.conflictingPharmacyProductId ?? null
+            };
+            this.conflict.set(conflictData);
             this.inputError.set(this.i18n.t('productsAdmin.mergeConflictError'));
           } else {
             const msg = err?.error?.message || this.i18n.t('productsAdmin.mergeFailed');
