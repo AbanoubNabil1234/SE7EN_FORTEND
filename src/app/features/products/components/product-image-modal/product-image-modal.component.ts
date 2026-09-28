@@ -20,6 +20,7 @@ import {
 } from '../../../../core/domain/models/catalog-family.model';
 import { pharmacyLogo as resolvePharmacyLogo } from '../../../../core/domain/pharmacy-brands';
 import { resolveApiUrl } from '../../../../core/infrastructure/http/api-origin';
+import { proxyImageUrl } from '../../../../core/domain/image-proxy';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -58,6 +59,8 @@ export class ProductImageModalComponent {
   readonly statusMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   readonly resolveApiUrl = resolveApiUrl;
+  readonly proxyImageUrl = proxyImageUrl;
+  readonly cacheBuster = signal<number>(Date.now());
 
   private lastOpened = false;
   private lastLoadedMasterId: string | null = null;
@@ -111,11 +114,19 @@ export class ProductImageModalComponent {
 
   currentPreviewImage(): string | null {
     const data = this.imagesData();
-    if (data?.customImageUrl) return data.customImageUrl;
+    if (data?.customImageUrl) {
+      const url = data.customImageUrl;
+      const sep = url.includes('?') ? '&' : '?';
+      return `${url}${sep}cb=${this.cacheBuster()}`;
+    }
     const fam = this.family();
-    if (fam?.imageUrl) return fam.imageUrl;
+    if (fam?.imageUrl) {
+      const url = fam.imageUrl;
+      const sep = url.includes('?') ? '&' : '?';
+      return `${url}${sep}cb=${this.cacheBuster()}`;
+    }
     const firstOffer = this.pharmacyOfferImages()[0];
-    return firstOffer ? firstOffer.imageUrl : null;
+    return firstOffer ? this.proxyImageUrl(firstOffer.imageUrl) : null;
   }
 
   hasCustomImage(): boolean {
@@ -152,6 +163,7 @@ export class ProductImageModalComponent {
   }
 
   loadImages(masterId: string): void {
+    this.cacheBuster.set(Date.now());
     this.loadingImages.set(true);
     this.catalog
       .getProductImages(masterId)

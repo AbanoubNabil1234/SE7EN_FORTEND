@@ -204,7 +204,7 @@
                         <!-- Image Preview -->
                         <div class="relative aspect-square w-full rounded-xl bg-white dark:bg-neutral-950 flex items-center justify-center overflow-hidden p-2 border border-[#EDE0D0]/50 dark:border-neutral-800">
                           <img
-                            [src]="resolveApiUrl(img.imageUrl)"
+                            [src]="proxyImageUrl(img.imageUrl)"
                             [alt]="img.pharmacyName"
                             class="size-full object-contain transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
