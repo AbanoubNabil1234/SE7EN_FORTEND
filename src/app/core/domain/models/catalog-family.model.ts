@@ -30,6 +30,7 @@ export interface CatalogPack {
   matchType?: string | null;
   priceSyncEnabled: boolean;
   requiresPackReview?: boolean;
+  imageUrl?: string | null;
   offers: CatalogOffer[];
 }
 
@@ -140,11 +141,18 @@ export function flattenFamilyPacks(families: CatalogFamily[]): CatalogFamily[] {
   });
 }
 
-const HERO_PHARMACY_CODES = ['nahdi', 'united', 'aldawaa'] as const;
-const HERO_LAST_PHARMACY = 'whites';
+const PHARMACY_PRIORITY_ORDER = [
+  'nahdi',
+  'united',
+  'whites',
+  'aldawaa',
+  'pharmabrand',
+  'ibrand',
+  'almujtama'
+] as const;
 
 export function packHeroImage(pack: CatalogPack): string | null {
-  return pickHeroImage(pack.offers);
+  return pack.imageUrl || pickHeroImage(pack.offers);
 }
 
 export function familyHeroImage(family: CatalogFamily): string | null {
@@ -153,12 +161,11 @@ export function familyHeroImage(family: CatalogFamily): string | null {
 
 function pickHeroImage(offers: CatalogOffer[]): string | null {
   const withImage = offers.filter((offer) => !!offer.imageUrl?.trim());
-  for (const code of HERO_PHARMACY_CODES) {
-    const hit = withImage.find((offer) => offer.pharmacyCode.toLowerCase() === code);
-    if (hit?.imageUrl) return hit.imageUrl;
+  for (const code of PHARMACY_PRIORITY_ORDER) {
+    const hit = withImage.find((offer) => offer.pharmacyCode?.toLowerCase() === code);
+    if (hit?.imageUrl?.trim()) return hit.imageUrl.trim();
   }
-  const other = withImage.find((offer) => offer.pharmacyCode.toLowerCase() !== HERO_LAST_PHARMACY);
-  return other?.imageUrl ?? withImage[0]?.imageUrl ?? null;
+  return withImage[0]?.imageUrl?.trim() ?? null;
 }
 
 const HAS_ARABIC_REGEX = /[\u0600-\u06FF]/;
