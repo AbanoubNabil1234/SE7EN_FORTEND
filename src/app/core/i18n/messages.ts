@@ -56,7 +56,8 @@ export const messagesAr: MessageTree = {
     users: 'المستخدمون',
     auditLogs: 'سجل العمليات والتعديلات',
     messages: 'الرسائل',
-    settings: 'الإعدادات'
+    settings: 'الإعدادات',
+    notifications: 'الإشعارات للموبايل'
   },
   dashboard: {
     eyebrow: 'لوحة التحكم والمؤشرات',
@@ -1467,6 +1468,46 @@ export const messagesAr: MessageTree = {
       categoriesWord: 'التصنيفات'
     }
   },
+  notifications: {
+    title: 'إشعارات تطبيق الموبايل',
+    subtitle: 'إدارة وبث الإشعارات إلى مستخدمي تطبيق الهاتف المحمول',
+    broadcastBtn: 'إرسال إشعار جديد',
+    searchPlaceholder: 'بحث في الإشعارات...',
+    filterAll: 'الكل',
+    filterCoupons: 'كوبونات',
+    filterMagazines: 'مجلات',
+    filterBillboards: 'إعلانات',
+    filterPriceDrops: 'انخفاض أسعار',
+    filterSystem: 'النظام',
+    typeCoupon: 'كوبون',
+    typeMagazine: 'مجلة عروض',
+    typeBillboard: 'إعلان',
+    typePriceDrop: 'صفقة / انخفاض سعر',
+    typeSystem: 'إشعار إداري / عام',
+    colTitle: 'عنوان الإشعار',
+    colBody: 'المحتوى',
+    colType: 'النوع',
+    colDate: 'تاريخ الإرسال',
+    colTarget: 'الفئة المستهدفة',
+    allUsers: 'جميع المستخدمين',
+    modalTitle: 'بث إشعار جديد لمستخدمي الموبايل',
+    titleArLabel: 'العنوان (عربي)',
+    titleEnLabel: 'العنوان (إنجليزي)',
+    bodyArLabel: 'نص الإشعار (عربي)',
+    bodyEnLabel: 'نص الإشعار (إنجليزي)',
+    typeLabel: 'نوع الإشعار',
+    deepLinkLabel: 'الرابط السريع (اختياري)',
+    imageUrlLabel: 'رابط الصورة (اختياري)',
+    sendPushLabel: 'إرسال كإشعار فوري (Push Notification) عبر Firebase',
+    sendSuccess: 'تم إرسال الإشعار بنجاح',
+    emptyTitle: 'لا توجد إشعارات حتى الآن',
+    emptySubtitle: 'قم بإرسال أول إشعار لمستخدمي تطبيق الموبايل',
+    totalSent: 'إجمالي الإشعارات',
+    couponCount: 'كوبونات',
+    magazineCount: 'مجلات',
+    billboardCount: 'إعلانات',
+    systemCount: 'تنبيهات النظام'
+  }
 };
 
 export const messagesEn: MessageTree = {
@@ -1525,7 +1566,8 @@ export const messagesEn: MessageTree = {
     users: 'Users',
     auditLogs: 'Audit Logs',
     messages: 'Messages',
-    settings: 'Settings'
+    settings: 'Settings',
+    notifications: 'Mobile Notifications'
   },
   dashboard: {
     eyebrow: 'Control & KPI Center',
@@ -2872,4 +2914,44 @@ export const messagesEn: MessageTree = {
       categoriesWord: 'Categories'
     }
   },
+  notifications: {
+    title: 'Mobile App Notifications',
+    subtitle: 'Manage and broadcast in-app and push notifications to mobile customers',
+    broadcastBtn: 'Broadcast Notification',
+    searchPlaceholder: 'Search notifications...',
+    filterAll: 'All',
+    filterCoupons: 'Coupons',
+    filterMagazines: 'Magazines',
+    filterBillboards: 'Billboards',
+    filterPriceDrops: 'Price Drops',
+    filterSystem: 'System',
+    typeCoupon: 'Coupon',
+    typeMagazine: 'Magazine',
+    typeBillboard: 'Billboard',
+    typePriceDrop: 'Deal / Price Drop',
+    typeSystem: 'System / Announcement',
+    colTitle: 'Notification Title',
+    colBody: 'Content',
+    colType: 'Type',
+    colDate: 'Sent Date',
+    colTarget: 'Target Audience',
+    allUsers: 'All Customers',
+    modalTitle: 'Broadcast Notification to Mobile Customers',
+    titleArLabel: 'Title (Arabic)',
+    titleEnLabel: 'Title (English)',
+    bodyArLabel: 'Message Body (Arabic)',
+    bodyEnLabel: 'Message Body (English)',
+    typeLabel: 'Notification Type',
+    deepLinkLabel: 'Deep Link (Optional)',
+    imageUrlLabel: 'Image URL (Optional)',
+    sendPushLabel: 'Send instant push notification via Firebase (FCM)',
+    sendSuccess: 'Notification broadcasted successfully',
+    emptyTitle: 'No notifications found',
+    emptySubtitle: 'Broadcast the first notification to mobile app users',
+    totalSent: 'Total Notifications',
+    couponCount: 'Coupons',
+    magazineCount: 'Magazines',
+    billboardCount: 'Billboards',
+    systemCount: 'System Alerts'
+  }
 };

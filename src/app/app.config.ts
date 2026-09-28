@@ -30,6 +30,8 @@ import { MatchReviewRepository } from './core/domain/repositories/match-review.r
 import { HttpMatchReviewRepository } from './core/infrastructure/repositories/http-match-review.repository';
 import { AuditLogRepository } from './core/domain/repositories/audit-log.repository';
 import { HttpAuditLogRepository } from './core/infrastructure/repositories/http-audit-log.repository';
+import { NotificationRepository } from './core/domain/repositories/notification.repository';
+import { HttpNotificationRepository } from './core/infrastructure/repositories/http-notification.repository';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -51,6 +53,7 @@ export const appConfig: ApplicationConfig = {
     { provide: LiveSearchRepository, useClass: HttpLiveSearchRepository },
     { provide: DashboardRepository, useClass: HttpDashboardRepository },
     { provide: MatchReviewRepository, useClass: HttpMatchReviewRepository },
-    { provide: AuditLogRepository, useClass: HttpAuditLogRepository }
+    { provide: AuditLogRepository, useClass: HttpAuditLogRepository },
+    { provide: NotificationRepository, useClass: HttpNotificationRepository }
   ]
 };
