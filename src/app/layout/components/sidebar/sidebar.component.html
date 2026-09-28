@@ -1,4 +1,4 @@
-﻿@if (open()) {
+@if (open()) {
       <button
         type="button"
         class="fixed inset-0 z-30 bg-[#181A1D]/50 lg:hidden"
@@ -35,7 +35,7 @@
           {{ 'shell.menu' | t }}
         </p>
         <ul class="space-y-1">
-          @for (item of mainNav; track item.path) {
+          @for (item of mainNav(); track item.path) {
             <li>
               <a
                 [routerLink]="item.path"

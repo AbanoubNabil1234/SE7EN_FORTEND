@@ -4,12 +4,13 @@ export interface User {
   fullName: string;
   firstName?: string;
   lastName?: string;
-  role: 'Customer' | 'Admin';
+  role: string;
   phone?: string | null;
   avatarUrl?: string;
   token?: string;
   refreshToken?: string;
   refreshTokenExpiresAt?: string;
+  permissions?: string[];
 }
 
 export interface AuthTokenResponse {
@@ -26,6 +27,6 @@ export interface AuthTokenResponse {
     role: string;
     phone?: string | null;
     isActive: boolean;
+    permissions?: string[];
   };
 }
-

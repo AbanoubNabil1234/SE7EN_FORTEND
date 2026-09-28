@@ -1,89 +1,139 @@
 <section class="w-full space-y-4 px-4 py-4 sm:px-5 sm:py-5" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
+  <!-- Top Banner & Header -->
   <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
     <div class="h-1.5 bg-[#C27938]"></div>
     <div class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
       <div class="min-w-0">
         <div class="inline-flex items-center gap-2 rounded-full bg-[#F8EEE2] px-3 py-1 text-[11px] font-bold text-[#C27938]">
           <span class="size-1.5 rounded-full bg-[#C27938]"></span>
-          {{ 'users.badge' | t }}
+          {{ (activeTab() === 'users' ? 'users.badge' : 'roles.badge') | t }}
         </div>
         <h1 class="mt-3 text-balance text-3xl font-extrabold text-[#181A1D] sm:text-4xl">
-          {{ 'users.title' | t }}
+          {{ (activeTab() === 'users' ? 'users.title' : 'roles.title') | t }}
         </h1>
         <p class="mt-1.5 max-w-xl text-pretty text-sm font-medium text-[#8A735C]">
-          {{ 'users.subtitle' | t }}
+          {{ (activeTab() === 'users' ? 'users.subtitle' : 'roles.subtitle') | t }}
         </p>
       </div>
+
+      <div class="flex items-center gap-2">
+        @if (activeTab() === 'users') {
+          <button
+            type="button"
+            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white transition hover:bg-[#A8682F]"
+            (click)="openCreate()"
+          >
+            <i class="pi pi-user-plus text-sm" aria-hidden="true"></i>
+            {{ 'users.createAdmin' | t }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white transition hover:bg-[#A8682F]"
+            (click)="openCreateRole()"
+          >
+            <i class="pi pi-shield text-sm" aria-hidden="true"></i>
+            {{ 'roles.createRole' | t }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Segmented Navigation Tabs -->
+    <div class="flex border-t border-[#EDE0D0] bg-[#FDFBF9] px-4 pt-2 sm:px-6">
       <button
         type="button"
-        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white hover:bg-[#A8682F]"
-        (click)="openCreate()"
+        class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition"
+        [ngClass]="
+          activeTab() === 'users'
+            ? 'border-[#C27938] text-[#C27938]'
+            : 'border-transparent text-[#8A735C] hover:text-[#181A1D]'
+        "
+        (click)="activeTab.set('users')"
       >
-        <i class="pi pi-user-plus text-sm" aria-hidden="true"></i>
-        {{ 'users.createAdmin' | t }}
+        <i class="pi pi-users text-sm" aria-hidden="true"></i>
+        <span>{{ 'users.tabUsers' | t }}</span>
+        <span class="rounded-full bg-[#F3E7D8] px-2 py-0.5 text-xs text-[#8A735C]">{{ items().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition"
+        [ngClass]="
+          activeTab() === 'roles'
+            ? 'border-[#C27938] text-[#C27938]'
+            : 'border-transparent text-[#8A735C] hover:text-[#181A1D]'
+        "
+        (click)="activeTab.set('roles')"
+      >
+        <i class="pi pi-lock text-sm" aria-hidden="true"></i>
+        <span>{{ 'users.tabRoles' | t }}</span>
+        <span class="rounded-full bg-[#F3E7D8] px-2 py-0.5 text-xs text-[#8A735C]">{{ roles().length }}</span>
       </button>
     </div>
 
-    <div class="grid grid-cols-2 border-t border-[#EDE0D0] sm:grid-cols-4">
-      <div class="border-e border-[#EDE0D0] px-4 py-3.5 sm:px-5">
-        <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'users.statTotal' | t }}</div>
-        <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">{{ items().length }}</div>
+    <!-- Users Quick Stats Bar -->
+    @if (activeTab() === 'users') {
+      <div class="grid grid-cols-2 border-t border-[#EDE0D0] sm:grid-cols-4">
+        <div class="border-e border-[#EDE0D0] px-4 py-3.5 sm:px-5">
+          <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'users.statTotal' | t }}</div>
+          <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">{{ items().length }}</div>
+        </div>
+        <div class="border-e border-[#EDE0D0] px-4 py-3.5 sm:px-5">
+          <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'users.statAdmins' | t }}</div>
+          <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#C27938]">{{ adminCount() }}</div>
+        </div>
+        <div class="border-e border-[#EDE0D0] px-4 py-3.5 sm:px-5">
+          <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'users.statCustomers' | t }}</div>
+          <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">{{ customerCount() }}</div>
+        </div>
+        <div class="px-4 py-3.5 sm:px-5">
+          <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'users.statActive' | t }}</div>
+          <div class="mt-1 text-2xl font-extrabold tabular-nums text-emerald-700">{{ activeCount() }}</div>
+        </div>
       </div>
-      <div class="border-e border-[#EDE0D0] px-4 py-3.5 sm:px-5">
-        <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'users.statAdmins' | t }}</div>
-        <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#C27938]">{{ adminCount() }}</div>
-      </div>
-      <div class="border-e border-[#EDE0D0] px-4 py-3.5 sm:px-5">
-        <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'users.statCustomers' | t }}</div>
-        <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">{{ customerCount() }}</div>
-      </div>
-      <div class="px-4 py-3.5 sm:px-5">
-        <div class="text-[11px] font-bold text-[#A68B6D]">{{ 'users.statActive' | t }}</div>
-        <div class="mt-1 text-2xl font-extrabold tabular-nums text-[#181A1D]">{{ activeCount() }}</div>
-      </div>
-    </div>
+    }
   </div>
 
-  <div class="flex flex-col gap-3 rounded-2xl border border-[#E8D5BE] bg-white p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4">
-    <label class="relative min-w-0 flex-1">
-      <span class="sr-only">{{ 'users.search' | t }}</span>
-      <i class="pi pi-search pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#A68B6D]" aria-hidden="true"></i>
-      <input
-        type="search"
-        class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] pe-3 ps-10 text-sm font-medium text-[#181A1D] outline-none placeholder:text-[#A68B6D] focus:border-[#C27938] focus:bg-white"
-        [placeholder]="'users.search' | t"
-        [value]="query()"
-        (input)="query.set(($any($event.target).value || '').toString())"
-      />
-    </label>
+  <!-- TAB 1: USERS -->
+  @if (activeTab() === 'users') {
+    <!-- Search & Filter Controls -->
+    <div class="flex flex-col gap-3 rounded-2xl border border-[#E8D5BE] bg-white p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4">
+      <label class="relative min-w-0 flex-1">
+        <span class="sr-only">{{ 'users.search' | t }}</span>
+        <i class="pi pi-search pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[#A68B6D]" aria-hidden="true"></i>
+        <input
+          type="search"
+          class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] pe-3 ps-10 text-sm font-medium text-[#181A1D] outline-none placeholder:text-[#A68B6D] focus:border-[#C27938] focus:bg-white"
+          [placeholder]="'users.search' | t"
+          [value]="query()"
+          (input)="query.set(($any($event.target).value || '').toString())"
+        />
+      </label>
 
-    <div class="flex gap-1 rounded-xl bg-[#F8EEE2] p-1" role="group" [attr.aria-label]="'users.roleGroup' | t">
-      @for (opt of roleTabs(); track opt.value) {
-        <button
-          type="button"
-          class="min-h-10 min-w-[5rem] flex-1 rounded-lg px-3 text-xs font-bold sm:flex-none"
-          [ngClass]="
-            roleFilter() === opt.value
-              ? 'bg-white text-[#181A1D] shadow-sm'
-              : 'bg-transparent text-[#8A735C] hover:text-[#181A1D]'
-          "
-          (click)="roleFilter.set(opt.value)"
-        >
-          {{ opt.label }}
-        </button>
-      }
-    </div>
-  </div>
-
-  @if (loading()) {
-    <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm animate-pulse">
-      <div class="border-b border-[#EDE0D0] bg-[#FBF8F4] px-4 py-3 flex items-center justify-between">
-        <div class="h-4 w-32 rounded bg-[#E8D5BE]"></div>
-        <div class="h-4 w-20 rounded bg-[#F3E7D8]"></div>
+      <div class="flex flex-wrap gap-1 rounded-xl bg-[#F8EEE2] p-1" role="group" [attr.aria-label]="'users.roleGroup' | t">
+        @for (opt of roleTabs(); track opt.value) {
+          <button
+            type="button"
+            class="min-h-10 min-w-[4.5rem] flex-1 rounded-lg px-3 text-xs font-bold sm:flex-none"
+            [ngClass]="
+              roleFilter() === opt.value
+                ? 'bg-white text-[#181A1D] shadow-sm'
+                : 'bg-transparent text-[#8A735C] hover:text-[#181A1D]'
+            "
+            (click)="roleFilter.set(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
       </div>
-      <div class="divide-y divide-[#F2E8DC] p-4 space-y-3">
-        @for (row of [1, 2, 3, 4, 5, 6]; track row) {
-          <div class="flex items-center justify-between gap-4 pt-3 first:pt-0">
+    </div>
+
+    <!-- Users Table -->
+    @if (loading()) {
+      <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm animate-pulse p-4 space-y-3">
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+          <div class="flex items-center justify-between gap-4 py-2 border-b border-[#F2E8DC] last:border-b-0">
             <div class="flex items-center gap-3">
               <div class="size-10 rounded-full bg-[#F3E7D8]"></div>
               <div class="space-y-1.5">
@@ -91,89 +141,205 @@
                 <div class="h-3 w-44 rounded bg-[#F8EEE2]"></div>
               </div>
             </div>
-            <div class="hidden sm:block h-4 w-28 rounded bg-[#F8EEE2]"></div>
-            <div class="h-5 w-16 rounded-full bg-[#E8D5BE]/60"></div>
-            <div class="h-5 w-16 rounded-full bg-[#F8EEE2]"></div>
+            <div class="h-5 w-20 rounded bg-[#F8EEE2]"></div>
           </div>
         }
       </div>
-    </div>
-  } @else if (error()) {
-    <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">{{ error() }}</div>
-  } @else {
-    <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-start text-sm">
-          <thead class="border-b border-[#EDE0D0] bg-[#FBF8F4] text-[11px] font-bold uppercase text-[#8A735C]">
-            <tr>
-              <th class="px-4 py-3 text-start">{{ 'users.colName' | t }}</th>
-              <th class="px-4 py-3 text-start">{{ 'users.colEmail' | t }}</th>
-              <th class="px-4 py-3 text-start">{{ 'users.colPhone' | t }}</th>
-              <th class="px-4 py-3 text-start">{{ 'users.colRole' | t }}</th>
-              <th class="px-4 py-3 text-start">{{ 'users.colStatus' | t }}</th>
-              <th class="px-4 py-3 text-start">{{ 'users.colCreated' | t }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (user of filtered(); track user.id) {
-              <tr class="border-b border-[#EDE0D0] last:border-b-0 hover:bg-[#FBF8F4]">
-                <td class="px-4 py-3.5">
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F8EEE2] text-xs font-extrabold text-[#C27938]"
-                    >
-                      {{ initials(user.fullName) }}
-                    </div>
-                    <span class="font-bold text-[#181A1D]">{{ user.fullName || '—' }}</span>
-                  </div>
-                </td>
-                <td class="px-4 py-3.5 text-[#4A4038]">{{ user.email }}</td>
-                <td class="px-4 py-3.5 tabular-nums text-[#8A735C]">{{ user.phone || '—' }}</td>
-                <td class="px-4 py-3.5">
-                  <span
-                    class="inline-flex rounded-md px-2 py-1 text-[11px] font-bold"
-                    [ngClass]="
-                      user.role === 'Admin'
-                        ? 'bg-[#F8EEE2] text-[#C27938]'
-                        : 'bg-[#F3EDE5] text-[#8A735C]'
-                    "
-                  >
-                    {{ roleLabel(user.role) }}
-                  </span>
-                </td>
-                <td class="px-4 py-3.5">
-                  @if (user.isActive) {
-                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
-                      <i class="pi pi-check-circle text-sm" aria-hidden="true"></i>
-                      {{ 'users.active' | t }}
-                    </span>
-                  } @else {
-                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700">
-                      <i class="pi pi-ban text-sm" aria-hidden="true"></i>
-                      {{ 'users.blocked' | t }}
-                    </span>
-                  }
-                </td>
-                <td class="px-4 py-3.5 tabular-nums text-[#4A4038]">{{ formatDate(user.createdAt) }}</td>
-              </tr>
-            } @empty {
+    } @else if (error()) {
+      <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">{{ error() }}</div>
+    } @else {
+      <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-start text-sm">
+            <thead class="border-b border-[#EDE0D0] bg-[#FBF8F4] text-[11px] font-bold uppercase text-[#8A735C]">
               <tr>
-                <td colspan="6" class="px-4 py-12 text-center text-sm text-[#8A735C]">
-                  {{ 'users.empty' | t }}
-                </td>
+                <th class="px-4 py-3 text-start">{{ 'users.colName' | t }}</th>
+                <th class="px-4 py-3 text-start">{{ 'users.colEmail' | t }}</th>
+                <th class="px-4 py-3 text-start">{{ 'users.colPhone' | t }}</th>
+                <th class="px-4 py-3 text-start">{{ 'users.colRole' | t }}</th>
+                <th class="px-4 py-3 text-start">{{ 'users.colStatus' | t }}</th>
+                <th class="px-4 py-3 text-start">{{ 'users.colCreated' | t }}</th>
+                <th class="px-4 py-3 text-end">{{ 'users.actions' | t }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (user of filtered(); track user.id) {
+                <tr class="border-b border-[#EDE0D0] last:border-b-0 hover:bg-[#FBF8F4]">
+                  <td class="px-4 py-3.5">
+                    <div class="flex items-center gap-3">
+                      <div class="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F8EEE2] text-xs font-extrabold text-[#C27938]">
+                        {{ initials(user.fullName) }}
+                      </div>
+                      <span class="font-bold text-[#181A1D]">{{ user.fullName || '—' }}</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3.5 text-[#4A4038]">{{ user.email }}</td>
+                  <td class="px-4 py-3.5 tabular-nums text-[#8A735C]">{{ user.phone || '—' }}</td>
+                  <td class="px-4 py-3.5">
+                    <span
+                      class="inline-flex rounded-md px-2.5 py-1 text-[11px] font-bold"
+                      [ngClass]="
+                        user.role === 'Admin'
+                          ? 'bg-[#F8EEE2] text-[#C27938] border border-[#E8D5BE]'
+                          : user.role === 'Customer'
+                          ? 'bg-[#F3EDE5] text-[#8A735C]'
+                          : 'bg-sky-50 text-sky-800 border border-sky-200'
+                      "
+                    >
+                      {{ roleLabel(user.role) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3.5">
+                    @if (user.isActive) {
+                      <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                        <i class="pi pi-check-circle text-sm" aria-hidden="true"></i>
+                        {{ 'users.active' | t }}
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700">
+                        <i class="pi pi-ban text-sm" aria-hidden="true"></i>
+                        {{ 'users.blocked' | t }}
+                      </span>
+                    }
+                  </td>
+                  <td class="px-4 py-3.5 tabular-nums text-[#4A4038]">{{ formatDate(user.createdAt) }}</td>
+                  <td class="px-4 py-3.5 text-end">
+                    <div class="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-[#6B5A48] hover:bg-[#F8EEE2] hover:text-[#C27938]"
+                        [title]="'users.changeRole' | t"
+                        (click)="openChangeRole(user)"
+                      >
+                        <i class="pi pi-id-card text-xs" aria-hidden="true"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-[#6B5A48] hover:bg-rose-50 hover:text-rose-700"
+                        [title]="user.isActive ? ('users.toggleStatusBlock' | t) : ('users.toggleStatusActive' | t)"
+                        (click)="toggleUserStatus(user)"
+                      >
+                        <i class="pi text-xs" [ngClass]="user.isActive ? 'pi-lock' : 'pi-lock-open'" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="px-4 py-12 text-center text-sm text-[#8A735C]">
+                    {{ 'users.empty' | t }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    }
+  }
+
+  <!-- TAB 2: ROLES & PERMISSIONS -->
+  @if (activeTab() === 'roles') {
+    @if (loadingRoles()) {
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="h-44 rounded-2xl border border-[#E8D5BE] bg-white p-5 animate-pulse"></div>
+        }
+      </div>
+    } @else if (rolesError()) {
+      <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">{{ rolesError() }}</div>
+    } @else {
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (role of roles(); track role.name) {
+          <div class="flex flex-col justify-between rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-sm transition hover:shadow-md">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <h3 class="text-lg font-bold text-[#181A1D]">
+                    {{ role.name === 'Admin' ? ('users.roleAdmin' | t) : role.name === 'Customer' ? ('users.roleCustomer' | t) : role.name }}
+                  </h3>
+                  <div class="mt-1 inline-flex items-center gap-1.5">
+                    @if (role.isSystemRole) {
+                      <span class="rounded bg-[#F8EEE2] px-2 py-0.5 text-[10px] font-bold text-[#C27938]">
+                        {{ 'roles.systemRole' | t }}
+                      </span>
+                    } @else {
+                      <span class="rounded bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-800 border border-sky-200">
+                        {{ 'roles.customRole' | t }}
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="text-end">
+                  <span class="inline-flex items-center gap-1 rounded-full bg-[#F3E7D8] px-2.5 py-0.5 text-xs font-bold text-[#8A735C]">
+                    <i class="pi pi-users text-[10px]" aria-hidden="true"></i>
+                    {{ role.userCount }} {{ 'roles.usersCount' | t }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="mt-4 border-t border-[#EDE0D0] pt-3">
+                <div class="flex items-center justify-between text-xs font-semibold text-[#8A735C]">
+                  <span>{{ 'roles.permissionsLabel' | t }}</span>
+                  <span class="font-bold text-[#C27938]">
+                    {{ role.name === 'Admin' ? ('users.all' | t) : (role.permissions.length + ' ' + ('roles.permissionsCount' | t)) }}
+                  </span>
+                </div>
+
+                @if (role.name === 'Admin') {
+                  <p class="mt-2 text-xs text-[#8A735C] italic">{{ 'roles.superAdminNotice' | t }}</p>
+                } @else {
+                  <div class="mt-2 flex flex-wrap gap-1">
+                    @for (p of role.permissions.slice(0, 4); track p) {
+                      <span class="rounded bg-[#FBF8F4] border border-[#E8D5BE] px-2 py-0.5 text-[10px] font-medium text-[#4A4038]">
+                        {{ p }}
+                      </span>
+                    }
+                    @if (role.permissions.length > 4) {
+                      <span class="rounded bg-[#F8EEE2] px-1.5 py-0.5 text-[10px] font-bold text-[#C27938]">
+                        +{{ role.permissions.length - 4 }}
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="mt-5 flex items-center justify-end gap-2 border-t border-[#EDE0D0] pt-3">
+              @if (!role.isSystemRole) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-[#E8D5BE] px-3 py-1.5 text-xs font-bold text-[#6B5A48] hover:bg-[#F8EEE2] hover:text-[#C27938]"
+                  (click)="openEditRole(role)"
+                >
+                  <i class="pi pi-pencil text-xs" aria-hidden="true"></i>
+                  {{ 'common.edit' | t }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50"
+                  (click)="openDeleteRoleConfirm(role)"
+                >
+                  <i class="pi pi-trash text-xs" aria-hidden="true"></i>
+                  {{ 'common.delete' | t }}
+                </button>
+              } @else {
+                <span class="text-[11px] text-[#A68B6D] italic">{{ 'roles.systemRole' | t }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
   }
 </section>
 
+<!-- MODAL: CREATE USER -->
 @if (createOpen()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
     <div
-      class="w-full max-w-md rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-md sm:p-6"
+      class="w-full max-w-md rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-xl sm:p-6"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="'users.createAdmin' | t"
@@ -217,6 +383,19 @@
           />
         </label>
         <label class="block space-y-1.5">
+          <span class="text-xs font-bold text-[#8A735C]">{{ 'users.role' | t }}</span>
+          <select
+            formControlName="role"
+            class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm outline-none focus:border-[#C27938] focus:bg-white"
+          >
+            @for (r of availableStaffRoles(); track r.name) {
+              <option [value]="r.name">
+                {{ r.name === 'Admin' ? ('users.roleAdmin' | t) : r.name }}
+              </option>
+            }
+          </select>
+        </label>
+        <label class="block space-y-1.5">
           <span class="text-xs font-bold text-[#8A735C]">{{ 'users.password' | t }}</span>
           <input
             type="password"
@@ -247,6 +426,215 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL: CHANGE USER ROLE -->
+@if (changeRoleUser(); as targetUser) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
+    <div
+      class="w-full max-w-sm rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-xl sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'users.changeRoleTitle' | t"
+    >
+      <h3 class="text-lg font-extrabold text-[#181A1D]">{{ 'users.changeRoleTitle' | t }}</h3>
+      <p class="mt-1 text-sm text-[#8A735C]">{{ targetUser.fullName }} ({{ targetUser.email }})</p>
+
+      <div class="mt-4 space-y-3">
+        <label class="block space-y-1.5">
+          <span class="text-xs font-bold text-[#8A735C]">{{ 'users.role' | t }}</span>
+          <select
+            class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm outline-none focus:border-[#C27938] focus:bg-white"
+            [value]="selectedNewRole()"
+            (change)="selectedNewRole.set($any($event.target).value)"
+          >
+            @for (r of roles(); track r.name) {
+              <option [value]="r.name">
+                {{ r.name === 'Admin' ? ('users.roleAdmin' | t) : r.name === 'Customer' ? ('users.roleCustomer' | t) : r.name }}
+              </option>
+            }
+          </select>
+        </label>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            class="min-h-11 rounded-xl px-4 text-sm font-bold text-[#6B5A48] hover:bg-[#F8EEE2]"
+            (click)="changeRoleUser.set(null)"
+          >
+            {{ 'common.cancel' | t }}
+          </button>
+          <button
+            type="button"
+            class="min-h-11 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white hover:bg-[#A8682F] disabled:opacity-60"
+            [disabled]="savingRoleChange()"
+            (click)="submitChangeRole()"
+          >
+            {{ 'users.changeRoleSubmit' | t }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL: CREATE / EDIT ROLE WITH PERMISSION MATRIX -->
+@if (roleModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
+    <div
+      class="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl border border-[#E8D5BE] bg-white shadow-2xl"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="(roleModalMode() === 'create' ? 'roles.createRole' : 'roles.editRole') | t"
+    >
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-[#EDE0D0] px-5 py-4 sm:px-6">
+        <div>
+          <h3 class="text-lg font-extrabold text-[#181A1D]">
+            {{ (roleModalMode() === 'create' ? 'roles.createRole' : 'roles.editRole') | t }}
+          </h3>
+          <p class="text-xs text-[#8A735C]">{{ 'roles.createRoleHint' | t }}</p>
+        </div>
+        <button
+          type="button"
+          class="rounded-lg p-1 text-[#8A735C] hover:bg-[#F8EEE2] hover:text-[#181A1D]"
+          (click)="roleModalOpen.set(false)"
+        >
+          <i class="pi pi-times text-base" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+        <!-- Role Name Input -->
+        <label class="block space-y-1.5">
+          <span class="text-xs font-bold text-[#8A735C]">{{ 'roles.roleName' | t }}</span>
+          <input
+            type="text"
+            class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3.5 text-sm font-medium outline-none focus:border-[#C27938] focus:bg-white"
+            [placeholder]="'roles.roleNamePlaceholder' | t"
+            [value]="roleNameInput()"
+            (input)="roleNameInput.set($any($event.target).value)"
+          />
+        </label>
+
+        <!-- Permissions Global Controls -->
+        <div class="flex items-center justify-between rounded-xl bg-[#F8EEE2] px-4 py-2.5">
+          <span class="text-xs font-bold text-[#4A4038]">
+            {{ 'roles.permissionsLabel' | t }} ({{ selectedPerms().length }} / {{ allSystemPermKeys().length }})
+          </span>
+          <button
+            type="button"
+            class="rounded-lg bg-white px-3 py-1 text-xs font-bold text-[#C27938] shadow-sm hover:bg-[#F3E7D8]"
+            (click)="toggleAllPerms()"
+          >
+            {{ (isAllPermsSelected() ? 'roles.deselectAll' : 'roles.selectAll') | t }}
+          </button>
+        </div>
+
+        <!-- Permission Groups Accordions / Cards -->
+        <div class="space-y-3">
+          @for (group of permissionGroups(); track group.groupKey) {
+            <div class="overflow-hidden rounded-xl border border-[#E8D5BE] bg-white">
+              <div class="flex items-center justify-between border-b border-[#EDE0D0] bg-[#FDFBF9] px-4 py-2.5">
+                <span class="text-xs font-bold text-[#181A1D]">
+                  {{ locale.isRtl() ? group.nameAr : group.nameEn }}
+                </span>
+                <button
+                  type="button"
+                  class="text-[11px] font-bold text-[#8A735C] hover:text-[#C27938]"
+                  (click)="toggleGroup(group)"
+                >
+                  {{ (isGroupSelected(group) ? 'roles.groupDeselectAll' : 'roles.groupSelectAll') | t }}
+                </button>
+              </div>
+
+              <div class="divide-y divide-[#F2E8DC] p-3 space-y-2">
+                @for (perm of group.permissions; track perm.key) {
+                  <label class="flex items-start gap-3 py-1 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      class="size-4 mt-0.5 rounded border-[#E8D5BE] text-[#C27938] focus:ring-[#C27938]"
+                      [checked]="hasPerm(perm.key)"
+                      (change)="togglePerm(perm.key)"
+                    />
+                    <div class="min-w-0">
+                      <div class="text-xs font-bold text-[#181A1D]">
+                        {{ locale.isRtl() ? (perm.nameAr || perm.key) : (perm.nameEn || perm.key) }}
+                      </div>
+                      <div class="text-[11px] text-[#8A735C]">
+                        {{ locale.isRtl() ? perm.descriptionAr : perm.descriptionEn }}
+                      </div>
+                    </div>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (roleModalError()) {
+          <p class="text-sm font-medium text-rose-700">{{ roleModalError() }}</p>
+        }
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end gap-2 border-t border-[#EDE0D0] px-5 py-4 sm:px-6">
+        <button
+          type="button"
+          class="min-h-11 rounded-xl px-4 text-sm font-bold text-[#6B5A48] hover:bg-[#F8EEE2]"
+          (click)="roleModalOpen.set(false)"
+        >
+          {{ 'common.cancel' | t }}
+        </button>
+        <button
+          type="button"
+          class="min-h-11 rounded-xl bg-[#C27938] px-5 text-sm font-bold text-white hover:bg-[#A8682F] disabled:opacity-60"
+          [disabled]="savingRole()"
+          (click)="submitRoleModal()"
+        >
+          {{ savingRole() ? ('roles.saving' | t) : ('roles.saveRole' | t) }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL: DELETE ROLE CONFIRMATION -->
+@if (deleteConfirmRole(); as targetRole) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
+    <div
+      class="w-full max-w-md rounded-2xl border border-rose-200 bg-white p-5 shadow-xl sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'roles.deleteRole' | t"
+    >
+      <div class="flex items-center gap-3 text-rose-700">
+        <i class="pi pi-exclamation-triangle text-2xl" aria-hidden="true"></i>
+        <h3 class="text-lg font-extrabold text-[#181A1D]">{{ 'roles.deleteRole' | t }}: {{ targetRole.name }}</h3>
+      </div>
+      <p class="mt-2 text-sm text-[#4A4038]">{{ 'roles.confirmDelete' | t }}</p>
+      <p class="mt-1 text-xs text-[#8A735C]">{{ 'roles.deleteWarning' | t }}</p>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          class="min-h-11 rounded-xl px-4 text-sm font-bold text-[#6B5A48] hover:bg-[#F8EEE2]"
+          (click)="deleteConfirmRole.set(null)"
+        >
+          {{ 'common.cancel' | t }}
+        </button>
+        <button
+          type="button"
+          class="min-h-11 rounded-xl bg-rose-700 px-4 text-sm font-bold text-white hover:bg-rose-800 disabled:opacity-60"
+          [disabled]="deletingRole()"
+          (click)="confirmDeleteRole()"
+        >
+          {{ 'common.delete' | t }}
+        </button>
+      </div>
     </div>
   </div>
 }

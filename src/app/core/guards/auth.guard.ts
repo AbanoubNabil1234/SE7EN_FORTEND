@@ -47,7 +47,7 @@ export const authGuard: CanActivateFn = () => {
   );
 };
 
-/** Requires Admin role with a valid, unexpired token. */
+/** Requires Staff/Admin role with a valid, unexpired token. */
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthRepository);
   const router = inject(Router);
@@ -55,7 +55,7 @@ export const adminGuard: CanActivateFn = () => {
   return auth.getCurrentUser().pipe(
     take(1),
     map((user) => {
-      if (user?.token && !isTokenExpired(user.token) && user.role === 'Admin') {
+      if (user?.token && !isTokenExpired(user.token) && user.role && user.role.toLowerCase() !== 'customer') {
         return true;
       }
       if (user?.token) {
