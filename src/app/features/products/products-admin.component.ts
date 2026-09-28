@@ -564,8 +564,10 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
         const freshCards = flattenFamilyPacks([freshFamily]);
         const replacement = freshCards[0] ?? freshFamily;
 
-        this.families.update((current) =>
-          current.map((f) => {
+        this.families.update((current) => {
+          let replaced = false;
+          const next: CatalogFamily[] = [];
+          for (const f of current) {
             const isMatch =
               f.familyKey === familyKey ||
               f.familyKey === freshFamily.familyKey ||
@@ -574,9 +576,25 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
               (newGroupCode && f.groupCode === newGroupCode) ||
               f.packs.some((p) => freshFamily.packs.some((fp) => fp.masterId === p.masterId)) ||
               (oldFamily && f.packs.some((p) => oldFamily.packs.some((op) => op.masterId === p.masterId)));
-            return isMatch ? replacement : f;
-          })
-        );
+
+            if (isMatch) {
+              if (!replaced) {
+                next.push(replacement);
+                replaced = true;
+              }
+              // If already replaced, this secondary matching card was merged into the family;
+              // drop it to prevent identical duplicate rows in the table.
+            } else {
+              if (this.listingKey(f) !== this.listingKey(replacement)) {
+                next.push(f);
+              }
+            }
+          }
+          if (!replaced) {
+            next.unshift(replacement);
+          }
+          return next;
+        });
       },
       error: () => {
         if (!silent) this.reloadKeepingSelection();
