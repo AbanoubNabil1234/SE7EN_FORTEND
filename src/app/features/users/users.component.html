@@ -18,23 +18,27 @@
 
       <div class="flex items-center gap-2">
         @if (activeTab() === 'users') {
-          <button
-            type="button"
-            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white transition hover:bg-[#A8682F]"
-            (click)="openCreate()"
-          >
-            <i class="pi pi-user-plus text-sm" aria-hidden="true"></i>
-            {{ 'users.createAdmin' | t }}
-          </button>
+          @if (canManageUsers()) {
+            <button
+              type="button"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white transition hover:bg-[#A8682F]"
+              (click)="openCreate()"
+            >
+              <i class="pi pi-user-plus text-sm" aria-hidden="true"></i>
+              {{ 'users.createAdmin' | t }}
+            </button>
+          }
         } @else {
-          <button
-            type="button"
-            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white transition hover:bg-[#A8682F]"
-            (click)="openCreateRole()"
-          >
-            <i class="pi pi-shield text-sm" aria-hidden="true"></i>
-            {{ 'roles.createRole' | t }}
-          </button>
+          @if (canManageRoles()) {
+            <button
+              type="button"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white transition hover:bg-[#A8682F]"
+              (click)="openCreateRole()"
+            >
+              <i class="pi pi-shield text-sm" aria-hidden="true"></i>
+              {{ 'roles.createRole' | t }}
+            </button>
+          }
         }
       </div>
     </div>
@@ -56,20 +60,22 @@
         <span class="rounded-full bg-[#F3E7D8] px-2 py-0.5 text-xs text-[#8A735C]">{{ items().length }}</span>
       </button>
 
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition"
-        [ngClass]="
-          activeTab() === 'roles'
-            ? 'border-[#C27938] text-[#C27938]'
-            : 'border-transparent text-[#8A735C] hover:text-[#181A1D]'
-        "
-        (click)="activeTab.set('roles')"
-      >
-        <i class="pi pi-lock text-sm" aria-hidden="true"></i>
-        <span>{{ 'users.tabRoles' | t }}</span>
-        <span class="rounded-full bg-[#F3E7D8] px-2 py-0.5 text-xs text-[#8A735C]">{{ roles().length }}</span>
-      </button>
+      @if (canManageRoles()) {
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition"
+          [ngClass]="
+            activeTab() === 'roles'
+              ? 'border-[#C27938] text-[#C27938]'
+              : 'border-transparent text-[#8A735C] hover:text-[#181A1D]'
+          "
+          (click)="activeTab.set('roles')"
+        >
+          <i class="pi pi-lock text-sm" aria-hidden="true"></i>
+          <span>{{ 'users.tabRoles' | t }}</span>
+          <span class="rounded-full bg-[#F3E7D8] px-2 py-0.5 text-xs text-[#8A735C]">{{ roles().length }}</span>
+        </button>
+      }
     </div>
 
     <!-- Users Quick Stats Bar -->
@@ -159,7 +165,9 @@
                 <th class="px-4 py-3 text-start">{{ 'users.colRole' | t }}</th>
                 <th class="px-4 py-3 text-start">{{ 'users.colStatus' | t }}</th>
                 <th class="px-4 py-3 text-start">{{ 'users.colCreated' | t }}</th>
-                <th class="px-4 py-3 text-end">{{ 'users.actions' | t }}</th>
+                @if (canManageUsers()) {
+                  <th class="px-4 py-3 text-end">{{ 'users.actions' | t }}</th>
+                }
               </tr>
             </thead>
             <tbody>
@@ -203,30 +211,32 @@
                     }
                   </td>
                   <td class="px-4 py-3.5 tabular-nums text-[#4A4038]">{{ formatDate(user.createdAt) }}</td>
-                  <td class="px-4 py-3.5 text-end">
-                    <div class="inline-flex items-center gap-1">
-                      <button
-                        type="button"
-                        class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-[#6B5A48] hover:bg-[#F8EEE2] hover:text-[#C27938]"
-                        [title]="'users.changeRole' | t"
-                        (click)="openChangeRole(user)"
-                      >
-                        <i class="pi pi-id-card text-xs" aria-hidden="true"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-[#6B5A48] hover:bg-rose-50 hover:text-rose-700"
-                        [title]="user.isActive ? ('users.toggleStatusBlock' | t) : ('users.toggleStatusActive' | t)"
-                        (click)="toggleUserStatus(user)"
-                      >
-                        <i class="pi text-xs" [ngClass]="user.isActive ? 'pi-lock' : 'pi-lock-open'" aria-hidden="true"></i>
-                      </button>
-                    </div>
-                  </td>
+                  @if (canManageUsers()) {
+                    <td class="px-4 py-3.5 text-end">
+                      <div class="inline-flex items-center gap-1">
+                        <button
+                          type="button"
+                          class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-[#6B5A48] hover:bg-[#F8EEE2] hover:text-[#C27938]"
+                          [title]="'users.changeRole' | t"
+                          (click)="openChangeRole(user)"
+                        >
+                          <i class="pi pi-id-card text-xs" aria-hidden="true"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-[#6B5A48] hover:bg-rose-50 hover:text-rose-700"
+                          [title]="user.isActive ? ('users.toggleStatusBlock' | t) : ('users.toggleStatusActive' | t)"
+                          (click)="toggleUserStatus(user)"
+                        >
+                          <i class="pi text-xs" [ngClass]="user.isActive ? 'pi-lock' : 'pi-lock-open'" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    </td>
+                  }
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="px-4 py-12 text-center text-sm text-[#8A735C]">
+                  <td [attr.colspan]="canManageUsers() ? 7 : 6" class="px-4 py-12 text-center text-sm text-[#8A735C]">
                     {{ 'users.empty' | t }}
                   </td>
                 </tr>
@@ -239,7 +249,7 @@
   }
 
   <!-- TAB 2: ROLES & PERMISSIONS -->
-  @if (activeTab() === 'roles') {
+  @if (canManageRoles() && activeTab() === 'roles') {
     @if (loadingRoles()) {
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         @for (i of [1, 2, 3]; track i) {
@@ -336,7 +346,7 @@
 </section>
 
 <!-- MODAL: CREATE USER -->
-@if (createOpen()) {
+@if (canManageUsers() && createOpen()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
     <div
       class="w-full max-w-md rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-xl sm:p-6"
@@ -431,7 +441,7 @@
 }
 
 <!-- MODAL: CHANGE USER ROLE -->
-@if (changeRoleUser(); as targetUser) {
+@if (canManageUsers() && changeRoleUser(); as targetUser) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
     <div
       class="w-full max-w-sm rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-xl sm:p-6"
@@ -481,7 +491,7 @@
 }
 
 <!-- MODAL: CREATE / EDIT ROLE WITH PERMISSION MATRIX -->
-@if (roleModalOpen()) {
+@if (canManageRoles() && roleModalOpen()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
     <div
       class="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl border border-[#E8D5BE] bg-white shadow-2xl"
@@ -603,7 +613,7 @@
 }
 
 <!-- MODAL: DELETE ROLE CONFIRMATION -->
-@if (deleteConfirmRole(); as targetRole) {
+@if (canManageRoles() && deleteConfirmRole(); as targetRole) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
     <div
       class="w-full max-w-md rounded-2xl border border-rose-200 bg-white p-5 shadow-xl sm:p-6"

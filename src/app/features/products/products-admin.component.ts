@@ -41,6 +41,7 @@ import { MatchReviewComponent } from '../match-review/match-review.component';
 import { MatchReviewRepository } from '../../core/domain/repositories/match-review.repository';
 import { AiMatchReviewModalComponent } from './components/ai-match-review-modal/ai-match-review-modal.component';
 import { ProductImageModalComponent } from './components/product-image-modal/product-image-modal.component';
+import { PermissionService } from '../../core/services/permission.service';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -76,7 +77,13 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly permissionService = inject(PermissionService);
   readonly locale = inject(LocaleService);
+
+  readonly canManageProducts = computed(() => this.permissionService.hasPermission('products.manage'));
+  readonly canManageLinking = computed(() => this.permissionService.hasPermission('product_linking.manage'));
+  readonly canViewMatchReview = computed(() => this.permissionService.hasPermission('match_review.view'));
+  readonly canManageMatchReview = computed(() => this.permissionService.hasPermission('match_review.manage'));
 
   readonly activeTab = signal<'catalog' | 'model-review'>('catalog');
   readonly modelReviewCount = signal<number>(3712);

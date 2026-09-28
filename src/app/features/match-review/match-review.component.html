@@ -266,7 +266,9 @@
             <table class="min-w-full text-sm">
               <thead class="sticky top-0 z-10 bg-[#FBF8F4] text-[11px] font-bold text-[#A68B6D] border-b border-[#EDE0D0] shadow-xs">
                 <tr>
-                  <th class="px-3 py-2.5 bg-[#FBF8F4]"></th>
+                  @if (canManage()) {
+                    <th class="px-3 py-2.5 bg-[#FBF8F4]"></th>
+                  }
                   <th class="px-3 py-2.5 text-start bg-[#FBF8F4]">{{ 'matchReview.listing' | t }}</th>
                   <th class="px-3 py-2.5 text-start bg-[#FBF8F4]">{{ 'matchReview.score' | t }}</th>
                   <th class="px-3 py-2.5 text-start bg-[#FBF8F4]">{{ 'matchReview.reason' | t }}</th>
@@ -279,9 +281,11 @@
                     [class.bg-review-selected]="selected()?.matchId === row.matchId"
                     (click)="open(row)"
                   >
-                    <td class="px-3 py-2">
-                      <input type="checkbox" [checked]="selectedIds().has(row.matchId)" (click)="$event.stopPropagation(); toggle(row.matchId)" />
-                    </td>
+                    @if (canManage()) {
+                      <td class="px-3 py-2">
+                        <input type="checkbox" [checked]="selectedIds().has(row.matchId)" (click)="$event.stopPropagation(); toggle(row.matchId)" />
+                      </td>
+                    }
                     <td class="px-3 py-2">
                       <div class="flex items-center gap-2.5">
                         <div class="size-9 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0] flex items-center justify-center relative">
@@ -488,7 +492,8 @@
           </div>
 
           <!-- Pinned Actions Container -->
-          <div class="shrink-0 pt-2.5 border-t border-[#EDE0D0] flex flex-col gap-2 bg-white">
+          @if (canManage()) {
+            <div class="shrink-0 pt-2.5 border-t border-[#EDE0D0] flex flex-col gap-2 bg-white">
             @if (selectedMode() === 'auto_98_99') {
               <!-- Unlink Button for Auto-Linked items -->
               <button
@@ -552,6 +557,7 @@
               </button>
             }
           </div>
+        }
         } @else {
           <p class="text-sm text-[#8A735C] py-8 text-center">{{ 'matchReview.empty' | t }}</p>
         }

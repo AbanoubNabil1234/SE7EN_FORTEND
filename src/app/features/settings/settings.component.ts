@@ -10,6 +10,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { API_ORIGIN } from '../../core/infrastructure/http/api-origin';
 import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.constants';
 import { AuditLogsComponent } from '../audit-logs/audit-logs.component';
+import { PermissionService } from '../../core/services/permission.service';
 
 type SettingsTab = 'help' | 'terms' | 'privacy' | 'logs' | 'dev';
 type ContentLang = 'ar' | 'en';
@@ -85,6 +86,9 @@ export class SettingsComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly permissionService = inject(PermissionService);
+
+  readonly canManage = computed(() => this.permissionService.hasPermission('settings.manage'));
 
   readonly apiOrigin = API_ORIGIN;
   readonly activeTab = signal<SettingsTab>('help');

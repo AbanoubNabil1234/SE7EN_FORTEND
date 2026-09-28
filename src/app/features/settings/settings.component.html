@@ -42,7 +42,7 @@
       </div>
 
       <!-- Save Button for CMS & Dev Tabs -->
-      @if (activeTab() !== 'logs') {
+      @if (activeTab() !== 'logs' && canManage()) {
         <button
           type="button"
           (click)="saveContentChanges()"
@@ -483,7 +483,8 @@
             <button
               type="button"
               (click)="content.isMaintenanceMode = !content.isMaintenanceMode"
-              class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+              [disabled]="!canManage()"
+              class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               [ngClass]="content.isMaintenanceMode ? 'bg-[#C27938]' : 'bg-[#D6C4B0]'"
             >
               <span
@@ -547,7 +548,8 @@
               <button
                 type="button"
                 (click)="content.isDevMode = !content.isDevMode"
-                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                [disabled]="!canManage()"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 [ngClass]="content.isDevMode ? 'bg-[#C27938]' : 'bg-[#D6C4B0]'"
               >
                 <span
@@ -566,7 +568,8 @@
               <button
                 type="button"
                 (click)="toggleDebugLogs()"
-                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                [disabled]="!canManage()"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 [ngClass]="devSettings().debugLogs ? 'bg-[#C27938]' : 'bg-[#D6C4B0]'"
               >
                 <span
@@ -585,7 +588,8 @@
               <button
                 type="button"
                 (click)="toggleMockFallback()"
-                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                [disabled]="!canManage()"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 [ngClass]="devSettings().mockFallback ? 'bg-[#C27938]' : 'bg-[#D6C4B0]'"
               >
                 <span
@@ -606,7 +610,8 @@
               <button
                 type="button"
                 (click)="clearLocalCache()"
-                class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-rose-700"
+                [disabled]="!canManage()"
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <i class="pi pi-trash text-xs"></i>
                 <span>{{ 'settings.clearCacheBtn' | t }}</span>

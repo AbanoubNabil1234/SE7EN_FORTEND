@@ -86,49 +86,51 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-2 self-end sm:self-auto">
-                <button
-                  type="button"
-                  class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
-                  [disabled]="sheetBusy()"
-                  [attr.aria-label]="('searchPharmacies.exportSheet' | t) + ' ' + p.name"
-                  (click)="exportSheet(p)"
-                >
-                  <i class="pi pi-download text-xs" [class.pi-spin]="exportingId() === p.id" aria-hidden="true"></i>
-                  {{
-                    exportingId() === p.id
-                      ? ('searchPharmacies.exporting' | t)
-                      : ('searchPharmacies.exportSheet' | t)
-                  }}
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
-                  [disabled]="sheetBusy()"
-                  [attr.aria-label]="('searchPharmacies.importSheet' | t) + ' ' + p.name"
-                  (click)="pickImport(p)"
-                >
-                  <i class="pi pi-upload text-xs" [class.pi-spin]="importingId() === p.id" aria-hidden="true"></i>
-                  {{
-                    importingId() === p.id
-                      ? ('searchPharmacies.importing' | t)
-                      : ('searchPharmacies.importSheet' | t)
-                  }}
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
-                  [disabled]="!p.isEnabled || syncingId() === p.id"
-                  [attr.title]="!p.isEnabled ? ('searchPharmacies.syncHarvestOff' | t) : null"
-                  (click)="syncPrices(p)"
-                >
-                  <i class="pi pi-refresh text-xs" [class.pi-spin]="syncingId() === p.id"></i>
-                  {{
-                    syncingId() === p.id
-                      ? ('searchPharmacies.syncing' | t)
-                      : ('searchPharmacies.syncPrices' | t)
-                  }}
-                </button>
-                <label class="inline-flex cursor-pointer items-center gap-3">
+                @if (canManage()) {
+                  <button
+                    type="button"
+                    class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
+                    [disabled]="sheetBusy()"
+                    [attr.aria-label]="('searchPharmacies.exportSheet' | t) + ' ' + p.name"
+                    (click)="exportSheet(p)"
+                  >
+                    <i class="pi pi-download text-xs" [class.pi-spin]="exportingId() === p.id" aria-hidden="true"></i>
+                    {{
+                      exportingId() === p.id
+                        ? ('searchPharmacies.exporting' | t)
+                        : ('searchPharmacies.exportSheet' | t)
+                    }}
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
+                    [disabled]="sheetBusy()"
+                    [attr.aria-label]="('searchPharmacies.importSheet' | t) + ' ' + p.name"
+                    (click)="pickImport(p)"
+                  >
+                    <i class="pi pi-upload text-xs" [class.pi-spin]="importingId() === p.id" aria-hidden="true"></i>
+                    {{
+                      importingId() === p.id
+                        ? ('searchPharmacies.importing' | t)
+                        : ('searchPharmacies.importSheet' | t)
+                    }}
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#E8D5BE] bg-white px-3 text-xs font-bold text-[#181A1D] hover:bg-[#FBF8F4] disabled:cursor-not-allowed disabled:opacity-40"
+                    [disabled]="!p.isEnabled || syncingId() === p.id"
+                    [attr.title]="!p.isEnabled ? ('searchPharmacies.syncHarvestOff' | t) : null"
+                    (click)="syncPrices(p)"
+                  >
+                    <i class="pi pi-refresh text-xs" [class.pi-spin]="syncingId() === p.id"></i>
+                    {{
+                      syncingId() === p.id
+                        ? ('searchPharmacies.syncing' | t)
+                        : ('searchPharmacies.syncPrices' | t)
+                    }}
+                  </button>
+                }
+                <label class="inline-flex items-center gap-3" [class.cursor-pointer]="canManage()">
                   <span class="text-xs font-bold text-[#8A735C]">
                     {{
                       p.showInCustomerSearch
@@ -136,25 +138,34 @@
                         : ('searchPharmacies.hidden' | t)
                     }}
                   </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    class="relative h-8 w-14 rounded-full transition-colors"
-                    [class.bg-[#C27938]]="p.showInCustomerSearch"
-                    [class.bg-[#E8D5BE]]="!p.showInCustomerSearch"
-                    [attr.aria-checked]="p.showInCustomerSearch"
-                    [attr.aria-label]="('searchPharmacies.toggleAria' | t) + ' ' + p.name"
-                    [disabled]="savingId() === p.id"
-                    (click)="toggle(p)"
-                  >
+                  @if (canManage()) {
+                    <button
+                      type="button"
+                      role="switch"
+                      class="relative h-8 w-14 rounded-full transition-colors"
+                      [class.bg-[#C27938]]="p.showInCustomerSearch"
+                      [class.bg-[#E8D5BE]]="!p.showInCustomerSearch"
+                      [attr.aria-checked]="p.showInCustomerSearch"
+                      [attr.aria-label]="('searchPharmacies.toggleAria' | t) + ' ' + p.name"
+                      [disabled]="savingId() === p.id"
+                      (click)="toggle(p)"
+                    >
+                      <span
+                        class="absolute top-1 size-6 rounded-full bg-white shadow transition-transform"
+                        [class.start-1]="!p.showInCustomerSearch"
+                        [class.end-1]="p.showInCustomerSearch"
+                        [style.inset-inline-start]="p.showInCustomerSearch ? 'auto' : '0.25rem'"
+                        [style.inset-inline-end]="p.showInCustomerSearch ? '0.25rem' : 'auto'"
+                      ></span>
+                    </button>
+                  } @else {
                     <span
-                      class="absolute top-1 size-6 rounded-full bg-white shadow transition-transform"
-                      [class.start-1]="!p.showInCustomerSearch"
-                      [class.end-1]="p.showInCustomerSearch"
-                      [style.inset-inline-start]="p.showInCustomerSearch ? 'auto' : '0.25rem'"
-                      [style.inset-inline-end]="p.showInCustomerSearch ? '0.25rem' : 'auto'"
-                    ></span>
-                  </button>
+                      class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold"
+                      [ngClass]="p.showInCustomerSearch ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-700'"
+                    >
+                      {{ (p.showInCustomerSearch ? 'searchPharmacies.visible' : 'searchPharmacies.hidden') | t }}
+                    </span>
+                  }
                 </label>
               </div>
             </li>

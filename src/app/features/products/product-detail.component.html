@@ -102,9 +102,11 @@
           <div class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
               <div
-                class="group relative mx-auto size-32 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 sm:mx-0 cursor-pointer shadow-xs transition hover:border-[#C27938]/60"
-                (click)="openImageModal()"
-                [title]="'productsAdmin.clickChangeImage' | t"
+                class="group relative mx-auto size-32 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 sm:mx-0 shadow-xs transition"
+                [class.cursor-pointer]="canManageProducts()"
+                [class.hover:border-[#C27938]/60]="canManageProducts()"
+                (click)="canManageProducts() ? openImageModal() : null"
+                [title]="canManageProducts() ? ('productsAdmin.clickChangeImage' | t) : ''"
               >
                 @if (heroImage(f); as img) {
                   <img [src]="img" [alt]="familyTitle(f)" class="size-full object-contain p-2" />
@@ -113,10 +115,12 @@
                     <i class="pi pi-image text-3xl"></i>
                   </div>
                 }
-                <div class="absolute inset-0 hidden group-hover:flex flex-col items-center justify-center bg-black/45 text-white text-xs font-bold transition backdrop-blur-xs">
-                  <i class="pi pi-pencil mb-1 text-sm"></i>
-                  <span>{{ 'productsAdmin.clickChangeImage' | t }}</span>
-                </div>
+                @if (canManageProducts()) {
+                  <div class="absolute inset-0 hidden group-hover:flex flex-col items-center justify-center bg-black/45 text-white text-xs font-bold transition backdrop-blur-xs">
+                    <i class="pi pi-pencil mb-1 text-sm"></i>
+                    <span>{{ 'productsAdmin.clickChangeImage' | t }}</span>
+                  </div>
+                }
               </div>
 
               <div class="min-w-0 flex-1 space-y-2">
@@ -214,14 +218,16 @@
                     <h2 class="text-sm font-bold text-slate-900">{{ 'productDetail.offers' | t }}</h2>
                     <p class="mt-0.5 text-xs text-slate-500">{{ 'productDetail.packsHint' | t }}</p>
                   </div>
-                  <button
-                    type="button"
-                    class="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-teal-700/30 bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-800 hover:bg-teal-700 hover:text-white transition-colors"
-                    (click)="openQuickAdd()"
-                  >
-                    <i class="pi pi-plus text-xs" aria-hidden="true"></i>
-                    <span>{{ 'quickAdd.addOffer' | t }}</span>
-                  </button>
+                  @if (canManageLinking()) {
+                    <button
+                      type="button"
+                      class="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-teal-700/30 bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-800 hover:bg-teal-700 hover:text-white transition-colors"
+                      (click)="openQuickAdd()"
+                    >
+                      <i class="pi pi-plus text-xs" aria-hidden="true"></i>
+                      <span>{{ 'quickAdd.addOffer' | t }}</span>
+                    </button>
+                  }
                 </div>
                 @if (selectedPack(); as pack) {
                   <div class="text-xs font-bold tabular-nums text-slate-700">
@@ -356,7 +362,7 @@
                               {{ 'productDetail.openOffer' | t }}
                             </a>
                           }
-                          @if (offer.pharmacyProductId) {
+                          @if (canManageLinking() && offer.pharmacyProductId) {
                             <input
                               class="min-h-8 w-24 rounded-lg border border-slate-200 bg-white px-2 font-mono text-[11px] font-bold uppercase text-slate-900 outline-none focus:border-teal-700"
                               [placeholder]="'productDetail.pasteCode' | t"
@@ -402,17 +408,21 @@
       }
     </section>
 
-    <app-quick-add-product-modal
-      [family]="family()"
-      [isOpen]="isQuickAddOpen()"
-      (close)="closeQuickAdd()"
-      (productAdded)="onQuickProductAdded($event)"
-    />
+    @if (canManageLinking()) {
+      <app-quick-add-product-modal
+        [family]="family()"
+        [isOpen]="isQuickAddOpen()"
+        (close)="closeQuickAdd()"
+        (productAdded)="onQuickProductAdded($event)"
+      />
+    }
 
-    <app-product-image-modal
-      [isOpen]="isImageModalOpen()"
-      [family]="family()"
-      [initialMasterId]="selectedMasterId()"
-      (close)="isImageModalOpen.set(false)"
-      (imageChanged)="onImageChanged($event)"
-    />
+    @if (canManageProducts()) {
+      <app-product-image-modal
+        [isOpen]="isImageModalOpen()"
+        [family]="family()"
+        [initialMasterId]="selectedMasterId()"
+        (close)="isImageModalOpen.set(false)"
+        (imageChanged)="onImageChanged($event)"
+      />
+    }

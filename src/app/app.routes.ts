@@ -22,6 +22,8 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
+        canActivate: [permissionGuard],
+        data: { permission: 'dashboard.view' },
         loadComponent: () =>
           import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
       },
@@ -137,6 +139,8 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
+        canActivate: [permissionGuard],
+        data: { permission: 'settings.view' },
         loadComponent: () =>
           import('./features/settings/settings.component').then((m) => m.SettingsComponent)
       }

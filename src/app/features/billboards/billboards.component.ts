@@ -8,6 +8,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { PermissionService } from '../../core/services/permission.service';
 
 @Component({
   selector: 'app-billboards',
@@ -19,9 +20,12 @@ export class BillboardsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly billboards = inject(BillboardRepository);
   private readonly i18n = inject(I18nService);
+  private readonly permissionService = inject(PermissionService);
   readonly locale = inject(LocaleService);
   private readonly notifications = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly canManage = computed(() => this.permissionService.hasPermission('billboards.manage'));
 
   readonly query = signal('');
   readonly statusFilter = signal<'all' | 'active' | 'inactive'>('all');

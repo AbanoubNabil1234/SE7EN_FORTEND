@@ -39,23 +39,25 @@
                 <span>{{ 'productsAdmin.tabCatalog' | t }}</span>
               </button>
 
-              <button
-                type="button"
-                (click)="switchTab('model-review')"
-                [class]="activeTab() === 'model-review' 
-                  ? 'bg-[#C27938] text-white shadow-sm' 
-                  : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
-                class="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all cursor-pointer"
-              >
-                <i class="pi pi-sparkles text-xs"></i>
-                <span>{{ 'productsAdmin.tabModelReview' | t }}</span>
-                <span 
-                  [class]="activeTab() === 'model-review' ? 'bg-white/20 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
-                  class="rounded-full px-2.5 py-0.5 text-xs font-extrabold tabular-nums transition-colors"
+              @if (canViewMatchReview()) {
+                <button
+                  type="button"
+                  (click)="switchTab('model-review')"
+                  [class]="activeTab() === 'model-review' 
+                    ? 'bg-[#C27938] text-white shadow-sm' 
+                    : 'border border-[#E8D5BE] bg-white text-[#8A735C] hover:bg-[#FBF8F4] hover:text-[#181A1D]'"
+                  class="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-all cursor-pointer"
                 >
-                  {{ modelReviewCount() > 0 ? (modelReviewCount() | number) : '2,731' }}
-                </span>
-              </button>
+                  <i class="pi pi-sparkles text-xs"></i>
+                  <span>{{ 'productsAdmin.tabModelReview' | t }}</span>
+                  <span 
+                    [class]="activeTab() === 'model-review' ? 'bg-white/20 text-white' : 'bg-[#F8EEE2] text-[#C27938]'"
+                    class="rounded-full px-2.5 py-0.5 text-xs font-extrabold tabular-nums transition-colors"
+                  >
+                    {{ modelReviewCount() > 0 ? (modelReviewCount() | number) : '2,731' }}
+                  </span>
+                </button>
+              }
             </div>
 
             <a
@@ -251,9 +253,11 @@
             <article class="border-t border-[#EDE0D0] even:bg-[#FBF8F4]/60 hover:bg-[#F8EEE2]/50">
               <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
                 <div
-                  class="group/img relative size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0]/60 cursor-pointer shadow-xs transition hover:border-[#C27938]"
-                  (click)="openImageModal(family)"
-                  [title]="'productsAdmin.clickChangeImage' | t"
+                  class="group/img relative size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0]/60 shadow-xs transition"
+                  [class.cursor-pointer]="canManageProducts()"
+                  [class.hover:border-[#C27938]]="canManageProducts()"
+                  (click)="canManageProducts() ? openImageModal(family) : null"
+                  [title]="canManageProducts() ? ('productsAdmin.clickChangeImage' | t) : ''"
                 >
                   @if (cardImage(family); as img) {
                     <img [src]="img" [alt]="familyTitle(family)" class="size-full object-contain p-1" loading="lazy" />
@@ -262,9 +266,11 @@
                       <i class="pi pi-image text-sm" aria-hidden="true"></i>
                     </div>
                   }
-                  <div class="absolute inset-0 hidden group-hover/img:flex items-center justify-center bg-black/50 text-white text-[10px] transition">
-                    <i class="pi pi-pencil"></i>
-                  </div>
+                  @if (canManageProducts()) {
+                    <div class="absolute inset-0 hidden group-hover/img:flex items-center justify-center bg-black/50 text-white text-[10px] transition">
+                      <i class="pi pi-pencil"></i>
+                    </div>
+                  }
                 </div>
 
                 <div class="min-w-0">
@@ -276,7 +282,7 @@
                   </h2>
                   <div class="mt-1 flex flex-wrap items-center gap-1.5">
                     <span [class]="matchBadgeClass(family)">{{ matchLabelKey(family) | t }}</span>
-                    @if (hasAiMatch(family)) {
+                    @if (hasAiMatch(family) && canManageMatchReview()) {
                       <button
                         type="button"
                         (click)="openAiReviewModal()"
@@ -341,14 +347,16 @@
                           [attr.aria-invalid]="!!barcodeError(family)"
                           [attr.aria-describedby]="barcodeError(family) ? barcodeErrorId(family) : null"
                         />
-                        <button
-                          type="button"
-                          class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-[#181A1D] px-2.5 text-[11px] font-bold text-white hover:bg-black disabled:opacity-50"
-                          [disabled]="barcodeBusyId() === cardMasterId(family)"
-                          (click)="saveBarcode(family)"
-                        >
-                          {{ 'productsAdmin.saveBarcode' | t }}
-                        </button>
+                        @if (canManageProducts()) {
+                          <button
+                            type="button"
+                            class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-[#181A1D] px-2.5 text-[11px] font-bold text-white hover:bg-black disabled:opacity-50"
+                            [disabled]="barcodeBusyId() === cardMasterId(family)"
+                            (click)="saveBarcode(family)"
+                          >
+                            {{ 'productsAdmin.saveBarcode' | t }}
+                          </button>
+                        }
                       </div>
                       @if (barcodeError(family); as err) {
                         <p
@@ -471,23 +479,25 @@
                       <h3 class="text-xs font-bold uppercase tracking-wide text-[#A68B6D]">
                         {{ 'productsAdmin.offers' | t }}
                       </h3>
-                      <button
-                        type="button"
-                        class="inline-flex min-h-7 items-center gap-1 rounded-lg border border-[#C27938]/30 bg-[#F8EEE2] px-2 py-0.5 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-colors"
-                        (click)="openQuickAdd(family)"
-                      >
-                        <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
-                        <span>{{ 'quickAdd.addOffer' | t }}</span>
-                      </button>
-                      @if (family.groupCode) {
+                      @if (canManageLinking()) {
                         <button
                           type="button"
                           class="inline-flex min-h-7 items-center gap-1 rounded-lg border border-[#C27938]/30 bg-[#F8EEE2] px-2 py-0.5 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-colors"
-                          (click)="openMergeModal(family)"
+                          (click)="openQuickAdd(family)"
                         >
-                          <i class="pi pi-link text-[10px]" aria-hidden="true"></i>
-                          <span>{{ 'productsAdmin.mergeGroup' | t }}</span>
+                          <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
+                          <span>{{ 'quickAdd.addOffer' | t }}</span>
                         </button>
+                        @if (family.groupCode) {
+                          <button
+                            type="button"
+                            class="inline-flex min-h-7 items-center gap-1 rounded-lg border border-[#C27938]/30 bg-[#F8EEE2] px-2 py-0.5 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-colors"
+                            (click)="openMergeModal(family)"
+                          >
+                            <i class="pi pi-link text-[10px]" aria-hidden="true"></i>
+                            <span>{{ 'productsAdmin.mergeGroup' | t }}</span>
+                          </button>
+                        }
                       }
                     </div>
                     @if (selectedPack(family); as pack) {
@@ -579,7 +589,7 @@
                               {{ 'productsAdmin.openOffer' | t }}
                             </a>
                           }
-                          @if (offer.pharmacyProductId) {
+                          @if (canManageLinking() && offer.pharmacyProductId) {
                             <div class="flex items-center gap-1">
                               <input
                                 class="min-h-9 w-28 rounded-lg border border-[#E8D5BE] bg-[#FBF8F4] px-2 font-mono text-xs font-bold uppercase outline-none focus:border-[#C27938]"
@@ -665,29 +675,35 @@
           </div>
         }
       }
-      } @else {
+      } @else if (canViewMatchReview()) {
         <app-match-review [isEmbedded]="true" [initialMode]="'auto_98_99'"></app-match-review>
       }
     </section>
 
-    <app-quick-add-product-modal
-      [family]="quickAddFamily()"
-      [isOpen]="isQuickAddOpen()"
-      (close)="closeQuickAdd()"
-      (productAdded)="onQuickProductAdded($event)"
-      (familyMerged)="onFamilyMerged()"
-    />
+    @if (canManageLinking()) {
+      <app-quick-add-product-modal
+        [family]="quickAddFamily()"
+        [isOpen]="isQuickAddOpen()"
+        (close)="closeQuickAdd()"
+        (productAdded)="onQuickProductAdded($event)"
+        (familyMerged)="onFamilyMerged()"
+      />
+    }
 
-    <app-ai-match-review-modal
-      [isOpen]="isAiReviewModalOpen()"
-      [initialMatchId]="selectedAiMatchId()"
-      (close)="closeAiReviewModal()"
-      (matchResolved)="onAiMatchResolved($event)"
-    />
+    @if (canManageMatchReview()) {
+      <app-ai-match-review-modal
+        [isOpen]="isAiReviewModalOpen()"
+        [initialMatchId]="selectedAiMatchId()"
+        (close)="closeAiReviewModal()"
+        (matchResolved)="onAiMatchResolved($event)"
+      />
+    }
 
-    <app-product-image-modal
-      [isOpen]="isImageModalOpen()"
-      [family]="imageTargetFamily()"
-      (close)="closeImageModal()"
-      (imageChanged)="onImageChanged($event)"
-    />
+    @if (canManageProducts()) {
+      <app-product-image-modal
+        [isOpen]="isImageModalOpen()"
+        [family]="imageTargetFamily()"
+        (close)="closeImageModal()"
+        (imageChanged)="onImageChanged($event)"
+      />
+    }

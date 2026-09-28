@@ -17,63 +17,67 @@
           </div>
 
           <!-- Top Action Buttons: Refresh Cache -->
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              (click)="refreshCacheNow()"
-              [disabled]="refreshingCache()"
-              class="inline-flex items-center gap-2 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 py-2.5 text-xs font-bold text-[#181A1D] shadow-xs transition hover:bg-[#F3EDE5] disabled:opacity-50"
-            >
-              <i class="pi pi-refresh text-xs text-[#C27938]" [ngClass]="refreshingCache() ? 'pi-spin' : ''"></i>
-              <span>{{ (refreshingCache() ? 'bestDeals.refreshingCache' : 'bestDeals.refreshCache') | t }}</span>
-            </button>
-          </div>
+          @if (canManage()) {
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                (click)="refreshCacheNow()"
+                [disabled]="refreshingCache()"
+                class="inline-flex items-center gap-2 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 py-2.5 text-xs font-bold text-[#181A1D] shadow-xs transition hover:bg-[#F3EDE5] disabled:opacity-50"
+              >
+                <i class="pi pi-refresh text-xs text-[#C27938]" [ngClass]="refreshingCache() ? 'pi-spin' : ''"></i>
+                <span>{{ (refreshingCache() ? 'bestDeals.refreshingCache' : 'bestDeals.refreshCache') | t }}</span>
+              </button>
+            </div>
+          }
         </div>
 
         <!-- System-wide Default Minimum Discount Configuration Bar -->
-        <div class="border-t border-[#EDE0D0] bg-[#FCF9F5] p-4 sm:px-6">
-          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex items-center gap-3">
-              <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#C27938]/15 text-[#C27938]">
-                <i class="pi pi-sliders-h text-sm"></i>
-              </span>
-              <div>
-                <div class="text-xs font-bold text-[#181A1D] sm:text-sm">
-                  {{ 'bestDeals.systemDefaultMinDiscount' | t }}
-                </div>
-                <div class="text-[11px] text-[#8A735C]">
-                  {{ 'bestDeals.systemDefaultHint' | t }}
+        @if (canManage()) {
+          <div class="border-t border-[#EDE0D0] bg-[#FCF9F5] p-4 sm:px-6">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#C27938]/15 text-[#C27938]">
+                  <i class="pi pi-sliders-h text-sm"></i>
+                </span>
+                <div>
+                  <div class="text-xs font-bold text-[#181A1D] sm:text-sm">
+                    {{ 'bestDeals.systemDefaultMinDiscount' | t }}
+                  </div>
+                  <div class="text-[11px] text-[#8A735C]">
+                    {{ 'bestDeals.systemDefaultHint' | t }}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="flex flex-wrap items-center gap-3">
-              <div class="flex items-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-3 py-1.5 shadow-xs">
-                <span class="text-xs font-bold text-[#8A735C]">%</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="80"
-                  step="5"
-                  [ngModel]="systemMinDiscount"
-                  (ngModelChange)="onSystemMinDiscountInput($event)"
-                  (keydown.enter)="saveSystemDefault()"
-                  class="w-16 text-center text-sm font-extrabold text-[#C27938] outline-none"
-                />
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-3 py-1.5 shadow-xs">
+                  <span class="text-xs font-bold text-[#8A735C]">%</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="80"
+                    step="5"
+                    [ngModel]="systemMinDiscount"
+                    (ngModelChange)="onSystemMinDiscountInput($event)"
+                    (keydown.enter)="saveSystemDefault()"
+                    class="w-16 text-center text-sm font-extrabold text-[#C27938] outline-none"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  (click)="saveSystemDefault()"
+                  [disabled]="savingSettings()"
+                  class="inline-flex items-center gap-2 rounded-xl bg-[#C27938] px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#A8682F] disabled:opacity-50"
+                >
+                  <i class="pi text-xs" [ngClass]="savingSettings() ? 'pi-spin pi-spinner' : 'pi-check'"></i>
+                  <span>{{ (savingSettings() ? 'bestDeals.savingSettings' : 'bestDeals.saveSystemDefault') | t }}</span>
+                </button>
               </div>
-
-              <button
-                type="button"
-                (click)="saveSystemDefault()"
-                [disabled]="savingSettings()"
-                class="inline-flex items-center gap-2 rounded-xl bg-[#C27938] px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#A8682F] disabled:opacity-50"
-              >
-                <i class="pi text-xs" [ngClass]="savingSettings() ? 'pi-spin pi-spinner' : 'pi-check'"></i>
-                <span>{{ (savingSettings() ? 'bestDeals.savingSettings' : 'bestDeals.saveSystemDefault') | t }}</span>
-              </button>
             </div>
           </div>
-        </div>
+        }
 
         <!-- KPI Metrics Ribbon -->
         <div class="grid grid-cols-2 divide-x divide-y divide-[#EDE0D0] border-t border-[#EDE0D0] bg-white rtl:divide-x-reverse sm:grid-cols-4 sm:divide-y-0">
@@ -349,16 +353,20 @@
 
                 <!-- Admin Action Toolbar on Card -->
                 <div class="flex items-center justify-between border-t border-[#EDE0D0] pt-2 mt-2">
-                  <!-- Pin/Unpin Button -->
-                  <button
-                    type="button"
-                    (click)="togglePin(deal)"
-                    class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold transition"
-                    [ngClass]="deal.isPinned ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-[#FBF8F4] text-[#6B5A48] border border-[#E8D5BE] hover:bg-[#F3EDE5]'"
-                  >
-                    <i class="pi" [ngClass]="deal.isPinned ? 'pi-bookmark-fill' : 'pi-bookmark'"></i>
-                    <span>{{ (deal.isPinned ? 'bestDeals.unpinAction' : 'bestDeals.pinAction') | t }}</span>
-                  </button>
+                  @if (canManage()) {
+                    <!-- Pin/Unpin Button -->
+                    <button
+                      type="button"
+                      (click)="togglePin(deal)"
+                      class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold transition"
+                      [ngClass]="deal.isPinned ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-[#FBF8F4] text-[#6B5A48] border border-[#E8D5BE] hover:bg-[#F3EDE5]'"
+                    >
+                      <i class="pi" [ngClass]="deal.isPinned ? 'pi-bookmark-fill' : 'pi-bookmark'"></i>
+                      <span>{{ (deal.isPinned ? 'bestDeals.unpinAction' : 'bestDeals.pinAction') | t }}</span>
+                    </button>
+                  } @else {
+                    <span></span>
+                  }
 
                   <div class="flex items-center gap-1">
                     <!-- Inspect Product Details -->
@@ -371,15 +379,17 @@
                       <i class="pi pi-external-link text-xs"></i>
                     </button>
 
-                    <!-- Exclude Deal Button -->
-                    <button
-                      type="button"
-                      (click)="toggleExclude(deal)"
-                      class="inline-flex size-7 items-center justify-center rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100"
-                      [title]="'bestDeals.excludeAction' | t"
-                    >
-                      <i class="pi pi-eye-slash text-xs"></i>
-                    </button>
+                    @if (canManage()) {
+                      <!-- Exclude Deal Button -->
+                      <button
+                        type="button"
+                        (click)="toggleExclude(deal)"
+                        class="inline-flex size-7 items-center justify-center rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100"
+                        [title]="'bestDeals.excludeAction' | t"
+                      >
+                        <i class="pi pi-eye-slash text-xs"></i>
+                      </button>
+                    }
                   </div>
                 </div>
               </div>

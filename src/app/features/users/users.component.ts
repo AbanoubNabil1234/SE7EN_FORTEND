@@ -10,6 +10,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.constants';
 import { RoleService } from '../../core/services/role.service';
 import { AdminRole, PermissionGroup } from '../../core/domain/models/role.model';
+import { PermissionService } from '../../core/services/permission.service';
 
 interface AdminUserRow {
   id: string;
@@ -36,7 +37,11 @@ export class UsersComponent implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly notifications = inject(NotificationService);
   private readonly roleService = inject(RoleService);
+  private readonly permissionService = inject(PermissionService);
   readonly locale = inject(LocaleService);
+
+  readonly canManageUsers = computed(() => this.permissionService.hasPermission('users.manage'));
+  readonly canManageRoles = computed(() => this.permissionService.hasPermission('roles.manage'));
 
   readonly activeTab = signal<'users' | 'roles'>('users');
 
@@ -137,7 +142,9 @@ export class UsersComponent implements OnInit {
 
   ngOnInit(): void {
     this.reloadUsers();
-    this.reloadRoles();
+    if (this.canManageRoles()) {
+      this.reloadRoles();
+    }
   }
 
   reloadUsers(): void {

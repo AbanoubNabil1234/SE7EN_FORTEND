@@ -16,6 +16,7 @@ import { LocaleService } from '../../core/services/locale.service';
 import { resolveApiUrl } from '../../core/infrastructure/http/api-origin';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { PermissionService } from '../../core/services/permission.service';
 
 interface CategoryVisual {
   icon: string;
@@ -119,6 +120,9 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   readonly locale = inject(LocaleService);
   readonly i18n = inject(I18nService);
+  private readonly permissionService = inject(PermissionService);
+
+  readonly canManage = computed(() => this.permissionService.hasPermission('categories.manage'));
 
   // Categories Tree State
   readonly roots = signal<CategoryNode[]>([]);

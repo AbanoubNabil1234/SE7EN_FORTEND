@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
@@ -7,6 +7,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.constants';
+import { PermissionService } from '../../core/services/permission.service';
 
 interface PharmacyVisibility {
   id: string;
@@ -35,9 +36,12 @@ export class SearchPharmaciesComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
+  private readonly permissionService = inject(PermissionService);
   readonly locale = inject(LocaleService);
   private readonly sheetFile = viewChild<ElementRef<HTMLInputElement>>('sheetFile');
   private pendingImport: PharmacyVisibility | null = null;
+
+  readonly canManage = computed(() => this.permissionService.hasPermission('pharmacies.manage'));
 
   readonly items = signal<PharmacyVisibility[]>([]);
   readonly loading = signal(true);

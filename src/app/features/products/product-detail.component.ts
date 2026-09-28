@@ -21,6 +21,7 @@ import {
 } from '../../core/domain/pack-size-display';
 import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
 import { ProductImageModalComponent } from './components/product-image-modal/product-image-modal.component';
+import { PermissionService } from '../../core/services/permission.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -34,7 +35,11 @@ export class ProductDetailComponent implements OnInit {
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly permissionService = inject(PermissionService);
   readonly locale = inject(LocaleService);
+
+  readonly canManageProducts = computed(() => this.permissionService.hasPermission('products.manage'));
+  readonly canManageLinking = computed(() => this.permissionService.hasPermission('product_linking.manage'));
 
   readonly family = signal<CatalogFamily | null>(null);
   readonly loading = signal(false);

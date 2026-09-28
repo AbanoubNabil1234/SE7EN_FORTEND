@@ -16,6 +16,7 @@ import { LocaleService } from '../../../core/services/locale.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { ProxyImgPipe } from '../../../shared/pipes/proxy-img.pipe';
+import { PermissionService } from '../../../core/services/permission.service';
 
 export type LinkingFilterMode = 'all' | 'binary' | 'ternary' | 'quaternary' | 'partial' | 'full';
 
@@ -32,6 +33,9 @@ export class ProductLinkingComponent implements OnInit, OnDestroy {
   private readonly i18n = inject(I18nService);
   private readonly notifications = inject(NotificationService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly permissionService = inject(PermissionService);
+
+  readonly canManage = computed(() => this.permissionService.hasPermission('product_linking.manage'));
 
   // Filter & Search for Linked Products (Left Pane)
   readonly selectedCount = signal<number | null>(null);

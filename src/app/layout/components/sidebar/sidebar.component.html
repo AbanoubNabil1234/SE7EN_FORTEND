@@ -64,17 +64,19 @@
       </nav>
 
       <div class="shrink-0 space-y-1 border-t border-white/10 p-3">
-        <a
-          routerLink="/settings"
-          routerLinkActive="nav-active"
-          class="nav-link group flex min-h-11 items-center gap-3 rounded-xl px-2.5 text-[13px] font-semibold text-white/70 hover:bg-white/5 hover:text-white"
-          (click)="onNavigate()"
-        >
-          <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/5">
-            <i class="pi pi-cog text-sm leading-none" aria-hidden="true"></i>
-          </span>
-          <span>{{ 'shell.settings' | t }}</span>
-        </a>
+        @if (canViewSettings()) {
+          <a
+            routerLink="/settings"
+            routerLinkActive="nav-active"
+            class="nav-link group flex min-h-11 items-center gap-3 rounded-xl px-2.5 text-[13px] font-semibold text-white/70 hover:bg-white/5 hover:text-white"
+            (click)="onNavigate()"
+          >
+            <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/5">
+              <i class="pi pi-cog text-sm leading-none" aria-hidden="true"></i>
+            </span>
+            <span>{{ 'shell.settings' | t }}</span>
+          </a>
+        }
         <button
           type="button"
           class="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-[13px] font-semibold text-white/70 hover:bg-white/5 hover:text-white"

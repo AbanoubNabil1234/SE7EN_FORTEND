@@ -51,6 +51,8 @@ export class SidebarComponent {
     );
   });
 
+  readonly canViewSettings = computed(() => this.permissionService.hasPermission('settings.view'));
+
   onNavigate(): void {
     this.closed.emit();
   }

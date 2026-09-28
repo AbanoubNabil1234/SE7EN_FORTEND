@@ -15,14 +15,16 @@
           {{ 'billboards.subtitle' | t }}
         </p>
       </div>
-      <button
-        type="button"
-        class="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#181A1D] px-5 text-sm font-bold text-white hover:bg-black"
-        (click)="openModal()"
-      >
-        <i class="pi pi-plus text-sm" aria-hidden="true"></i>
-        {{ 'billboards.add' | t }}
-      </button>
+      @if (canManage()) {
+        <button
+          type="button"
+          class="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#181A1D] px-5 text-sm font-bold text-white hover:bg-black"
+          (click)="openModal()"
+        >
+          <i class="pi pi-plus text-sm" aria-hidden="true"></i>
+          {{ 'billboards.add' | t }}
+        </button>
+      }
     </div>
 
     <div class="grid grid-cols-3 border-t border-[#EDE0D0]">
@@ -172,24 +174,26 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-extrabold text-[#181A1D] hover:bg-[#F8EEE2] sm:flex-none sm:min-w-[7rem]"
-                (click)="editItem(item)"
-              >
-                <i class="pi pi-pencil" aria-hidden="true"></i>
-                {{ 'common.edit' | t }}
-              </button>
-              <button
-                type="button"
-                class="inline-flex size-11 items-center justify-center rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50"
-                [attr.aria-label]="'common.delete' | t"
-                (click)="askRemove(item.id)"
-              >
-                <i class="pi pi-trash" aria-hidden="true"></i>
-              </button>
-            </div>
+            @if (canManage()) {
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-extrabold text-[#181A1D] hover:bg-[#F8EEE2] sm:flex-none sm:min-w-[7rem]"
+                  (click)="editItem(item)"
+                >
+                  <i class="pi pi-pencil" aria-hidden="true"></i>
+                  {{ 'common.edit' | t }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex size-11 items-center justify-center rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50"
+                  [attr.aria-label]="'common.delete' | t"
+                  (click)="askRemove(item.id)"
+                >
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+                </button>
+              </div>
+            }
           </div>
         </article>
       } @empty {
@@ -198,20 +202,22 @@
             <i class="pi pi-megaphone text-2xl" aria-hidden="true"></i>
           </div>
           <p class="mt-4 text-pretty text-sm font-medium text-[#8A735C]">{{ 'billboards.empty' | t }}</p>
-          <button
-            type="button"
-            class="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#C27938] px-5 text-sm font-bold text-white"
-            (click)="openModal()"
-          >
-            {{ 'billboards.add' | t }}
-          </button>
+          @if (canManage()) {
+            <button
+              type="button"
+              class="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#C27938] px-5 text-sm font-bold text-white"
+              (click)="openModal()"
+            >
+              {{ 'billboards.add' | t }}
+            </button>
+          }
         </div>
       }
     </div>
   }
 </section>
 
-@if (modalOpen()) {
+@if (canManage() && modalOpen()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
     <div
       class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#E8D5BE] bg-white shadow-md"
@@ -369,7 +375,7 @@
   </div>
 }
 
-@if (pendingDeleteId()) {
+@if (canManage() && pendingDeleteId()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#181A1D]/50 p-4">
     <div
       class="w-full max-w-sm rounded-2xl border border-[#E8D5BE] bg-white p-5 shadow-md"

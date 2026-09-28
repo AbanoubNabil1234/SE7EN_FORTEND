@@ -21,6 +21,7 @@ import { ListBestDealsUseCase } from '../../core/use-cases/deals/list-best-deals
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { ProxyImgPipe } from '../../shared/pipes/proxy-img.pipe';
 import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.constants';
+import { PermissionService } from '../../core/services/permission.service';
 
 const PAGE_SIZE = 24;
 
@@ -42,7 +43,10 @@ export class BestDealsComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
+  private readonly permissionService = inject(PermissionService);
   readonly locale = inject(LocaleService);
+
+  readonly canManage = computed(() => this.permissionService.hasPermission('best_deals.manage'));
 
   readonly minBound = MIN_DISCOUNT;
   readonly maxBound = MAX_DISCOUNT;

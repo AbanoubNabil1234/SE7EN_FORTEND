@@ -212,26 +212,44 @@
           <!-- Category Details & Breadcrumbs -->
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#EDE0D0]/80 pb-4 dark:border-neutral-800">
             <div class="flex items-center gap-3.5">
-              <div
-                class="relative group/avatar flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm overflow-hidden border border-[#E8D5BE] dark:border-neutral-700 cursor-pointer"
-                [ngClass]="getVisual(activeCategoryNode()!.slug || primary.slug).gradient"
-                (click)="openImageModal(activeCategoryNode())"
-                [title]="'categories.changeImgTooltip' | t"
-              >
-                @if (hasValidImage(activeCategoryNode()!.imageUrl)) {
-                  <img
-                    [src]="resolveApiUrl(activeCategoryNode()!.imageUrl)"
-                    [alt]="activeCategoryTitle()"
-                    (error)="onImageError(activeCategoryNode()!.imageUrl)"
-                    class="size-full object-cover transition-transform group-hover/avatar:scale-105"
-                  />
-                } @else {
-                  <i [class]="getVisual(activeCategoryNode()!.slug || primary.slug).icon" class="text-2xl"></i>
-                }
-                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity text-white">
-                  <i class="pi pi-camera text-base"></i>
+              @if (canManage()) {
+                <div
+                  class="relative group/avatar flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm overflow-hidden border border-[#E8D5BE] dark:border-neutral-700 cursor-pointer"
+                  [ngClass]="getVisual(activeCategoryNode()!.slug || primary.slug).gradient"
+                  (click)="openImageModal(activeCategoryNode())"
+                  [title]="'categories.changeImgTooltip' | t"
+                >
+                  @if (hasValidImage(activeCategoryNode()!.imageUrl)) {
+                    <img
+                      [src]="resolveApiUrl(activeCategoryNode()!.imageUrl)"
+                      [alt]="activeCategoryTitle()"
+                      (error)="onImageError(activeCategoryNode()!.imageUrl)"
+                      class="size-full object-cover transition-transform group-hover/avatar:scale-105"
+                    />
+                  } @else {
+                    <i [class]="getVisual(activeCategoryNode()!.slug || primary.slug).icon" class="text-2xl"></i>
+                  }
+                  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity text-white">
+                    <i class="pi pi-camera text-base"></i>
+                  </div>
                 </div>
-              </div>
+              } @else {
+                <div
+                  class="relative flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm overflow-hidden border border-[#E8D5BE] dark:border-neutral-700"
+                  [ngClass]="getVisual(activeCategoryNode()!.slug || primary.slug).gradient"
+                >
+                  @if (hasValidImage(activeCategoryNode()!.imageUrl)) {
+                    <img
+                      [src]="resolveApiUrl(activeCategoryNode()!.imageUrl)"
+                      [alt]="activeCategoryTitle()"
+                      (error)="onImageError(activeCategoryNode()!.imageUrl)"
+                      class="size-full object-cover"
+                    />
+                  } @else {
+                    <i [class]="getVisual(activeCategoryNode()!.slug || primary.slug).icon" class="text-2xl"></i>
+                  }
+                </div>
+              }
               <div>
                 <!-- Breadcrumbs -->
                 <div class="flex items-center gap-1.5 text-[11px] font-semibold text-[#8A735C] dark:text-neutral-400 mb-0.5">
@@ -253,14 +271,16 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-              <button
-                type="button"
-                (click)="openImageModal(activeCategoryNode())"
-                class="flex items-center gap-2 rounded-2xl border border-[#C27938]/30 bg-[#F8EEE2] px-3.5 py-2 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-all shadow-xs dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-[#C27938]"
-              >
-                <i class="pi pi-camera text-xs"></i>
-                <span>{{ currentSubNode() ? ('categories.changeImgSub' | t) : ('categories.changeImgRoot' | t) }}</span>
-              </button>
+              @if (canManage()) {
+                <button
+                  type="button"
+                  (click)="openImageModal(activeCategoryNode())"
+                  class="flex items-center gap-2 rounded-2xl border border-[#C27938]/30 bg-[#F8EEE2] px-3.5 py-2 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-all shadow-xs dark:bg-neutral-800 dark:border-neutral-700 dark:hover:bg-[#C27938]"
+                >
+                  <i class="pi pi-camera text-xs"></i>
+                  <span>{{ currentSubNode() ? ('categories.changeImgSub' | t) : ('categories.changeImgRoot' | t) }}</span>
+                </button>
+              }
 
               <!-- Total Count Badge -->
               <div class="flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2 text-xs font-extrabold text-slate-700 dark:bg-neutral-800 dark:text-neutral-300">
@@ -792,7 +812,8 @@
   }
 
   <!-- Category Image Upload Modal -->
-  @if (imageModalOpen() && targetCategory(); as cat) {
+  @if (imageModalOpen() && canManage()) {
+    @if (targetCategory(); as cat) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn" (click)="closeImageModal()">
       <div
         class="relative w-full max-w-md overflow-hidden rounded-3xl border border-[#E8D5BE] bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
@@ -926,6 +947,7 @@
         </div>
       </div>
     </div>
+    }
   }
 
 </section>

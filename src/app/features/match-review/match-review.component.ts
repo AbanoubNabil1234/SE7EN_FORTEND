@@ -19,6 +19,7 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { ProxyImgPipe } from '../../shared/pipes/proxy-img.pipe';
+import { PermissionService } from '../../core/services/permission.service';
 
 @Component({
   selector: 'app-match-review',
@@ -36,7 +37,10 @@ export class MatchReviewComponent implements OnInit {
   private readonly repo = inject(MatchReviewRepository);
   private readonly notify = inject(NotificationService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly permissionService = inject(PermissionService);
   private readonly route = inject(ActivatedRoute, { optional: true });
+
+  readonly canManage = computed(() => this.permissionService.hasPermission('match_review.manage'));
 
   readonly pharmacies = PHARMACY_BRANDS;
 
