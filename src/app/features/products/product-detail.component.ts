@@ -125,8 +125,7 @@ export class ProductDetailComponent implements OnInit {
   }
 
   heroImage(f: CatalogFamily): string | null {
-    if (f.imageUrl) return f.imageUrl;
-    return f.packs.flatMap((p) => p.offers.map((o) => o.imageUrl)).find((u): u is string => !!u) ?? null;
+    return f.imageUrl;
   }
 
   pharmacyCount(f: CatalogFamily): number {

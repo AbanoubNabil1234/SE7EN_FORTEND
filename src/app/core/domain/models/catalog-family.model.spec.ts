@@ -106,7 +106,7 @@ describe('flattenFamilyPacks', () => {
 });
 
 describe('familyHeroImage', () => {
-  it('prefers nahdi then united then aldawaa and keeps whites last', () => {
+  it('does not select an offer image when the resolved image is absent', () => {
     const row = family(['Exact']);
     row.packs[0] = {
       ...row.packs[0],
@@ -119,18 +119,18 @@ describe('familyHeroImage', () => {
       ]
     };
 
-    assert.equal(familyHeroImage(row), 'https://img/nahdi.jpg');
+    assert.equal(familyHeroImage(row), null);
   });
 
-  it('uses lemon before whites when preferred pharmacies are missing', () => {
+  it('keeps a missing resolved image missing when flattening packs', () => {
     const row = family(['Exact']);
     row.packs[0] = {
       ...row.packs[0],
       offers: [offerImage('whites', 'https://img/whites.jpg'), offerImage('lemon', 'https://img/lemon.jpg')]
     };
 
-    assert.equal(familyHeroImage(row), 'https://img/lemon.jpg');
-    assert.equal(flattenFamilyPacks([row])[0].imageUrl, 'https://img/lemon.jpg');
+    assert.equal(familyHeroImage(row), null);
+    assert.equal(flattenFamilyPacks([row])[0].imageUrl, null);
   });
 });
 
@@ -286,7 +286,7 @@ function offerImage(code: string, imageUrl: string, listingName: string | null =
 }
 
 describe('target product hero image resolution', () => {
-  it('prefers family hero image from offers when family.imageUrl is null', () => {
+  it('does not revive an offer image rejected by the catalog', () => {
     const f: CatalogFamily = {
       familyKey: 'f1',
       brand: 'Panadol',
@@ -315,7 +315,7 @@ describe('target product hero image resolution', () => {
         }
       ]
     };
-    assert.equal(familyHeroImage(f), 'https://cdn.nahdi.com/panadol.jpg');
+    assert.equal(familyHeroImage(f), null);
     assert.equal(catalogFamilyTitle(f, 'ar'), 'بنادول إكسترا');
   });
 

@@ -379,8 +379,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   }
 
   cardImage(family: CatalogFamily): string | null {
-    if (family.imageUrl) return family.imageUrl;
-    return family.packs.flatMap((p) => p.offers.map((o) => o.imageUrl)).find((u): u is string => !!u) ?? null;
+    return family.imageUrl;
   }
 
   cardPrice(family: CatalogFamily): number {

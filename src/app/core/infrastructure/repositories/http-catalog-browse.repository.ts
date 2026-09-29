@@ -533,10 +533,6 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       ? packsRaw.map((p) => this.normalizePack(p)).filter((p): p is CatalogPack => p !== null)
       : [];
 
-    const imageFromPack = packs
-      .flatMap((p) => p.offers.map((o) => o.imageUrl))
-      .find((url): url is string => !!url);
-
     return {
       familyKey: familyKey || label,
       brand: (r['brand'] ?? r['Brand'] ?? null) as string | null,
@@ -545,7 +541,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       englishName: this.optionalText(r['englishName'] ?? r['EnglishName']),
       dosageForm: (r['dosageForm'] ?? r['DosageForm'] ?? null) as string | null,
       strength: (r['strength'] ?? r['Strength'] ?? null) as string | null,
-      imageUrl: resolveApiUrl((r['imageUrl'] ?? r['ImageUrl'] ?? imageFromPack ?? null) as string | null),
+      imageUrl: resolveApiUrl((r['imageUrl'] ?? r['ImageUrl'] ?? null) as string | null),
       groupCode: this.optionalText(r['groupCode'] ?? r['GroupCode']),
       packs
     };

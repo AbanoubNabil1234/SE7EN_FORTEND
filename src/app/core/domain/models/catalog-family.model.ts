@@ -141,32 +141,14 @@ export function flattenFamilyPacks(families: CatalogFamily[]): CatalogFamily[] {
   });
 }
 
-const PHARMACY_PRIORITY_ORDER = [
-  'nahdi',
-  'united',
-  'whites',
-  'aldawaa',
-  'pharmabrand',
-  'ibrand',
-  'almujtama'
-] as const;
-
 export function packHeroImage(pack: CatalogPack): string | null {
-  return pack.imageUrl || pickHeroImage(pack.offers);
+  return pack.imageUrl ?? null;
 }
 
 export function familyHeroImage(family: CatalogFamily): string | null {
-  return family.imageUrl || pickHeroImage(family.packs.flatMap((pack) => pack.offers));
+  return family.imageUrl;
 }
 
-function pickHeroImage(offers: CatalogOffer[]): string | null {
-  const withImage = offers.filter((offer) => !!offer.imageUrl?.trim());
-  for (const code of PHARMACY_PRIORITY_ORDER) {
-    const hit = withImage.find((offer) => offer.pharmacyCode?.toLowerCase() === code);
-    if (hit?.imageUrl?.trim()) return hit.imageUrl.trim();
-  }
-  return withImage[0]?.imageUrl?.trim() ?? null;
-}
 
 const HAS_ARABIC_REGEX = /[\u0600-\u06FF]/;
 
