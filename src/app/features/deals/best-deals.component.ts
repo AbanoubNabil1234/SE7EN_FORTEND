@@ -11,13 +11,19 @@ import {
   MAX_DISCOUNT,
   MIN_DISCOUNT
 } from '../../core/domain/best-deals';
-import { BestDeal, BestDealsSettings } from '../../core/domain/models/best-deal.model';
+import {
+  BestDeal,
+  BestDealsSettings,
+  CustomerBestPriceCard,
+  CustomerBestPricePharmacyOffer
+} from '../../core/domain/models/best-deal.model';
 import { PHARMACY_BRANDS, pharmacyDisplayName, pharmacyLogo } from '../../core/domain/pharmacy-brands';
 import { LocaleService } from '../../core/services/locale.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { BestDealsRepository } from '../../core/domain/repositories/best-deals.repository';
 import { ListBestDealsUseCase } from '../../core/use-cases/deals/list-best-deals.use-case';
+import { ListCustomerBestPricesUseCase } from '../../core/use-cases/deals/list-customer-best-prices.use-case';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { ProxyImgPipe } from '../../shared/pipes/proxy-img.pipe';
 import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.constants';
@@ -28,16 +34,19 @@ const PAGE_SIZE = 24;
 interface SimpleCategory {
   id: string;
   name: string;
+  slug: string;
 }
 
 @Component({
   selector: 'app-best-deals',
   standalone: true,
   imports: [CommonModule, FormsModule, TranslatePipe, CurrencyPipe, DecimalPipe, ProxyImgPipe],
-  templateUrl: './best-deals.component.html'
+  templateUrl: './best-deals.component.html',
+  styleUrl: './best-deals.component.css'
 })
 export class BestDealsComponent implements OnInit {
   private readonly listBestDeals = inject(ListBestDealsUseCase);
+  private readonly listCustomerBestPrices = inject(ListCustomerBestPricesUseCase);
   private readonly dealsRepo = inject(BestDealsRepository);
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
@@ -54,7 +63,10 @@ export class BestDealsComponent implements OnInit {
   readonly skeletonSlots = [1, 2, 3, 4, 5, 6, 7, 8];
   readonly pharmacyList = PHARMACY_BRANDS;
 
-  // State Signals
+  // View Tab State
+  readonly activeTab = signal<'store_discount' | 'best_price'>('store_discount');
+
+  // Store Discount Signals
   readonly minDiscount = signal(DEFAULT_MIN_DISCOUNT);
   readonly maxDiscount = signal<number | null>(null);
   readonly searchQuery = signal('');
@@ -71,6 +83,15 @@ export class BestDealsComponent implements OnInit {
   readonly refreshingCache = signal(false);
   readonly savingSettings = signal(false);
 
+  // Best Price Signals
+  readonly bestPrices = signal<CustomerBestPriceCard[]>([]);
+  readonly bestPricePage = signal(1);
+  readonly totalBestPrices = signal(0);
+  readonly loadingBestPrices = signal(false);
+  readonly errorBestPrices = signal(false);
+  readonly selectedBestPriceCategorySlug = signal('all');
+  readonly expandedCardIds = signal<Set<string>>(new Set<string>());
+
   readonly discountPresets = [
     { labelKey: 'common.all', label: 'All', min: 0, max: null },
     { labelAr: '10% - 20%', labelEn: '10% - 20%', min: 10, max: 20 },
@@ -84,13 +105,21 @@ export class BestDealsComponent implements OnInit {
   private fetchTimer: ReturnType<typeof setTimeout> | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private requestSeq = 0;
+  private bestPriceRequestSeq = 0;
 
   readonly hasMore = computed(() => this.deals().length < this.total());
+  readonly hasMoreBestPrices = computed(() => this.bestPrices().length < this.totalBestPrices());
 
   ngOnInit(): void {
     this.loadSettings();
     this.loadCategories();
     this.fetch(1, false);
+    this.fetchBestPrices(1, false);
+  }
+
+  switchTab(tab: 'store_discount' | 'best_price'): void {
+    if (this.activeTab() === tab) return;
+    this.activeTab.set(tab);
   }
 
   loadSettings(): void {
@@ -124,10 +153,13 @@ export class BestDealsComponent implements OnInit {
     this.http.get<unknown[]>(API_ENDPOINTS.CUSTOMER_CATEGORIES).subscribe({
       next: (list) => {
         if (!Array.isArray(list)) return;
-        const normalized = list.map((item: any) => ({
-          id: String(item.id ?? item.Id ?? item.categoryId ?? ''),
-          name: String(item.name ?? item.Name ?? item.title ?? '')
-        })).filter(c => c.id && c.name);
+        const normalized = list
+          .map((item: any) => ({
+            id: String(item.id ?? item.Id ?? item.categoryId ?? ''),
+            name: String(item.name ?? item.Name ?? item.title ?? ''),
+            slug: String(item.slug ?? item.Slug ?? '')
+          }))
+          .filter((c) => c.id && c.name);
         this.categories.set(normalized);
       },
       error: () => {}
@@ -137,14 +169,13 @@ export class BestDealsComponent implements OnInit {
   saveSystemDefault(): void {
     const val = Number(this.systemMinDiscount);
     if (!Number.isFinite(val) || val < 0 || val > 80) {
-      this.notifications.showError(
-        this.i18n.t('bestDeals.invalidDiscountError')
-      );
+      this.notifications.showError(this.i18n.t('bestDeals.invalidDiscountError'));
       return;
     }
 
     this.savingSettings.set(true);
-    this.dealsRepo.updateSettings({ defaultMinDiscount: val })
+    this.dealsRepo
+      .updateSettings({ defaultMinDiscount: val })
       .pipe(finalize(() => this.savingSettings.set(false)))
       .subscribe({
         next: (res) => {
@@ -169,19 +200,18 @@ export class BestDealsComponent implements OnInit {
 
   refreshCacheNow(): void {
     this.refreshingCache.set(true);
-    this.dealsRepo.refreshCache()
+    this.dealsRepo
+      .refreshCache()
       .pipe(finalize(() => this.refreshingCache.set(false)))
       .subscribe({
         next: () => {
-          this.notifications.showSuccess(
-            this.i18n.t('bestDeals.cacheRefreshed')
-          );
+          this.notifications.showSuccess(this.i18n.t('bestDeals.cacheRefreshed'));
+          this.loadSettings();
           this.fetch(1, false);
+          this.fetchBestPrices(1, false);
         },
         error: () => {
-          this.notifications.showError(
-            this.i18n.t('bestDeals.refreshCacheError')
-          );
+          this.notifications.showError(this.i18n.t('bestDeals.refreshCacheError'));
         }
       });
   }
@@ -191,19 +221,17 @@ export class BestDealsComponent implements OnInit {
       next: (res) => {
         this.settings.set(res);
         const isPinnedNow = res.pinnedIds.includes(deal.pharmacyProductId);
-        this.deals.update(current =>
-          current.map(d => d.pharmacyProductId === deal.pharmacyProductId ? { ...d, isPinned: isPinnedNow } : d)
+        this.deals.update((current) =>
+          current.map((d) =>
+            d.pharmacyProductId === deal.pharmacyProductId ? { ...d, isPinned: isPinnedNow } : d
+          )
         );
         this.notifications.showSuccess(
-          isPinnedNow
-            ? this.i18n.t('bestDeals.pinSuccess')
-            : this.i18n.t('bestDeals.unpinSuccess')
+          isPinnedNow ? this.i18n.t('bestDeals.pinSuccess') : this.i18n.t('bestDeals.unpinSuccess')
         );
       },
       error: () => {
-        this.notifications.showError(
-          this.i18n.t('bestDeals.pinError')
-        );
+        this.notifications.showError(this.i18n.t('bestDeals.pinError'));
       }
     });
   }
@@ -212,16 +240,14 @@ export class BestDealsComponent implements OnInit {
     this.dealsRepo.toggleExclude(deal.pharmacyProductId).subscribe({
       next: (res) => {
         this.settings.set(res);
-        this.deals.update(current => current.filter(d => d.pharmacyProductId !== deal.pharmacyProductId));
-        this.total.update(t => Math.max(0, t - 1));
-        this.notifications.showWarn(
-          this.i18n.t('bestDeals.excludeSuccess')
+        this.deals.update((current) =>
+          current.filter((d) => d.pharmacyProductId !== deal.pharmacyProductId)
         );
+        this.total.update((t) => Math.max(0, t - 1));
+        this.notifications.showWarn(this.i18n.t('bestDeals.excludeSuccess'));
       },
       error: () => {
-        this.notifications.showError(
-          this.i18n.t('bestDeals.excludeError')
-        );
+        this.notifications.showError(this.i18n.t('bestDeals.excludeError'));
       }
     });
   }
@@ -338,9 +364,11 @@ export class BestDealsComponent implements OnInit {
         page,
         pageSize: PAGE_SIZE
       })
-      .pipe(finalize(() => {
-        if (seq === this.requestSeq) this.loading.set(false);
-      }))
+      .pipe(
+        finalize(() => {
+          if (seq === this.requestSeq) this.loading.set(false);
+        })
+      )
       .subscribe({
         next: (result) => {
           if (seq !== this.requestSeq) return;
@@ -352,6 +380,160 @@ export class BestDealsComponent implements OnInit {
           if (seq !== this.requestSeq) return;
           this.error.set(true);
           if (!append) this.deals.set([]);
+        }
+      });
+  }
+
+  // --- Best Price Across Pharmacies Methods ---
+
+  onBestPriceCategoryChange(categorySlug: string): void {
+    this.selectedBestPriceCategorySlug.set(categorySlug);
+    this.bestPricePage.set(1);
+    this.fetchBestPrices(1, false);
+  }
+
+  resetBestPriceCategory(): void {
+    this.selectedBestPriceCategorySlug.set('all');
+    this.bestPricePage.set(1);
+    this.fetchBestPrices(1, false);
+  }
+
+  loadMoreBestPrices(): void {
+    if (!this.hasMoreBestPrices() || this.loadingBestPrices()) return;
+    this.fetchBestPrices(this.bestPricePage() + 1, true);
+  }
+
+  toggleExpandedCard(cardId: string): void {
+    this.expandedCardIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(cardId)) {
+        next.delete(cardId);
+      } else {
+        next.add(cardId);
+      }
+      return next;
+    });
+  }
+
+  isCardExpanded(cardId: string): boolean {
+    return this.expandedCardIds().has(cardId);
+  }
+
+  togglePinBestPrice(card: CustomerBestPriceCard): void {
+    const targetId = card.masterId || card.pharmacyProductId;
+    if (!targetId) return;
+
+    this.dealsRepo.togglePin(targetId).subscribe({
+      next: (res) => {
+        this.settings.set(res);
+        const pinnedSet = new Set(res.pinnedIds.map((id) => id.toLowerCase()));
+        const isPinnedNow = pinnedSet.has(targetId.toLowerCase());
+        this.bestPrices.update((current) =>
+          current.map((c) => {
+            const matches =
+              (c.masterId && c.masterId.toLowerCase() === targetId.toLowerCase()) ||
+              (c.pharmacyProductId &&
+                c.pharmacyProductId.toLowerCase() === targetId.toLowerCase());
+            return matches ? { ...c, isPinned: isPinnedNow } : c;
+          })
+        );
+        this.notifications.showSuccess(
+          isPinnedNow ? this.i18n.t('bestDeals.pinSuccess') : this.i18n.t('bestDeals.unpinSuccess')
+        );
+        this.fetchBestPrices(1, false);
+      },
+      error: () => {
+        this.notifications.showError(this.i18n.t('bestDeals.pinError'));
+      }
+    });
+  }
+
+  toggleExcludeBestPrice(card: CustomerBestPriceCard): void {
+    const targetId = card.masterId || card.pharmacyProductId;
+    if (!targetId) return;
+
+    this.dealsRepo.toggleExclude(targetId).subscribe({
+      next: (res) => {
+        this.settings.set(res);
+        this.bestPrices.update((current) =>
+          current.filter(
+            (c) =>
+              c.masterId?.toLowerCase() !== targetId.toLowerCase() &&
+              c.pharmacyProductId?.toLowerCase() !== targetId.toLowerCase()
+          )
+        );
+        this.totalBestPrices.update((t) => Math.max(0, t - 1));
+        this.notifications.showWarn(this.i18n.t('bestDeals.excludeSuccess'));
+      },
+      error: () => {
+        this.notifications.showError(this.i18n.t('bestDeals.excludeError'));
+      }
+    });
+  }
+
+  openBestPriceDeal(deal: CustomerBestPriceCard): void {
+    const key = deal.familyKey?.trim();
+    if (key) {
+      void this.router.navigate(['/products/detail'], { queryParams: { key } });
+      return;
+    }
+    if (deal.productUrl) {
+      window.open(deal.productUrl, '_blank', 'noopener');
+    }
+  }
+
+  openPharmacyOffer(offer: CustomerBestPricePharmacyOffer): void {
+    if (offer.productUrl) {
+      window.open(offer.productUrl, '_blank', 'noopener');
+    }
+  }
+
+  pharmacyDisplayNameFor(code: string, defaultName: string): string {
+    return pharmacyDisplayName(code, defaultName, this.locale.locale());
+  }
+
+  pharmacyLogoFor(code: string): string | null {
+    return pharmacyLogo(code);
+  }
+
+  private fetchBestPrices(page: number, append: boolean): void {
+    const seq = ++this.bestPriceRequestSeq;
+    this.loadingBestPrices.set(true);
+    this.errorBestPrices.set(false);
+
+    const slug = this.selectedBestPriceCategorySlug();
+    const categorySlug = slug && slug !== 'all' ? slug : undefined;
+
+    this.listCustomerBestPrices
+      .execute({
+        page,
+        pageSize: PAGE_SIZE,
+        categorySlug
+      })
+      .pipe(
+        finalize(() => {
+          if (seq === this.bestPriceRequestSeq) this.loadingBestPrices.set(false);
+        })
+      )
+      .subscribe({
+        next: (result) => {
+          if (seq !== this.bestPriceRequestSeq) return;
+          this.bestPricePage.set(result.page);
+          this.totalBestPrices.set(result.total);
+          const pinnedSet = new Set((this.settings()?.pinnedIds ?? []).map((id) => id.toLowerCase()));
+          const enriched = result.data.map((card) => ({
+            ...card,
+            isPinned:
+              card.isPinned ||
+              (card.masterId ? pinnedSet.has(card.masterId.toLowerCase()) : false) ||
+              (card.pharmacyProductId ? pinnedSet.has(card.pharmacyProductId.toLowerCase()) : false)
+          }));
+          this.bestPrices.update((current) => (append ? [...current, ...enriched] : enriched));
+        },
+        error: () => {
+          if (seq !== this.bestPriceRequestSeq) return;
+          this.errorBestPrices.set(true);
+          if (!append) this.bestPrices.set([]);
         }
       });
   }

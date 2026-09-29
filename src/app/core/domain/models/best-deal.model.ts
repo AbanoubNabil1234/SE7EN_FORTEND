@@ -46,3 +46,59 @@ export interface BestDealsFilterParams {
   page?: number;
   pageSize?: number;
 }
+
+export interface CustomerBestPricePharmacyOffer {
+  pharmacyCode: string;
+  name: string;
+  logoUrl?: string | null;
+  price: number;
+  currency: string;
+  availability?: string | null;
+  isBest: boolean;
+  productUrl?: string | null;
+  nameAr?: string | null;
+  nameEn?: string | null;
+  oldPrice?: number | null;
+  discountPercent: number;
+}
+
+export interface CustomerBestPriceCard {
+  masterId: string;
+  pharmacyProductId: string;
+  name: string;
+  brand?: string | null;
+  imageUrl?: string | null;
+  familyKey?: string | null;
+  pharmacyCode: string;
+  pharmacyName: string;
+  productUrl?: string | null;
+  price: number;
+  oldPrice?: number | null;
+  discountPercent: number;
+  currency: string;
+  pharmacyNameAr?: string | null;
+  pharmacyNameEn?: string | null;
+  pharmacyCount: number;
+  lowestPrice?: number;
+  highestPrice?: number;
+  dealType?: string;
+  nextBestPrice?: number | null;
+  comparisonSavingsAmount?: number | null;
+  comparisonSavingsPercent?: number | null;
+  pharmacies: CustomerBestPricePharmacyOffer[];
+  isPinned?: boolean;
+}
+
+export interface CustomerFeaturedPage<T = CustomerBestPriceCard> {
+  page: number;
+  pageSize: number;
+  total: number;
+  data: T[];
+}
+
+export interface CustomerBestPriceFilterParams {
+  page?: number;
+  pageSize?: number;
+  categorySlug?: string;
+}
+

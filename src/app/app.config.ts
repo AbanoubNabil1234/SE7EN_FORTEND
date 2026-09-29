@@ -22,6 +22,8 @@ import { CouponRepository } from './core/domain/repositories/coupon.repository';
 import { HttpCouponRepository } from './core/infrastructure/repositories/http-coupon.repository';
 import { BestDealsRepository } from './core/domain/repositories/best-deals.repository';
 import { HttpBestDealsRepository } from './core/infrastructure/repositories/http-best-deals.repository';
+import { CustomerFeaturedRepository } from './core/domain/repositories/customer-featured.repository';
+import { HttpCustomerFeaturedRepository } from './core/infrastructure/repositories/http-customer-featured.repository';
 import { LiveSearchRepository } from './core/domain/repositories/live-search.repository';
 import { HttpLiveSearchRepository } from './core/infrastructure/repositories/http-live-search.repository';
 import { DashboardRepository } from './core/domain/repositories/dashboard.repository';
@@ -50,6 +52,7 @@ export const appConfig: ApplicationConfig = {
     { provide: MagazineRepository, useClass: HttpMagazineRepository },
     { provide: CouponRepository, useClass: HttpCouponRepository },
     { provide: BestDealsRepository, useClass: HttpBestDealsRepository },
+    { provide: CustomerFeaturedRepository, useClass: HttpCustomerFeaturedRepository },
     { provide: LiveSearchRepository, useClass: HttpLiveSearchRepository },
     { provide: DashboardRepository, useClass: HttpDashboardRepository },
     { provide: MatchReviewRepository, useClass: HttpMatchReviewRepository },
