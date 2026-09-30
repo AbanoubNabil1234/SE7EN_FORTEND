@@ -365,7 +365,12 @@
               type="text"
               formControlName="firstName"
               class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm outline-none focus:border-[#C27938] focus:bg-white"
+              [class.border-rose-500]="isCreateFieldInvalid(createForm.controls.firstName)"
+              [attr.aria-invalid]="isCreateFieldInvalid(createForm.controls.firstName)"
             />
+            @if (isCreateFieldInvalid(createForm.controls.firstName)) {
+              <p class="text-xs font-medium text-rose-700">{{ 'users.fieldRequired' | t }}</p>
+            }
           </label>
           <label class="block space-y-1.5">
             <span class="text-xs font-bold text-[#8A735C]">{{ 'users.lastName' | t }}</span>
@@ -373,7 +378,12 @@
               type="text"
               formControlName="lastName"
               class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm outline-none focus:border-[#C27938] focus:bg-white"
+              [class.border-rose-500]="isCreateFieldInvalid(createForm.controls.lastName)"
+              [attr.aria-invalid]="isCreateFieldInvalid(createForm.controls.lastName)"
             />
+            @if (isCreateFieldInvalid(createForm.controls.lastName)) {
+              <p class="text-xs font-medium text-rose-700">{{ 'users.fieldRequired' | t }}</p>
+            }
           </label>
         </div>
         <label class="block space-y-1.5">
@@ -382,7 +392,14 @@
             type="email"
             formControlName="email"
             class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm outline-none focus:border-[#C27938] focus:bg-white"
+            [class.border-rose-500]="isCreateFieldInvalid(createForm.controls.email)"
+            [attr.aria-invalid]="isCreateFieldInvalid(createForm.controls.email)"
           />
+          @if (isCreateFieldInvalid(createForm.controls.email)) {
+            <p class="text-xs font-medium text-rose-700">
+              {{ createForm.controls.email.hasError('required') ? ('users.fieldRequired' | t) : ('users.invalidEmail' | t) }}
+            </p>
+          }
         </label>
         <label class="block space-y-1.5">
           <span class="text-xs font-bold text-[#8A735C]">{{ 'users.colPhone' | t }}</span>
@@ -390,13 +407,20 @@
             type="tel"
             formControlName="phone"
             class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm outline-none focus:border-[#C27938] focus:bg-white"
+            [class.border-rose-500]="isCreateFieldInvalid(createForm.controls.phone)"
+            [attr.aria-invalid]="isCreateFieldInvalid(createForm.controls.phone)"
           />
+          @if (isCreateFieldInvalid(createForm.controls.phone)) {
+            <p class="text-xs font-medium text-rose-700">{{ 'users.invalidPhone' | t }}</p>
+          }
         </label>
         <label class="block space-y-1.5">
           <span class="text-xs font-bold text-[#8A735C]">{{ 'users.role' | t }}</span>
           <select
             formControlName="role"
             class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm outline-none focus:border-[#C27938] focus:bg-white"
+            [class.border-rose-500]="isCreateFieldInvalid(createForm.controls.role)"
+            [attr.aria-invalid]="isCreateFieldInvalid(createForm.controls.role)"
           >
             @for (r of availableStaffRoles(); track r.name) {
               <option [value]="r.name">
@@ -404,15 +428,44 @@
               </option>
             }
           </select>
+          @if (isCreateFieldInvalid(createForm.controls.role)) {
+            <p class="text-xs font-medium text-rose-700">{{ 'users.fieldRequired' | t }}</p>
+          }
         </label>
         <label class="block space-y-1.5">
           <span class="text-xs font-bold text-[#8A735C]">{{ 'users.password' | t }}</span>
-          <input
-            type="password"
-            formControlName="password"
-            autocomplete="new-password"
-            class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-sm outline-none focus:border-[#C27938] focus:bg-white"
-          />
+          <div class="relative">
+            <input
+              [type]="showCreatePassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              class="min-h-11 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 pe-11 text-sm outline-none focus:border-[#C27938] focus:bg-white"
+              [class.border-rose-500]="isCreateFieldInvalid(createForm.controls.password)"
+              [attr.aria-invalid]="isCreateFieldInvalid(createForm.controls.password)"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 end-0 flex w-11 items-center justify-center text-[#8A735C] hover:text-[#C27938]"
+              (click)="showCreatePassword.set(!showCreatePassword())"
+              [attr.aria-label]="(showCreatePassword() ? 'users.hidePassword' : 'users.showPassword') | t"
+            >
+              <i class="pi" [class.pi-eye]="!showCreatePassword()" [class.pi-eye-slash]="showCreatePassword()" aria-hidden="true"></i>
+            </button>
+          </div>
+          @if (shouldShowPasswordRequirements()) {
+            <div class="space-y-1 pt-1 text-xs text-[#6B5A48]" [class.text-rose-700]="isCreateFieldInvalid(createForm.controls.password)">
+              <p class="font-bold">{{ 'users.passwordRequirements' | t }}</p>
+              <p [class.text-emerald-700]="passwordRequirementMet('minLength')">
+                <i class="pi me-1" [class.pi-check-circle]="passwordRequirementMet('minLength')" [class.pi-circle]="!passwordRequirementMet('minLength')" aria-hidden="true"></i>{{ 'users.passwordMinLength' | t }}
+              </p>
+              <p [class.text-emerald-700]="passwordRequirementMet('digit')">
+                <i class="pi me-1" [class.pi-check-circle]="passwordRequirementMet('digit')" [class.pi-circle]="!passwordRequirementMet('digit')" aria-hidden="true"></i>{{ 'users.passwordDigit' | t }}
+              </p>
+              <p [class.text-emerald-700]="passwordRequirementMet('lowercase')">
+                <i class="pi me-1" [class.pi-check-circle]="passwordRequirementMet('lowercase')" [class.pi-circle]="!passwordRequirementMet('lowercase')" aria-hidden="true"></i>{{ 'users.passwordLowercase' | t }}
+              </p>
+            </div>
+          }
         </label>
 
         @if (createError()) {
@@ -430,7 +483,7 @@
           <button
             type="submit"
             class="min-h-11 rounded-xl bg-[#C27938] px-4 text-sm font-bold text-white hover:bg-[#A8682F] disabled:opacity-60"
-            [disabled]="createForm.invalid || creating()"
+            [disabled]="creating()"
           >
             {{ creating() ? ('users.creating' | t) : ('users.createSubmit' | t) }}
           </button>

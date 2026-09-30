@@ -1,6 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -11,6 +11,7 @@ import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.cons
 import { RoleService } from '../../core/services/role.service';
 import { AdminRole, PermissionGroup } from '../../core/domain/models/role.model';
 import { PermissionService } from '../../core/services/permission.service';
+import { getPasswordRequirements, hasMeaningfulText, isPhoneNumberValid, PasswordRequirements } from './users.validators';
 
 interface AdminUserRow {
   id: string;
@@ -54,6 +55,7 @@ export class UsersComponent implements OnInit {
   readonly createOpen = signal(false);
   readonly creating = signal(false);
   readonly createError = signal('');
+  readonly showCreatePassword = signal(false);
 
   // Roles State
   readonly roles = signal<AdminRole[]>([]);
@@ -80,11 +82,11 @@ export class UsersComponent implements OnInit {
   readonly savingRoleChange = signal(false);
 
   readonly createForm = this.fb.nonNullable.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
+    firstName: ['', [Validators.required, this.meaningfulTextValidator]],
+    lastName: ['', [Validators.required, this.meaningfulTextValidator]],
     email: ['', [Validators.required, Validators.email]],
-    phone: [''],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    phone: ['', this.phoneNumberValidator],
+    password: ['', [Validators.required, this.passwordPolicyValidator]],
     role: ['Admin', Validators.required]
   });
 
@@ -186,11 +188,15 @@ export class UsersComponent implements OnInit {
       role: 'Admin'
     });
     this.createError.set('');
+    this.showCreatePassword.set(false);
     this.createOpen.set(true);
   }
 
   submitCreate(): void {
-    if (this.createForm.invalid) return;
+    if (this.createForm.invalid) {
+      this.createForm.markAllAsTouched();
+      return;
+    }
     this.creating.set(true);
     this.createError.set('');
     const v = this.createForm.getRawValue();
@@ -219,6 +225,34 @@ export class UsersComponent implements OnInit {
           this.createError.set(msg);
         }
       });
+  }
+
+  isCreateFieldInvalid(control: AbstractControl): boolean {
+    return control.invalid && control.touched;
+  }
+
+  shouldShowPasswordRequirements(): boolean {
+    const control = this.createForm.controls.password;
+    return control.touched || control.value.length > 0;
+  }
+
+  passwordRequirementMet(requirement: keyof PasswordRequirements): boolean {
+    return getPasswordRequirements(this.createForm.controls.password.value)[requirement];
+  }
+
+  private meaningfulTextValidator(control: AbstractControl): ValidationErrors | null {
+    return hasMeaningfulText(String(control.value ?? '')) ? null : { required: true };
+  }
+
+  private phoneNumberValidator(control: AbstractControl): ValidationErrors | null {
+    return isPhoneNumberValid(String(control.value ?? '').trim()) ? null : { phone: true };
+  }
+
+  private passwordPolicyValidator(control: AbstractControl): ValidationErrors | null {
+    const requirements = getPasswordRequirements(String(control.value ?? ''));
+    return requirements.minLength && requirements.digit && requirements.lowercase
+      ? null
+      : { passwordPolicy: true };
   }
 
   openChangeRole(user: AdminUserRow): void {
