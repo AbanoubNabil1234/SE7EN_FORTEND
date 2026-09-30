@@ -25,10 +25,5 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     headers = headers.set('Authorization', `Bearer ${user.token}`);
   }
 
-  if (req.url.includes('/api/v1/admin/') || req.url.includes('/admin/')) {
-    headers = headers.set('X-Admin-Key', 'se7en_admin_key_2026_pharmacy');
-  }
-
   return next(req.clone({ headers }));
 };
-

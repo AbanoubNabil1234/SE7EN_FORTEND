@@ -222,13 +222,13 @@ export class LoginComponent {
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
         next: (user) => {
-          if (user.role !== 'Admin') {
+          if (!user.role || user.role.toLowerCase() === 'customer') {
             this.auth.logout().subscribe();
             this.error.set(this.i18n.t('login.adminOnlyError'));
             return;
           }
           this.notifications.showSuccess(this.i18n.t('login.signedInMsg'), this.i18n.t('login.signedInTitle'));
-          this.prefetchAdminHome();
+          this.prefetchAdminHome(user);
           void this.router.navigateByUrl('/dashboard');
         },
         error: (err) => {
@@ -238,8 +238,14 @@ export class LoginComponent {
       });
   }
 
-  private prefetchAdminHome(): void {
-    this.dashboard.getSnapshot().subscribe({ error: () => undefined });
-    this.catalog.listFamilies({ page: 1, pageSize: 24, sort: 'nameAsc' }).subscribe({ error: () => undefined });
+  private prefetchAdminHome(user: { role: string; permissions?: string[] }): void {
+    const hasPermission = (permission: string) => user.role.toLowerCase() === 'admin'
+      || user.permissions?.includes('*') || user.permissions?.includes(permission);
+    if (hasPermission('dashboard.view')) {
+      this.dashboard.getSnapshot().subscribe({ error: () => undefined });
+    }
+    if (hasPermission('products.view')) {
+      this.catalog.listFamilies({ page: 1, pageSize: 24, sort: 'nameAsc' }).subscribe({ error: () => undefined });
+    }
   }
 }

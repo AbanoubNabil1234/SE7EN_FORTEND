@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, of, tap, catchError } from 'rxjs';
+import { BehaviorSubject, Observable, map, of, tap, catchError } from 'rxjs';
 import {
   AuthRepository,
   ChangePasswordPayload,
@@ -25,22 +25,30 @@ interface AuthUserDto {
   role: string;
   phone?: string | null;
   isActive: boolean;
+  permissions?: string[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class HttpAuthRepository extends AuthRepository {
   private readonly http = inject(HttpClient);
   private readonly storage = inject(LocalStorageService);
+  private readonly currentUser = new BehaviorSubject<User | null>(this.storage.getItem<User>(AUTH_USER_KEY));
+
+  private storeUser(user: User | null): void {
+    if (user) this.storage.setItem(AUTH_USER_KEY, user);
+    else this.storage.removeItem(AUTH_USER_KEY);
+    this.currentUser.next(user);
+  }
 
   login(credentials: LoginCredentials): Observable<User> {
     return this.http.post<AuthTokenResponse>(API_ENDPOINTS.AUTH_LOGIN, credentials).pipe(
       map((res) => this.toUserFromToken(res)),
-      tap((user) => this.storage.setItem(AUTH_USER_KEY, user))
+      tap((user) => this.storeUser(user))
     );
   }
 
   getCurrentUser(): Observable<User | null> {
-    return of(this.storage.getItem<User>(AUTH_USER_KEY));
+    return this.currentUser.asObservable();
   }
 
   refreshMe(): Observable<User | null> {
@@ -49,8 +57,8 @@ export class HttpAuthRepository extends AuthRepository {
       return of(null);
     }
     return this.http.get<AuthUserDto>(API_ENDPOINTS.AUTH_ME).pipe(
-      map((dto) => this.toUserFromDto(dto, cached.token!)),
-      tap((user) => this.storage.setItem(AUTH_USER_KEY, user)),
+      map((dto) => this.toUserFromDto(dto, cached.token!, cached.refreshToken, cached.refreshTokenExpiresAt)),
+      tap((user) => this.storeUser(user)),
       catchError(() => of(cached))
     );
   }
@@ -58,7 +66,7 @@ export class HttpAuthRepository extends AuthRepository {
   refreshToken(): Observable<User> {
     const cached = this.storage.getItem<User>(AUTH_USER_KEY);
     if (!cached?.refreshToken) {
-      this.storage.removeItem(AUTH_USER_KEY);
+      this.storeUser(null);
       return of(null as unknown as User);
     }
     return this.http
@@ -67,7 +75,7 @@ export class HttpAuthRepository extends AuthRepository {
       })
       .pipe(
         map((res) => this.toUserFromToken(res)),
-        tap((user) => this.storage.setItem(AUTH_USER_KEY, user))
+        tap((user) => this.storeUser(user))
       );
   }
 
@@ -75,7 +83,7 @@ export class HttpAuthRepository extends AuthRepository {
     const cached = this.storage.getItem<User>(AUTH_USER_KEY);
     return this.http.put<AuthUserDto>(API_ENDPOINTS.AUTH_ME, payload).pipe(
       map((dto) => this.toUserFromDto(dto, cached?.token, cached?.refreshToken, cached?.refreshTokenExpiresAt)),
-      tap((user) => this.storage.setItem(AUTH_USER_KEY, user))
+      tap((user) => this.storeUser(user))
     );
   }
 
@@ -86,7 +94,7 @@ export class HttpAuthRepository extends AuthRepository {
   logout(): Observable<void> {
     const cached = this.storage.getItem<User>(AUTH_USER_KEY);
     if (!cached?.token) {
-      this.storage.removeItem(AUTH_USER_KEY);
+      this.storeUser(null);
       return of(void 0);
     }
     // Send refreshToken if available so the server revokes it
@@ -95,7 +103,7 @@ export class HttpAuthRepository extends AuthRepository {
       .pipe(
         map(() => void 0),
         catchError(() => of(void 0)),
-        tap(() => this.storage.removeItem(AUTH_USER_KEY))
+        tap(() => this.storeUser(null))
       );
   }
 
@@ -138,7 +146,8 @@ export class HttpAuthRepository extends AuthRepository {
       fullName: dto.fullName,
       firstName: dto.firstName,
       lastName: dto.lastName,
-      role: dto.role === 'Admin' ? 'Admin' : 'Customer',
+      role: dto.role,
+      permissions: dto.permissions ?? [],
       phone: dto.phone,
       token,
       refreshToken,
@@ -146,4 +155,3 @@ export class HttpAuthRepository extends AuthRepository {
     };
   }
 }
-
