@@ -115,7 +115,7 @@
         >
           <div class="relative min-h-[160px] bg-[#F8EEE2]">
             @if (item.imageUrl) {
-              <img [src]="item.imageUrl" [alt]="item.title" class="size-full object-cover" loading="lazy" />
+              <img [src]="item.imageUrl" [alt]="item.title || ('billboards.fieldImage' | t)" class="size-full object-cover" loading="lazy" />
             } @else {
               <div class="flex h-full min-h-[160px] flex-col items-center justify-center gap-2.5 p-5 text-center">
                 <div class="inline-flex size-14 items-center justify-center rounded-xl bg-[#181A1D] text-[#E5BE96]">
@@ -175,7 +175,17 @@
             </div>
 
             @if (canManage()) {
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-[#F8EEE2] px-4 text-xs font-extrabold text-[#181A1D] hover:bg-[#E8D5BE] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C27938] disabled:opacity-50 sm:flex-none sm:min-w-[7rem]"
+                  [disabled]="!!changingStatusId() || saving()"
+                  [attr.aria-busy]="changingStatusId() === item.id"
+                  (click)="toggleActive(item)"
+                >
+                  <i class="pi" [ngClass]="changingStatusId() === item.id ? 'pi-spin pi-spinner' : (item.isActive ? 'pi-pause' : 'pi-play')" aria-hidden="true"></i>
+                  {{ (item.isActive ? 'billboards.deactivate' : 'billboards.activate') | t }}
+                </button>
                 <button
                   type="button"
                   class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-extrabold text-[#181A1D] hover:bg-[#F8EEE2] sm:flex-none sm:min-w-[7rem]"
@@ -240,7 +250,7 @@
 
       <form class="space-y-4 px-5 py-5" [formGroup]="form" (ngSubmit)="save()">
         <label class="block space-y-1.5">
-          <span class="text-xs font-bold text-[#4A4038]">{{ 'billboards.fieldTitle' | t }} *</span>
+          <span class="text-xs font-bold text-[#4A4038]">{{ 'billboards.fieldTitle' | t }}</span>
           <input
             type="text"
             formControlName="title"
@@ -249,7 +259,7 @@
         </label>
 
         <label class="block space-y-1.5">
-          <span class="text-xs font-bold text-[#4A4038]">{{ 'billboards.fieldDescription' | t }} *</span>
+          <span class="text-xs font-bold text-[#4A4038]">{{ 'billboards.fieldDescription' | t }}</span>
           <textarea
             rows="3"
             formControlName="description"
@@ -262,6 +272,7 @@
             <span class="text-xs font-bold text-[#4A4038]">{{ 'billboards.fieldStart' | t }} *</span>
             <input
               type="date"
+              required
               formControlName="startDate"
               class="min-h-11 w-full rounded-xl border border-[#E8D5BE] px-3 text-sm tabular-nums outline-none focus:border-[#C27938]"
             />
@@ -272,6 +283,7 @@
               type="number"
               min="1"
               formControlName="durationDays"
+              required
               class="min-h-11 w-full rounded-xl border border-[#E8D5BE] px-3 text-sm tabular-nums outline-none focus:border-[#C27938]"
             />
           </label>
@@ -331,7 +343,7 @@
         </label>
 
         <div class="space-y-1.5">
-          <span class="text-xs font-bold text-[#4A4038]">{{ 'billboards.fieldImage' | t }}</span>
+          <span class="text-xs font-bold text-[#4A4038]">{{ 'billboards.fieldImage' | t }} *</span>
           <div class="overflow-hidden rounded-xl border border-[#E8D5BE] bg-[#FBF8F4]">
             @if (previewUrl()) {
               <img
@@ -347,12 +359,23 @@
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 class="sr-only"
+                [attr.aria-required]="true"
+                [attr.aria-invalid]="imageRequired()"
+                aria-describedby="billboard-image-hint billboard-image-error"
                 (change)="onImagePicked($event)"
               />
             </label>
           </div>
-          <p class="text-pretty text-xs font-medium text-[#8A735C]">{{ 'billboards.imageHint' | t }}</p>
+          <p id="billboard-image-hint" class="text-pretty text-xs font-medium text-[#8A735C]">{{ 'billboards.imageHint' | t }}</p>
+          <p id="billboard-image-error" class="text-xs font-medium text-rose-700" aria-live="polite">{{ imageRequired() ? ('billboards.imageRequired' | t) : '' }}</p>
         </div>
+
+        <label class="flex min-h-11 items-center gap-3 rounded-xl border border-[#E8D5BE] px-3 text-sm font-bold text-[#4A4038]">
+          <input type="checkbox" formControlName="isActive" class="size-4 accent-[#C27938]" />
+          {{ 'billboards.fieldActive' | t }}
+        </label>
+
+        <p class="text-xs font-medium text-[#8A735C]">{{ 'billboards.requiredHint' | t }}</p>
 
         <div class="flex items-center justify-end gap-2 border-t border-[#EDE0D0] pt-4">
           <button
@@ -365,7 +388,7 @@
           <button
             type="submit"
             class="min-h-11 rounded-xl bg-[#C27938] px-5 text-sm font-bold text-white hover:bg-[#A8682F] disabled:opacity-50"
-            [disabled]="form.invalid || saving()"
+            [disabled]="form.invalid || !hasImage() || saving()"
           >
             {{ 'common.save' | t }}
           </button>

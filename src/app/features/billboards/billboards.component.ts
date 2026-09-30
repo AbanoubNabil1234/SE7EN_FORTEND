@@ -31,10 +31,14 @@ export class BillboardsComponent implements OnInit {
   readonly statusFilter = signal<'all' | 'active' | 'inactive'>('all');
   readonly modalOpen = signal(false);
   readonly editingId = signal<string | null>(null);
+  private readonly editingDisplayOrder = signal(0);
   readonly pendingDeleteId = signal<string | null>(null);
   readonly items = signal<Billboard[]>([]);
   readonly loading = signal(false);
   readonly saving = signal(false);
+  readonly changingStatusId = signal<string | null>(null);
+  readonly imageRequired = signal(false);
+  readonly hasImage = computed(() => !!(this.pickedFile() || this.existingImageUrl()));
   readonly error = signal(false);
   readonly previewUrl = signal<string | null>(null);
   readonly pickedFile = signal<File | null>(null);
@@ -43,15 +47,16 @@ export class BillboardsComponent implements OnInit {
   private queryTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly form = this.fb.group({
-    title: this.fb.nonNullable.control('', Validators.required),
-    description: this.fb.nonNullable.control('', Validators.required),
+    title: this.fb.nonNullable.control(''),
+    description: this.fb.nonNullable.control(''),
     startDate: this.fb.nonNullable.control('', Validators.required),
     durationDays: this.fb.nonNullable.control(7, [Validators.required, Validators.min(1)]),
     imageLabelAr: this.fb.nonNullable.control(''),
     imageLabelEn: this.fb.nonNullable.control(''),
     percentage: this.fb.control<number | null>(null),
     fixedDiscount: this.fb.control<number | null>(null),
-    linkUrl: this.fb.nonNullable.control('')
+    linkUrl: this.fb.nonNullable.control(''),
+    isActive: this.fb.nonNullable.control(true)
   });
 
   readonly activeCount = computed(() => this.items().filter((i) => i.status === 'active').length);
@@ -97,6 +102,7 @@ export class BillboardsComponent implements OnInit {
 
   openModal(): void {
     this.editingId.set(null);
+    this.editingDisplayOrder.set(0);
     this.form.reset({
       title: '',
       description: '',
@@ -106,7 +112,8 @@ export class BillboardsComponent implements OnInit {
       imageLabelEn: '',
       percentage: null,
       fixedDiscount: null,
-      linkUrl: ''
+      linkUrl: '',
+      isActive: true
     });
     this.clearImageState();
     this.modalOpen.set(true);
@@ -114,6 +121,7 @@ export class BillboardsComponent implements OnInit {
 
   editItem(item: Billboard): void {
     this.editingId.set(item.id);
+    this.editingDisplayOrder.set(item.displayOrder);
     this.form.setValue({
       title: item.title,
       description: item.subtitle,
@@ -123,7 +131,8 @@ export class BillboardsComponent implements OnInit {
       imageLabelEn: item.imageLabelEn,
       percentage: item.percentage,
       fixedDiscount: item.fixedDiscount,
-      linkUrl: item.linkUrl ?? ''
+      linkUrl: item.linkUrl ?? '',
+      isActive: item.isActive
     });
     this.clearImageState();
     this.existingImageUrl.set(item.imageUrl);
@@ -154,6 +163,7 @@ export class BillboardsComponent implements OnInit {
 
     this.revokePreview();
     this.pickedFile.set(file);
+    this.imageRequired.set(false);
     this.previewUrl.set(URL.createObjectURL(file));
   }
 
@@ -181,6 +191,13 @@ export class BillboardsComponent implements OnInit {
   }
 
   save(): void {
+    if (!this.canManage() || this.saving()) return;
+    this.imageRequired.set(!this.hasImage());
+    if (this.imageRequired()) {
+      this.notifications.showError(this.i18n.t('billboards.imageRequired'), this.i18n.t('billboards.fieldImage'));
+      this.form.markAllAsTouched();
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -193,13 +210,15 @@ export class BillboardsComponent implements OnInit {
 
     const persist = (imageUrl: string | null): Observable<Billboard> => {
       const payload = {
-        title: value.title,
-        subtitle: value.description,
+        title: value.title.trim(),
+        subtitle: value.description.trim(),
         startDate: value.startDate,
         durationDays: value.durationDays,
         imageUrl,
-        imageLabelAr: value.imageLabelAr.trim() || null,
-        imageLabelEn: value.imageLabelEn.trim() || null,
+        imageLabelAr: value.imageLabelAr.trim(),
+        imageLabelEn: value.imageLabelEn.trim(),
+        isActive: value.isActive,
+        displayOrder: this.editingDisplayOrder(),
         percentage: this.normalizeDiscountInput(value.percentage),
         fixedDiscount: this.normalizeDiscountInput(value.fixedDiscount),
         linkUrl: value.linkUrl.trim() || null
@@ -233,6 +252,40 @@ export class BillboardsComponent implements OnInit {
     return null;
   }
 
+  toggleActive(item: Billboard): void {
+    if (!this.canManage() || this.changingStatusId() || this.saving()) return;
+    if (!item.imageUrl || (!item.isActive && item.isExpired)) {
+      this.editItem(item);
+      this.form.controls.isActive.setValue(!item.isActive);
+      this.notifications.showError(
+        this.i18n.t(item.imageUrl ? 'billboards.activationNeedsDates' : 'billboards.imageRequired'),
+        this.i18n.t('billboards.title')
+      );
+      return;
+    }
+    this.changingStatusId.set(item.id);
+    this.billboards.update(item.id, {
+      title: item.title,
+      subtitle: item.subtitle,
+      startDate: item.startDate,
+      durationDays: item.durationDays,
+      imageUrl: item.imageUrl,
+      imageLabelAr: item.imageLabelAr,
+      imageLabelEn: item.imageLabelEn,
+      displayOrder: item.displayOrder,
+      isActive: !item.isActive,
+      percentage: item.percentage,
+      fixedDiscount: item.fixedDiscount,
+      linkUrl: item.linkUrl
+    }).pipe(finalize(() => this.changingStatusId.set(null))).subscribe({
+      next: () => {
+        this.notifications.showSuccess(this.i18n.t('billboards.statusUpdated'), this.i18n.t('billboards.title'));
+        this.reload();
+      },
+      error: () => this.notifications.showError(this.i18n.t('billboards.statusUpdateError'), this.i18n.t('billboards.title'))
+    });
+  }
+
   private normalizeDiscountInput(value: number | null | undefined): number | null {
     if (value == null) return null;
     const n = Number(value);
@@ -255,6 +308,7 @@ export class BillboardsComponent implements OnInit {
   }
 
   private clearImageState(): void {
+    this.imageRequired.set(false);
     this.revokePreview();
     this.pickedFile.set(null);
     this.previewUrl.set(null);
