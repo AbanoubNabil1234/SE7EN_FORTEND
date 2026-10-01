@@ -42,6 +42,7 @@ import { MatchReviewRepository } from '../../core/domain/repositories/match-revi
 import { AiMatchReviewModalComponent } from './components/ai-match-review-modal/ai-match-review-modal.component';
 import { ProductImageModalComponent } from './components/product-image-modal/product-image-modal.component';
 import { PermissionService } from '../../core/services/permission.service';
+import { CatalogReloadScheduler } from './catalog-reload-scheduler';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -126,8 +127,11 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly quickAddFamily = signal<CatalogFamily | null>(null);
   readonly isQuickAddOpen = signal<boolean>(false);
 
-  private queryTimer: ReturnType<typeof setTimeout> | null = null;
   private fetchSub: Subscription | null = null;
+  private readonly reloadScheduler = new CatalogReloadScheduler((refreshDistribution) => {
+    this.reload();
+    if (refreshDistribution) this.loadPharmacyDistribution();
+  });
 
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.total() / this.listPageSize()))
@@ -193,23 +197,21 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   setPharmacyCount(count: number | null): void {
     if (this.pharmacyCount() === count) return;
     this.pharmacyCount.set(count);
-    this.reload();
+    this.scheduleReload();
   }
 
   onPrimaryCategoryChange(slug: string): void {
     this.primaryCategorySlug.set(slug);
     this.subcategorySlug.set('');
     this.categorySlug.set(slug);
-    this.reload();
-    this.loadPharmacyDistribution();
+    this.scheduleReload(true);
   }
 
   onSubcategoryChange(slug: string): void {
     this.subcategorySlug.set(slug);
     const effectiveSlug = slug || this.primaryCategorySlug();
     this.categorySlug.set(effectiveSlug);
-    this.reload();
-    this.loadPharmacyDistribution();
+    this.scheduleReload(true);
   }
 
   loadPharmacyDistribution(): void {
@@ -298,34 +300,30 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.queryTimer) clearTimeout(this.queryTimer);
+    this.reloadScheduler.cancel();
     this.fetchSub?.unsubscribe();
   }
 
   onQueryChange(value: string): void {
     this.query.set(value);
-    if (this.queryTimer) clearTimeout(this.queryTimer);
     const trimmed = value.trim();
     if (trimmed.length === 0) {
-      this.reload();
+      this.scheduleReload();
       return;
     }
-    this.queryTimer = setTimeout(() => {
-      if (!isCatalogSearchReady(this.query())) return;
-      this.reload();
-    }, 120);
+    if (!isCatalogSearchReady(this.query())) return;
+    this.scheduleReload();
   }
 
   onCategoryChange(value: string): void {
     this.categorySlug.set(value);
     this.syncCategoryFromSlug(value);
-    this.reload();
-    this.loadPharmacyDistribution();
+    this.scheduleReload(true);
   }
 
   onBrandChange(value: string): void {
     this.brand.set(value);
-    this.reload();
+    this.scheduleReload();
   }
 
   onSortChange(value: string): void {
@@ -333,7 +331,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       value === 'pharmaciesDesc' ? 'pharmaciesDesc' :
       value === 'nameDesc' ? 'nameDesc' : 'nameAsc';
     this.sort.set(s);
-    this.reload();
+    this.scheduleReload();
   }
 
   goToPage(page: number): void {
@@ -972,6 +970,11 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     this.error.set(false);
     this.openOfferKeys.set(new Set());
     this.fetch(1);
+  }
+
+  private scheduleReload(refreshDistribution: boolean = false): void {
+    this.fetchSub?.unsubscribe();
+    this.reloadScheduler.schedule(refreshDistribution);
   }
 
   private fetch(page: number, after?: () => void): void {
