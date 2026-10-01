@@ -357,6 +357,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       .pipe(
         map((raw) => {
           this.structureCache.clear();
+          this.treeCache.clear();
           const rawUrl = String(raw['imageUrl'] ?? raw['ImageUrl'] ?? '');
           return {
             id: String(raw['id'] ?? raw['Id'] ?? categoryId),
@@ -374,6 +375,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       .pipe(
         map((raw) => {
           this.structureCache.clear();
+          this.treeCache.clear();
           return {
             id: String(raw['id'] ?? raw['Id'] ?? categoryId),
             slug: String(raw['slug'] ?? raw['Slug'] ?? ''),
