@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map, of, tap } from 'rxjs';
+import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
 import { CatalogBrowseRepository, CatalogFamilySort } from '../../domain/repositories/catalog-browse.repository';
 import { CategoryNode } from '../../domain/models/category.model';
 import { categoryEnglishName } from '../../domain/category-display';
@@ -18,6 +18,7 @@ import {
 import { API_ENDPOINTS } from '../http/api-endpoints.constants';
 import { resolveApiUrl } from '../http/api-origin';
 import { TtlCache } from '../http/ttl-cache';
+import { compressCategoryImage } from '../http/category-image';
 
 const FRESH_MS = 3 * 60_000;
 const STALE_MS = 30 * 60_000;
@@ -349,12 +350,13 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     categoryId: string,
     file: File
   ): Observable<{ id: string; slug: string; imageUrl: string; message: string }> {
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-
-    return this.http
-      .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_CATEGORY_IMAGE(categoryId), formData)
+    return defer(() => compressCategoryImage(file))
       .pipe(
+        switchMap((compressed) => {
+          const formData = new FormData();
+          formData.append('file', compressed, compressed.name);
+          return this.http.post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_CATEGORY_IMAGE(categoryId), formData);
+        }),
         map((raw) => {
           this.structureCache.clear();
           this.treeCache.clear();

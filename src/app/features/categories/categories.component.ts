@@ -529,7 +529,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   submitCategoryImage(): void {
     const cat = this.targetCategory();
     const file = this.selectedImageFile();
-    if (!cat || !file) return;
+    if (!cat || !file || this.uploadingImage()) return;
 
     this.uploadingImage.set(true);
     this.uploadErrorMessage.set(null);
