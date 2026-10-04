@@ -192,7 +192,7 @@
         @if (loading() && families().length === 0) {
         <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm" aria-hidden="true">
           <div
-            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
+            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(12rem,14rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
           >
             <span></span>
             <span>{{ 'productsAdmin.colProduct' | t }}</span>
@@ -203,7 +203,7 @@
           </div>
           @for (slot of [1, 2, 3, 4, 5, 6, 7, 8]; track slot) {
             <div class="animate-pulse border-t border-[#EDE0D0] px-3 py-2.5">
-              <div class="grid grid-cols-1 gap-2 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
+              <div class="grid grid-cols-1 gap-2 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(12rem,14rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
                 <div class="size-11 rounded-lg bg-[#F3E7D8]"></div>
                 <div class="min-w-0 space-y-1.5">
                   <div class="h-3 w-20 rounded bg-[#F0E2D1]"></div>
@@ -240,7 +240,7 @@
             </div>
           }
           <div
-            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
+            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(12rem,14rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
           >
             <span></span>
             <span>{{ 'productsAdmin.colProduct' | t }}</span>
@@ -251,7 +251,7 @@
           </div>
           @for (family of families(); track listingKey(family)) {
             <article class="border-t border-[#EDE0D0] even:bg-[#FBF8F4]/60 hover:bg-[#F8EEE2]/50">
-              <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
+              <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(12rem,14rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
                 <div
                   class="group/img relative size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0]/60 shadow-xs transition"
                   [class.cursor-pointer]="canManageProducts() && canEditBarcode(family)"
