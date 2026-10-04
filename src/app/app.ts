@@ -9,6 +9,7 @@ import {
 } from '@angular/router';
 import { LoadingService } from './core/services/loading.service';
 import { TranslatePipe } from './shared/pipes/translate.pipe';
+import { recoverLazyRoute } from './core/routing/lazy-route-recovery';
 
 interface LoadingPharmacy {
   code: string;
@@ -58,6 +59,11 @@ export class App {
         event instanceof NavigationCancel ||
         event instanceof NavigationError
       ) {
+        if (event instanceof NavigationError && typeof window !== 'undefined') {
+          try {
+            if (recoverLazyRoute(event.error, event.url, window.sessionStorage, window.location)) return;
+          } catch { /* Keep normal error handling when browser storage is restricted. */ }
+        }
         const remaining = Math.max(0, 450 - (Date.now() - this.routeStartedAt));
         this.routeLoadingTimer = setTimeout(() => {
           this.routeLoading.set(false);
