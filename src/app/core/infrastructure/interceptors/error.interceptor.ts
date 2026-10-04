@@ -64,10 +64,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // 4. Other HTTP errors (403, 500, etc.)
+      // 4. Other HTTP errors (403, 429, 500, etc.)
       let message = i18n.t('common.networkError');
       if (error.status === 403) {
         message = i18n.t('common.forbiddenError');
+      } else if (error.status === 429) {
+        message = i18n.t('common.rateLimitError');
       } else if (error.error?.message) {
         message = error.error.message;
       }
