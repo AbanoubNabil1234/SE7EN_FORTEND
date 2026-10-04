@@ -26,7 +26,7 @@ const STALE_MS = 30 * 60_000;
 @Injectable({ providedIn: 'root' })
 export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
   private readonly http = inject(HttpClient);
-  private readonly familiesCache = new TtlCache<CatalogFamilyPage>('se7en.admin.families.default.v3', STALE_MS);
+  private readonly familiesCache = new TtlCache<CatalogFamilyPage>('se7en.admin.families.default.v4', STALE_MS);
   private readonly brandsCache = new TtlCache<string[]>('se7en.admin.family-brands.v1', STALE_MS);
   private readonly structureCache = new TtlCache<CategoryNode[]>('se7en.admin.category-structure.v2', STALE_MS);
   private readonly treeCache = new TtlCache<CategoryNode[]>('se7en.admin.category-tree.v2', STALE_MS);
@@ -560,7 +560,9 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       : [];
 
     return {
-      masterId: String(r['masterId'] ?? r['MasterId'] ?? ''),
+      masterId: (r['isUnlinked'] ?? r['IsUnlinked']) === true
+        ? `live:${offers[0]?.pharmacyProductId ?? ''}`
+        : String(r['masterId'] ?? r['MasterId'] ?? ''),
       label: String(r['label'] ?? r['Label'] ?? ''),
       arabicName: this.optionalText(r['arabicName'] ?? r['ArabicName']),
       englishName: this.optionalText(r['englishName'] ?? r['EnglishName']),

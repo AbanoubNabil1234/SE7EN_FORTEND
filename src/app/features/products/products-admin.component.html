@@ -254,10 +254,10 @@
               <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
                 <div
                   class="group/img relative size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0]/60 shadow-xs transition"
-                  [class.cursor-pointer]="canManageProducts()"
-                  [class.hover:border-[#C27938]]="canManageProducts()"
-                  (click)="canManageProducts() ? openImageModal(family) : null"
-                  [title]="canManageProducts() ? ('productsAdmin.clickChangeImage' | t) : ''"
+                  [class.cursor-pointer]="canManageProducts() && canEditBarcode(family)"
+                  [class.hover:border-[#C27938]]="canManageProducts() && canEditBarcode(family)"
+                  (click)="canManageProducts() && canEditBarcode(family) ? openImageModal(family) : null"
+                  [title]="canManageProducts() && canEditBarcode(family) ? ('productsAdmin.clickChangeImage' | t) : ''"
                 >
                   @if (cardImage(family); as img) {
                     <img [src]="img" [alt]="familyTitle(family)" class="size-full object-contain p-1" loading="lazy" />
@@ -266,7 +266,7 @@
                       <i class="pi pi-image text-sm" aria-hidden="true"></i>
                     </div>
                   }
-                  @if (canManageProducts()) {
+                  @if (canManageProducts() && canEditBarcode(family)) {
                     <div class="absolute inset-0 hidden group-hover/img:flex items-center justify-center bg-black/50 text-white text-[10px] transition">
                       <i class="pi pi-pencil"></i>
                     </div>
@@ -412,6 +412,7 @@
                     type="button"
                     class="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-[#EDE0D0] bg-[#FBF8F4] px-2 text-[11px] font-bold text-[#8A735C] hover:text-[#C27938] hover:border-[#C27938] hover:bg-white transition"
                     (click)="openImageModal(family)"
+                    [disabled]="!canEditBarcode(family)"
                     [title]="'productsAdmin.clickChangeImage' | t"
                   >
                     <i class="pi pi-image text-xs"></i>
@@ -484,6 +485,7 @@
                           type="button"
                           class="inline-flex min-h-7 items-center gap-1 rounded-lg border border-[#C27938]/30 bg-[#F8EEE2] px-2 py-0.5 text-xs font-bold text-[#C27938] hover:bg-[#C27938] hover:text-white transition-colors"
                           (click)="openQuickAdd(family)"
+                          [disabled]="!canEditBarcode(family)"
                         >
                           <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
                           <span>{{ 'quickAdd.addOffer' | t }}</span>

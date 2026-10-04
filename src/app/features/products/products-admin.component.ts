@@ -608,6 +608,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   openQuickAdd(family: CatalogFamily): void {
+    if (!this.canEditBarcode(family)) return;
     this.quickAddFamily.set(family);
     this.isQuickAddOpen.set(true);
   }
@@ -679,6 +680,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   openImageModal(family: CatalogFamily): void {
+    if (!this.canEditBarcode(family)) return;
     this.imageTargetFamily.set(family);
     this.isImageModalOpen.set(true);
   }

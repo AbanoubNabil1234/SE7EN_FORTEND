@@ -58,6 +58,11 @@ export class ProductDetailComponent implements OnInit {
     return f.packs.find((p) => p.masterId === id) ?? f.packs[0] ?? null;
   });
 
+  readonly canEditMaster = computed(() => {
+    const id = this.selectedPack()?.masterId;
+    return !!id && !id.startsWith('live:');
+  });
+
   readonly displayLowPrice = computed(() => {
     const pack = this.selectedPack();
     if (pack) return pack.lowestPrice > 0 ? pack.lowestPrice : 0;
@@ -112,6 +117,7 @@ export class ProductDetailComponent implements OnInit {
   }
 
   openImageModal(): void {
+    if (!this.canEditMaster()) return;
     this.isImageModalOpen.set(true);
   }
 
@@ -275,6 +281,7 @@ export class ProductDetailComponent implements OnInit {
   }
 
   openQuickAdd(): void {
+    if (!this.canEditMaster()) return;
     this.isQuickAddOpen.set(true);
   }
 
