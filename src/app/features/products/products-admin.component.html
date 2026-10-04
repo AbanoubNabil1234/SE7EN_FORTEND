@@ -192,7 +192,7 @@
         @if (loading() && families().length === 0) {
         <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm" aria-hidden="true">
           <div
-            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
+            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
           >
             <span></span>
             <span>{{ 'productsAdmin.colProduct' | t }}</span>
@@ -203,7 +203,7 @@
           </div>
           @for (slot of [1, 2, 3, 4, 5, 6, 7, 8]; track slot) {
             <div class="animate-pulse border-t border-[#EDE0D0] px-3 py-2.5">
-              <div class="grid grid-cols-1 gap-2 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
+              <div class="grid grid-cols-1 gap-2 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
                 <div class="size-11 rounded-lg bg-[#F3E7D8]"></div>
                 <div class="min-w-0 space-y-1.5">
                   <div class="h-3 w-20 rounded bg-[#F0E2D1]"></div>
@@ -240,7 +240,7 @@
             </div>
           }
           <div
-            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
+            class="hidden border-b border-[#EDE0D0] bg-[#FBF8F4] px-3 py-2 text-[11px] font-bold text-[#A68B6D] lg:grid lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2"
           >
             <span></span>
             <span>{{ 'productsAdmin.colProduct' | t }}</span>
@@ -251,7 +251,7 @@
           </div>
           @for (family of families(); track listingKey(family)) {
             <article class="border-t border-[#EDE0D0] even:bg-[#FBF8F4]/60 hover:bg-[#F8EEE2]/50">
-              <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_6.75rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
+              <div class="grid grid-cols-1 gap-2 px-3 py-1.5 lg:grid-cols-[2.75rem_minmax(0,1.35fr)_9rem_minmax(10rem,13rem)_5rem_minmax(0,auto)] lg:items-center lg:gap-2">
                 <div
                   class="group/img relative size-11 shrink-0 overflow-hidden rounded-lg bg-[#FBF8F4] border border-[#EDE0D0]/60 shadow-xs transition"
                   [class.cursor-pointer]="canManageProducts() && canEditBarcode(family)"
@@ -305,9 +305,15 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-1">
-                  <code class="inline-block rounded-md bg-[#181A1D] px-1.5 py-1 font-mono text-[11px] font-bold text-white">
-                    {{ family.groupCode || '—' }}
-                  </code>
+                  <input
+                    type="text"
+                    dir="ltr"
+                    readonly
+                    class="min-h-9 w-full min-w-0 rounded-lg border border-[#E8D5BE] bg-[#FBF8F4] px-2 font-mono text-xs font-bold text-[#181A1D]"
+                    [value]="family.groupCode || ''"
+                    [placeholder]="'productsAdmin.groupCode' | t"
+                    [attr.aria-label]="'productsAdmin.groupCode' | t"
+                  />
                   @if (family.groupCode) {
                     <button
                       type="button"
@@ -331,7 +337,6 @@
                 </div>
 
                 <div>
-                  @if (canEditBarcode(family)) {
                     <div class="space-y-1">
                       <div class="flex items-center gap-1">
                         <input
@@ -341,13 +346,14 @@
                           class="min-h-9 w-full min-w-0 rounded-lg border bg-[#FBF8F4] px-2 font-mono text-xs font-bold tabular-nums text-[#181A1D] outline-none focus:border-[#C27938] focus:bg-white"
                           [ngClass]="barcodeError(family) ? 'border-rose-400' : 'border-[#E8D5BE]'"
                           [ngModel]="barcodeValue(family)"
+                          [readOnly]="!canManageProducts() || !canEditBarcode(family)"
                           (ngModelChange)="setBarcodeDraft(family, $event)"
                           [placeholder]="'productsAdmin.internationalCode' | t"
                           [attr.aria-label]="'productsAdmin.internationalCode' | t"
                           [attr.aria-invalid]="!!barcodeError(family)"
                           [attr.aria-describedby]="barcodeError(family) ? barcodeErrorId(family) : null"
                         />
-                        @if (canManageProducts()) {
+                        @if (canManageProducts() && canEditBarcode(family)) {
                           <button
                             type="button"
                             class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-[#181A1D] px-2.5 text-[11px] font-bold text-white hover:bg-black disabled:opacity-50"
@@ -366,11 +372,6 @@
                         >{{ err }}</p>
                       }
                     </div>
-                  } @else {
-                    <span class="font-mono text-xs font-bold tabular-nums text-[#181A1D]" dir="ltr">
-                      {{ cardBarcode(family) || '—' }}
-                    </span>
-                  }
                 </div>
 
                 <div class="tabular-nums">
