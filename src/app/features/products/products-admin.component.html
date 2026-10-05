@@ -469,9 +469,16 @@
                         <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
                       } @else {
                         <span
-                          class="size-2 rounded-full"
-                          [class]="family.isHidden ? 'bg-rose-500' : 'bg-emerald-500'"
-                        ></span>
+                          dir="ltr"
+                          class="relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors"
+                          [class]="family.isHidden ? 'bg-rose-400' : 'bg-emerald-500'"
+                          aria-hidden="true"
+                        >
+                          <span
+                            class="absolute start-0.5 size-3 rounded-full bg-white shadow transition-transform"
+                            [class.translate-x-3]="family.isHidden !== true"
+                          ></span>
+                        </span>
                       }
                       <span>{{ (family.isHidden ? 'productsAdmin.moderation.hidden' : 'productsAdmin.moderation.visible') | t }}</span>
                     </button>
@@ -712,9 +719,16 @@
                                 <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
                               } @else {
                                 <span
-                                  class="size-2 rounded-full"
-                                  [class]="offer.isHidden ? 'bg-rose-500' : 'bg-emerald-500'"
-                                ></span>
+                                  dir="ltr"
+                                  class="relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors"
+                                  [class]="offer.isHidden ? 'bg-rose-400' : 'bg-emerald-500'"
+                                  aria-hidden="true"
+                                >
+                                  <span
+                                    class="absolute start-0.5 size-3 rounded-full bg-white shadow transition-transform"
+                                    [class.translate-x-3]="offer.isHidden !== true"
+                                  ></span>
+                                </span>
                               }
                               <span>{{ (offer.isHidden ? 'productsAdmin.moderation.hidden' : 'productsAdmin.moderation.visible') | t }}</span>
                             </button>
