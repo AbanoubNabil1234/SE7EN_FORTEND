@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Subscription, interval, finalize } from 'rxjs';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
@@ -45,6 +45,8 @@ const OPEN_RUN_STATUSES = new Set(['Pending', 'Running', 'Paused']);
   styleUrl: './price-refresh-logs.component.css'
 })
 export class PriceRefreshLogsComponent implements OnInit, OnDestroy {
+  readonly isEmbedded = input<boolean>(false);
+
   private readonly priceRefresh = inject(PriceRefreshRepository);
   private readonly i18n = inject(I18nService);
   readonly locale = inject(LocaleService);
@@ -101,6 +103,25 @@ export class PriceRefreshLogsComponent implements OnInit, OnDestroy {
     return Math.max(1, Math.ceil(items.totalCount / items.pageSize));
   });
 
+  readonly isPolling = computed(() => this.pollSubscription() !== null);
+
+  readonly totalRunsCount = computed(() => this.runs()?.totalCount ?? 0);
+
+  readonly completedRunsCount = computed(() => {
+    const list = this.runs()?.items ?? [];
+    return list.filter((r) => r.status === 'Completed').length;
+  });
+
+  readonly issuesRunsCount = computed(() => {
+    const list = this.runs()?.items ?? [];
+    return list.filter((r) => r.status === 'CompletedWithIssues').length;
+  });
+
+  readonly failedRunsCount = computed(() => {
+    const list = this.runs()?.items ?? [];
+    return list.filter((r) => r.status === 'Failed' || r.status === 'Cancelled').length;
+  });
+
   readonly runStatuses: string[] = [
     'Pending', 'Running', 'Completed', 'CompletedWithIssues', 'Cancelled', 'Failed'
   ];
@@ -109,6 +130,34 @@ export class PriceRefreshLogsComponent implements OnInit, OnDestroy {
     'UnavailableConfirmed', 'NotFound', 'Blocked', 'FailedFinal',
     'InvalidPrice', 'IdentityConflict', 'MissingLocator', 'TargetChanged'
   ];
+
+  resetFilters(): void {
+    this.runsStatusFilter.set('');
+    this.runsFromFilter.set('');
+    this.runsToFilter.set('');
+    this.onRunsFilterChanged();
+  }
+
+  resetItemsFilters(): void {
+    this.itemsPharmacyFilter.set('');
+    this.itemsStatusFilter.set('');
+    this.itemsSearch.set('');
+    this.onItemsFilterChanged();
+  }
+
+  async copyRunId(runId: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(runId);
+      this.notifications.showSuccess(this.i18n.t('priceRefreshLogs.runIdCopied'));
+    } catch {
+      // fallback if clipboard API not available
+    }
+  }
+
+  getSuccessPercent(success: number, total: number): number {
+    if (!total || total <= 0) return 0;
+    return Math.min(100, Math.max(0, Math.round((success / total) * 100)));
+  }
 
   ngOnInit(): void {
     this.loadSchedule();

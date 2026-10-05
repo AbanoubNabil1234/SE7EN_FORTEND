@@ -8,7 +8,6 @@ const ROUTE_PERMISSION_FALLBACKS: { path: string; permission: string }[] = [
   { path: '/dashboard', permission: 'dashboard.view' },
   { path: '/categories', permission: 'categories.view' },
   { path: '/products', permission: 'products.view' },
-  { path: '/price-refresh-logs', permission: 'products.view' },
   { path: '/product-linking', permission: 'product_linking.view' },
   { path: '/billboards', permission: 'billboards.view' },
   { path: '/search-pharmacies', permission: 'pharmacies.view' },

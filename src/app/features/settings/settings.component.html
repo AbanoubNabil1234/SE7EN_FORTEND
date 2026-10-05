@@ -105,6 +105,16 @@
 
         <button
           type="button"
+          (click)="setTab('price-refresh')"
+          class="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all sm:text-sm"
+          [ngClass]="activeTab() === 'price-refresh' ? 'bg-[#C27938] text-white shadow-sm' : 'bg-transparent text-[#6B5A48] hover:bg-[#F3EDE5] hover:text-[#181A1D]'"
+        >
+          <i class="pi pi-sync text-sm"></i>
+          <span>{{ 'settings.tabPriceRefresh' | t }}</span>
+        </button>
+
+        <button
+          type="button"
           (click)="setTab('dev')"
           class="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all sm:text-sm"
           [ngClass]="activeTab() === 'dev' ? 'bg-[#C27938] text-white shadow-sm' : 'bg-transparent text-[#6B5A48] hover:bg-[#F3EDE5] hover:text-[#181A1D]'"
@@ -115,7 +125,7 @@
       </div>
 
       <!-- Language switch for content editing -->
-      @if (activeTab() !== 'logs') {
+      @if (activeTab() !== 'logs' && activeTab() !== 'price-refresh') {
         <div class="mt-2 flex items-center gap-1 rounded-xl border border-[#E8D5BE] bg-white p-1 sm:mt-0">
           <button
             type="button"
@@ -466,6 +476,11 @@
   <!-- Tab 4: Unified System & Audit Logs -->
   @if (activeTab() === 'logs') {
     <app-audit-logs [isEmbedded]="true" />
+  }
+
+  <!-- Tab: Price Refresh Logs -->
+  @if (activeTab() === 'price-refresh') {
+    <app-price-refresh-logs [isEmbedded]="true" />
   }
 
   <!-- Tab 5: Development & Maintenance Mode -->

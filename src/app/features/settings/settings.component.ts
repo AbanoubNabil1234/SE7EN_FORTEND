@@ -10,9 +10,10 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { API_ORIGIN } from '../../core/infrastructure/http/api-origin';
 import { API_ENDPOINTS } from '../../core/infrastructure/http/api-endpoints.constants';
 import { AuditLogsComponent } from '../audit-logs/audit-logs.component';
+import { PriceRefreshLogsComponent } from '../price-refresh-logs/price-refresh-logs.component';
 import { PermissionService } from '../../core/services/permission.service';
 
-type SettingsTab = 'help' | 'terms' | 'privacy' | 'logs' | 'dev';
+type SettingsTab = 'help' | 'terms' | 'privacy' | 'logs' | 'price-refresh' | 'dev';
 type ContentLang = 'ar' | 'en';
 
 interface FaqItem {
@@ -76,7 +77,7 @@ const SETTINGS_KEY = 'se7en_dev_settings';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, AuditLogsComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, AuditLogsComponent, PriceRefreshLogsComponent],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {
@@ -153,7 +154,7 @@ export class SettingsComponent implements OnInit {
   private syncFromUrl(): void {
     this.route.queryParams.subscribe((params) => {
       const tabParam = params['tab'] as SettingsTab | undefined;
-      if (tabParam && ['help', 'terms', 'privacy', 'logs', 'dev'].includes(tabParam)) {
+      if (tabParam && ['help', 'terms', 'privacy', 'logs', 'price-refresh', 'dev'].includes(tabParam)) {
         this.activeTab.set(tabParam);
       }
       const langParam = params['lang'] as ContentLang | undefined;

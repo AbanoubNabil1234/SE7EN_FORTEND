@@ -35,7 +35,6 @@ export class SidebarComponent {
     { path: '/dashboard', icon: 'pi-th-large', labelKey: 'nav.dashboard', exact: true, permission: 'dashboard.view' },
     { path: '/categories', icon: 'pi-sitemap', labelKey: 'nav.categories', permission: 'categories.view' },
     { path: '/products', icon: 'pi-box', labelKey: 'nav.products', permission: 'products.view' },
-    { path: '/price-refresh-logs', icon: 'pi-history', labelKey: 'nav.priceRefreshLogs', permission: 'products.view' },
     { path: '/product-linking', icon: 'pi-link', labelKey: 'nav.productLinking', permission: 'product_linking.view' },
     { path: '/billboards', icon: 'pi-tag', labelKey: 'nav.billboards', permission: 'billboards.view' },
     { path: '/search-pharmacies', icon: 'pi-building', labelKey: 'nav.searchPharmacies', permission: 'pharmacies.view' },

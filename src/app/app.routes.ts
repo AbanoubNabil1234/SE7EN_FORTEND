@@ -57,12 +57,7 @@ export const routes: Routes = [
       },
       {
         path: 'price-refresh-logs',
-        canActivate: [permissionGuard],
-        data: { permission: 'products.view' },
-        loadComponent: () =>
-          import('./features/price-refresh-logs/price-refresh-logs.component').then(
-            (m) => m.PriceRefreshLogsComponent
-          )
+        redirectTo: () => inject(Router).createUrlTree(['/settings'], { queryParams: { tab: 'price-refresh' } })
       },
       {
         path: 'product-linking',

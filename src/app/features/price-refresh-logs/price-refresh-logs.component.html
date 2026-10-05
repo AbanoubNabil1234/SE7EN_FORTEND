@@ -1,276 +1,681 @@
-<section class="page" aria-labelledby="prl-title">
-  <header class="page-header">
-    <div>
-      <h1 id="prl-title" class="title">{{ 'priceRefreshLogs.title' | t }}</h1>
-      <p class="subtitle">{{ 'priceRefreshLogs.subtitle' | t }}</p>
-    </div>
-  </header>
+<section class="w-full space-y-5" [class.px-4]="!isEmbedded()" [class.py-4]="!isEmbedded()" [class.sm:px-6]="!isEmbedded()" [class.sm:py-6]="!isEmbedded()" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
 
-  <!-- Schedule panel -->
-  <div class="card schedule-card" role="status" [attr.aria-busy]="scheduleLoading()">
-    @if (scheduleLoading()) {
-      <p class="muted">{{ 'priceRefreshLogs.loading' | t }}</p>
-    } @else if (scheduleError()) {
-      <p class="error-text">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
-      <button type="button" class="btn btn-secondary" (click)="loadSchedule()">
-        {{ 'priceRefreshLogs.retry' | t }}
-      </button>
-    } @else if (schedule(); as s) {
-      <div class="schedule-row">
-        <span class="schedule-icon pi pi-clock" aria-hidden="true"></span>
-        <div class="schedule-text">
-          <strong>{{ 'priceRefreshLogs.scheduleDaily' | t }}</strong>
-          <span class="schedule-value">{{ s.localTime }} ({{ s.timeZoneId }})</span>
+  <!-- Top Header Card (Shown only when not embedded or as top banner) -->
+  <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
+    <div class="h-1.5 bg-[#C27938]"></div>
+    <div class="p-5 sm:p-6">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-2 rounded-full bg-[#F8EEE2] px-3 py-1 text-[11px] font-bold text-[#C27938]">
+            <i class="pi pi-sync text-xs"></i>
+            <span>{{ 'priceRefreshLogs.badge' | t }}</span>
+          </div>
+          <h1 class="text-xl font-black text-[#181A1D] sm:text-2xl">
+            {{ 'priceRefreshLogs.title' | t }}
+          </h1>
+          <p class="max-w-2xl text-xs font-medium text-[#8A735C] sm:text-sm">
+            {{ 'priceRefreshLogs.subtitle' | t }}
+          </p>
         </div>
-        @if (s.enabled) {
-          <span class="badge badge-on">{{ 'priceRefreshLogs.scheduleEnabled' | t }}</span>
-          @if (s.nextRunAtUtc) {
-            <span class="muted">{{ 'priceRefreshLogs.nextRun' | t }}: {{ formatDate(s.nextRunAtUtc) }}</span>
+
+        <!-- Header Actions: Live indicator & Refresh -->
+        <div class="flex flex-wrap items-center gap-3">
+          @if (isPolling()) {
+            <div class="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 shadow-2xs">
+              <span class="relative flex size-2.5">
+                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex size-2.5 rounded-full bg-emerald-600"></span>
+              </span>
+              <span>{{ 'priceRefreshLogs.liveSync' | t }}</span>
+            </div>
           }
-        } @else {
-          <span class="badge badge-off">{{ 'priceRefreshLogs.scheduleDisabled' | t }}</span>
-        }
+
+          <button
+            type="button"
+            (click)="loadRuns()"
+            [disabled]="runsLoading()"
+            class="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E8D5BE] bg-white px-4 text-xs font-bold text-[#5C4936] transition shadow-2xs hover:bg-[#FBF8F4] active:scale-98 cursor-pointer disabled:opacity-50"
+            [title]="'priceRefreshLogs.refresh' | t"
+          >
+            <i class="pi pi-refresh text-xs" [class.pi-spin]="runsLoading()"></i>
+            <span>{{ 'priceRefreshLogs.refresh' | t }}</span>
+          </button>
+        </div>
       </div>
-    }
-  </div>
-
-  <!-- Runs filters -->
-  <div class="card filters" role="search">
-    <div class="filter-item">
-      <label for="prl-status-filter">{{ 'priceRefreshLogs.filterStatus' | t }}</label>
-      <select id="prl-status-filter" [value]="runsStatusFilter()" (change)="runsStatusFilter.set($any($event.target).value); onRunsFilterChanged()">
-        <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
-        @for (status of runStatuses; track status) {
-          <option [value]="status">{{ statusKey(status) | t }}</option>
-        }
-      </select>
-    </div>
-    <div class="filter-item">
-      <label for="prl-from-filter">{{ 'priceRefreshLogs.filterFrom' | t }}</label>
-      <input id="prl-from-filter" type="date" [value]="runsFromFilter()" (change)="runsFromFilter.set($any($event.target).value); onRunsFilterChanged()" />
-    </div>
-    <div class="filter-item">
-      <label for="prl-to-filter">{{ 'priceRefreshLogs.filterTo' | t }}</label>
-      <input id="prl-to-filter" type="date" [value]="runsToFilter()" (change)="runsToFilter.set($any($event.target).value); onRunsFilterChanged()" />
     </div>
   </div>
 
-  <!-- Runs list -->
-  @if (runsLoading()) {
-    <div class="card"><p class="muted">{{ 'priceRefreshLogs.loading' | t }}</p></div>
-  } @else if (runsError()) {
-    <div class="card">
-      <p class="error-text">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
-      <button type="button" class="btn btn-secondary" (click)="loadRuns()">{{ 'priceRefreshLogs.retry' | t }}</button>
-    </div>
-  } @else if (runs(); as runsData) {
-    @if (runsData.items.length === 0) {
-      <div class="card"><p class="muted">{{ 'priceRefreshLogs.emptyRuns' | t }}</p></div>
-    } @else {
-      <div class="card table-card">
-        <table class="table">
-          <caption class="sr-only">{{ 'priceRefreshLogs.title' | t }}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{{ 'priceRefreshLogs.colRun' | t }}</th>
-              <th scope="col">{{ 'priceRefreshLogs.colTrigger' | t }}</th>
-              <th scope="col">{{ 'priceRefreshLogs.colStarted' | t }}</th>
-              <th scope="col">{{ 'priceRefreshLogs.colStatus' | t }}</th>
-              <th scope="col">{{ 'priceRefreshLogs.colTargets' | t }}</th>
-              <th scope="col">{{ 'priceRefreshLogs.colSuccess' | t }}</th>
-              <th scope="col">{{ 'priceRefreshLogs.colFailed' | t }}</th>
-              <th scope="col">{{ 'priceRefreshLogs.colSkipped' | t }}</th>
-              <th scope="col">{{ 'priceRefreshLogs.colPending' | t }}</th>
-              <th scope="col"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (run of runsData.items; track run.runId) {
-              <tr [class.selected]="selectedRun()?.runId === run.runId">
-                <td>
-                  <span class="run-id" [title]="run.runId">{{ run.runId.slice(0, 8) }}</span>
-                  @if (run.parentRunId) {
-                    <span class="child-tag">{{ 'priceRefreshLogs.childOf' | t }} {{ run.parentRunId.slice(0, 8) }}</span>
-                  }
-                </td>
-                <td>{{ triggerKey(run.triggerType) | t }}</td>
-                <td>{{ formatDate(run.createdAtUtc) }}</td>
-                <td><span class="badge" [class.badge-on]="run.status === 'Completed'" [class.badge-warn]="run.status === 'CompletedWithIssues' || run.status === 'Running'" [class.badge-off]="run.status === 'Failed' || run.status === 'Cancelled'">{{ statusKey(run.status) | t }}</span></td>
-                <td>{{ run.totalTargets }}</td>
-                <td class="ok">{{ run.successCount }}</td>
-                <td class="bad">{{ run.failedCount }}</td>
-                <td class="muted">{{ run.skippedCount }}</td>
-                <td class="muted">{{ run.pendingWorkCount }}</td>
-                <td>
-                  <button type="button" class="btn btn-secondary" (click)="selectRun(run)">
-                    {{ 'priceRefreshLogs.openRun' | t }}
-                  </button>
-                </td>
-              </tr>
+  <!-- KPI Metrics Strip -->
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- Schedule Card -->
+    <div class="flex flex-col justify-between rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-sm transition hover:shadow-md">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-[#8A735C]">{{ 'priceRefreshLogs.scheduleTitle' | t }}</span>
+        <span class="inline-flex size-8 items-center justify-center rounded-xl bg-[#F8EEE2] text-[#C27938]">
+          <i class="pi pi-clock text-sm"></i>
+        </span>
+      </div>
+      <div class="mt-2">
+        @if (scheduleLoading()) {
+          <div class="h-6 w-24 animate-pulse rounded bg-[#F3EDE5]"></div>
+        } @else if (schedule(); as s) {
+          <div class="flex items-baseline gap-2">
+            <span class="text-lg font-black text-[#181A1D] tabular-nums">{{ s.localTime }}</span>
+            <span class="text-[10px] font-bold text-[#8A735C]">({{ s.timeZoneId }})</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between">
+            @if (s.enabled) {
+              <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                {{ 'priceRefreshLogs.scheduleEnabled' | t }}
+              </span>
+            } @else {
+              <span class="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-600">
+                {{ 'priceRefreshLogs.scheduleDisabled' | t }}
+              </span>
             }
-          </tbody>
-        </table>
-        <nav class="pager" [attr.aria-label]="'priceRefreshLogs.pager' | t">
-          <button type="button" class="btn btn-secondary" [disabled]="runsPage() <= 1" (click)="goToRunsPage(runsPage() - 1)">‹</button>
-          <span>{{ runsPage() }} / {{ totalPages() }}</span>
-          <button type="button" class="btn btn-secondary" [disabled]="runsPage() >= totalPages()" (click)="goToRunsPage(runsPage() + 1)">›</button>
-        </nav>
+            @if (s.nextRunAtUtc) {
+              <span class="text-[10px] font-medium text-[#8A735C]" [title]="formatDate(s.nextRunAtUtc)">
+                {{ formatDate(s.nextRunAtUtc) }}
+              </span>
+            }
+          </div>
+        } @else {
+          <span class="text-xs text-[#8A735C]">—</span>
+        }
       </div>
-    }
-  }
+    </div>
 
-  <!-- Selected run details -->
-  @if (selectedRun(); as run) {
-    <section class="card details" [attr.aria-label]="'priceRefreshLogs.runDetails' | t">
-      <header class="details-header">
-        <h2 class="section-title">{{ 'priceRefreshLogs.runDetails' | t }} — {{ run.runId.slice(0, 8) }}</h2>
-        <button type="button" class="btn btn-secondary" (click)="closeRunDetails()">{{ 'priceRefreshLogs.close' | t }}</button>
-      </header>
+    <!-- Total Runs -->
+    <div class="flex flex-col justify-between rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-sm transition hover:shadow-md">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-[#8A735C]">{{ 'priceRefreshLogs.statTotalRuns' | t }}</span>
+        <span class="inline-flex size-8 items-center justify-center rounded-xl bg-[#F0E6D8] text-[#8C5D30]">
+          <i class="pi pi-server text-sm"></i>
+        </span>
+      </div>
+      <div class="mt-3 flex items-baseline justify-between">
+        <span class="text-2xl font-black text-[#181A1D] tabular-nums">{{ totalRunsCount() | number }}</span>
+        <span class="text-[11px] font-bold text-[#8A735C]">{{ 'priceRefreshLogs.colRun' | t }}</span>
+      </div>
+    </div>
 
-      @if (runReportLoading()) {
-        <p class="muted">{{ 'priceRefreshLogs.loading' | t }}</p>
-      } @else if (runReportError()) {
-        <p class="error-text">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
-        <button type="button" class="btn btn-secondary" (click)="loadRunReport(run.runId)">{{ 'priceRefreshLogs.retry' | t }}</button>
-      } @else if (runReport(); as report) {
-        <!-- Per-pharmacy breakdown -->
-        <div class="table-scroll">
-          <table class="table">
-            <caption class="sr-only">{{ 'priceRefreshLogs.pharmacyBreakdown' | t }}</caption>
-            <thead>
+    <!-- Succeeded Runs -->
+    <div class="flex flex-col justify-between rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-sm transition hover:shadow-md">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-[#8A735C]">{{ 'priceRefreshLogs.statCompleted' | t }}</span>
+        <span class="inline-flex size-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+          <i class="pi pi-check-circle text-sm"></i>
+        </span>
+      </div>
+      <div class="mt-3 flex items-baseline justify-between">
+        <span class="text-2xl font-black text-emerald-700 tabular-nums">{{ completedRunsCount() }}</span>
+        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+          {{ 'priceRefreshLogs.colSuccess' | t }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Failed / Issues Runs -->
+    <div class="flex flex-col justify-between rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-sm transition hover:shadow-md">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-[#8A735C]">{{ 'priceRefreshLogs.statIssues' | t }}</span>
+        <span class="inline-flex size-8 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
+          <i class="pi pi-exclamation-triangle text-sm"></i>
+        </span>
+      </div>
+      <div class="mt-3 flex items-baseline justify-between">
+        <span class="text-2xl font-black text-rose-700 tabular-nums">{{ issuesRunsCount() + failedRunsCount() }}</span>
+        <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+          {{ 'priceRefreshLogs.colFailed' | t }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="rounded-2xl border border-[#E8D5BE] bg-white p-4 shadow-sm">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 items-end">
+      <!-- Status Filter -->
+      <div class="space-y-1">
+        <label for="prl-status-filter" class="text-[11px] font-bold text-[#8A735C]">
+          {{ 'priceRefreshLogs.filterStatus' | t }}
+        </label>
+        <select
+          id="prl-status-filter"
+          [value]="runsStatusFilter()"
+          (change)="runsStatusFilter.set($any($event.target).value); onRunsFilterChanged()"
+          class="h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-xs font-semibold text-[#181A1D] outline-none transition focus:border-[#C27938] focus:bg-white"
+        >
+          <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
+          @for (status of runStatuses; track status) {
+            <option [value]="status">{{ statusKey(status) | t }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Date From -->
+      <div class="space-y-1">
+        <label for="prl-from-filter" class="text-[11px] font-bold text-[#8A735C]">
+          {{ 'priceRefreshLogs.filterFrom' | t }}
+        </label>
+        <input
+          id="prl-from-filter"
+          type="date"
+          [value]="runsFromFilter()"
+          (change)="runsFromFilter.set($any($event.target).value); onRunsFilterChanged()"
+          class="h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-xs font-semibold text-[#181A1D] outline-none transition focus:border-[#C27938] focus:bg-white"
+        />
+      </div>
+
+      <!-- Date To -->
+      <div class="space-y-1">
+        <label for="prl-to-filter" class="text-[11px] font-bold text-[#8A735C]">
+          {{ 'priceRefreshLogs.filterTo' | t }}
+        </label>
+        <input
+          id="prl-to-filter"
+          type="date"
+          [value]="runsToFilter()"
+          (change)="runsToFilter.set($any($event.target).value); onRunsFilterChanged()"
+          class="h-10 w-full rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3 text-xs font-semibold text-[#181A1D] outline-none transition focus:border-[#C27938] focus:bg-white"
+        />
+      </div>
+
+      <!-- Reset Filters Button -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="resetFilters()"
+          class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-4 text-xs font-bold text-[#6B5A48] transition hover:bg-[#F3EDE5] hover:text-[#181A1D] cursor-pointer"
+        >
+          <i class="pi pi-filter-slash text-xs"></i>
+          <span>{{ 'priceRefreshLogs.resetFilters' | t }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Runs List / Table Card -->
+  <div class="overflow-hidden rounded-2xl border border-[#E8D5BE] bg-white shadow-sm">
+    @if (runsLoading()) {
+      <div class="flex flex-col items-center justify-center p-12 text-center">
+        <i class="pi pi-spin pi-spinner text-3xl text-[#C27938]"></i>
+        <p class="mt-3 text-xs font-bold text-[#8A735C]">{{ 'priceRefreshLogs.loading' | t }}</p>
+      </div>
+    } @else if (runsError()) {
+      <div class="flex flex-col items-center justify-center p-10 text-center space-y-3">
+        <span class="inline-flex size-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+          <i class="pi pi-exclamation-circle text-xl"></i>
+        </span>
+        <p class="text-xs font-bold text-rose-700 sm:text-sm">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
+        <button
+          type="button"
+          (click)="loadRuns()"
+          class="inline-flex h-9 items-center gap-2 rounded-xl bg-[#C27938] px-4 text-xs font-bold text-white shadow-xs hover:bg-[#A15D2A] transition cursor-pointer"
+        >
+          <i class="pi pi-refresh text-xs"></i>
+          <span>{{ 'priceRefreshLogs.retry' | t }}</span>
+        </button>
+      </div>
+    } @else if (runs(); as runsData) {
+      @if (runsData.items.length === 0) {
+        <div class="flex flex-col items-center justify-center p-12 text-center space-y-2">
+          <span class="inline-flex size-12 items-center justify-center rounded-2xl bg-[#F8EEE2] text-[#C27938]">
+            <i class="pi pi-inbox text-xl"></i>
+          </span>
+          <p class="text-xs font-bold text-[#8A735C] sm:text-sm">{{ 'priceRefreshLogs.emptyRuns' | t }}</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-start text-xs">
+            <thead class="border-b border-[#EDE0D0] bg-[#FAF8F5] text-[11px] font-bold text-[#8A735C] uppercase tracking-wider">
               <tr>
-                <th scope="col">{{ 'priceRefreshLogs.colPharmacy' | t }}</th>
-                <th scope="col">{{ 'priceRefreshLogs.colSuccess' | t }}</th>
-                <th scope="col">{{ 'priceRefreshLogs.colUpdated' | t }}</th>
-                <th scope="col">{{ 'priceRefreshLogs.colUnchanged' | t }}</th>
-                <th scope="col">{{ 'priceRefreshLogs.colFailed' | t }}</th>
-                <th scope="col">{{ 'priceRefreshLogs.colSkipped' | t }}</th>
-                <th scope="col">{{ 'priceRefreshLogs.colPending' | t }}</th>
-                <th scope="col">{{ 'priceRefreshLogs.colAvailabilityOnly' | t }}</th>
-                @if (canRetry()) {
-                  <th scope="col"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
-                }
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colRun' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colTrigger' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colStarted' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colStatus' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colTargets' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colSuccess' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colFailed' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colSkipped' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-start">{{ 'priceRefreshLogs.colPending' | t }}</th>
+                <th scope="col" class="px-4 py-3 text-end"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
               </tr>
             </thead>
-            <tbody>
-              @for (ph of report.pharmacies; track ph.code) {
-                <tr>
-                  <td>
-                    <strong>{{ pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic) }}</strong>
-                    <span class="muted">({{ ph.code }})</span>
-                  </td>
-                  <td class="ok">{{ ph.successCount }}</td>
-                  <td>{{ ph.updated }}</td>
-                  <td>{{ ph.unchanged }}</td>
-                  <td class="bad">{{ ph.failedCount }}</td>
-                  <td class="muted">{{ ph.skippedCount }}</td>
-                  <td class="muted">{{ ph.pendingWorkCount }}</td>
-                  <td class="muted">{{ ph.availabilityOnly }}</td>
-                  @if (canRetry()) {
-                    <td>
+            <tbody class="divide-y divide-[#EDE0D0]/70">
+              @for (run of runsData.items; track run.runId) {
+                <tr
+                  class="transition-colors hover:bg-[#FBF8F4]/80"
+                  [class.bg-[#F8EEE2]/40]="selectedRun()?.runId === run.runId"
+                  [class.font-semibold]="selectedRun()?.runId === run.runId"
+                >
+                  <!-- Run ID & Tag -->
+                  <td class="px-4 py-3.5 whitespace-nowrap">
+                    <div class="flex items-center gap-1.5">
                       <button
                         type="button"
-                        class="btn btn-primary"
-                        [disabled]="ph.failedCount === 0 || busyFor('pharmacy:' + (ph.pharmacyId ?? ph.code))"
-                        (click)="retryPharmacyFailures(ph.pharmacyId ?? '', pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic), ph.failedCount)">
-                        {{ 'priceRefreshLogs.retryPharmacyBtn' | t }} ({{ ph.failedCount }})
+                        (click)="copyRunId(run.runId)"
+                        class="group inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#181A1D] hover:bg-[#F3EDE5] transition"
+                        [title]="run.runId"
+                      >
+                        <span>{{ run.runId.slice(0, 8) }}</span>
+                        <i class="pi pi-copy text-[10px] text-[#A68B6D] opacity-0 group-hover:opacity-100 transition"></i>
                       </button>
-                    </td>
-                  }
+                      @if (run.parentRunId) {
+                        <span class="inline-flex items-center rounded-full bg-[#F8EEE2] px-2 py-0.5 text-[10px] font-bold text-[#C27938]" [title]="run.parentRunId">
+                          {{ 'priceRefreshLogs.childOf' | t }} {{ run.parentRunId.slice(0, 6) }}
+                        </span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Trigger -->
+                  <td class="px-4 py-3.5 whitespace-nowrap text-[#5C4936]">
+                    <span class="inline-flex items-center gap-1 rounded-lg bg-[#FAF8F5] border border-[#E8D5BE] px-2 py-0.5 text-[11px] font-medium">
+                      {{ triggerKey(run.triggerType) | t }}
+                    </span>
+                  </td>
+
+                  <!-- Started At -->
+                  <td class="px-4 py-3.5 whitespace-nowrap text-[#5C4936] tabular-nums font-mono text-[11px]">
+                    {{ formatDate(run.createdAtUtc) }}
+                  </td>
+
+                  <!-- Status Pill -->
+                  <td class="px-4 py-3.5 whitespace-nowrap">
+                    @if (run.status === 'Completed') {
+                      <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
+                        <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                        {{ statusKey(run.status) | t }}
+                      </span>
+                    } @else if (run.status === 'Running' || run.status === 'Pending') {
+                      <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800 animate-pulse">
+                        <span class="size-1.5 rounded-full bg-amber-500"></span>
+                        {{ statusKey(run.status) | t }}
+                      </span>
+                    } @else if (run.status === 'CompletedWithIssues') {
+                      <span class="inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-orange-50 px-2.5 py-0.5 text-[11px] font-bold text-orange-800">
+                        <span class="size-1.5 rounded-full bg-orange-500"></span>
+                        {{ statusKey(run.status) | t }}
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-rose-700">
+                        <span class="size-1.5 rounded-full bg-rose-500"></span>
+                        {{ statusKey(run.status) | t }}
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Targets -->
+                  <td class="px-4 py-3.5 whitespace-nowrap tabular-nums font-bold text-[#181A1D]">
+                    {{ run.totalTargets | number }}
+                  </td>
+
+                  <!-- Success Count -->
+                  <td class="px-4 py-3.5 whitespace-nowrap tabular-nums font-bold text-emerald-700">
+                    {{ run.successCount | number }}
+                  </td>
+
+                  <!-- Failed Count -->
+                  <td class="px-4 py-3.5 whitespace-nowrap tabular-nums font-bold" [class.text-rose-600]="run.failedCount > 0" [class.text-[#8A735C]]="run.failedCount === 0">
+                    {{ run.failedCount | number }}
+                  </td>
+
+                  <!-- Skipped -->
+                  <td class="px-4 py-3.5 whitespace-nowrap tabular-nums text-[#8A735C]">
+                    {{ run.skippedCount | number }}
+                  </td>
+
+                  <!-- Pending -->
+                  <td class="px-4 py-3.5 whitespace-nowrap tabular-nums text-[#8A735C]">
+                    {{ run.pendingWorkCount | number }}
+                  </td>
+
+                  <!-- Actions: View Details -->
+                  <td class="px-4 py-3.5 text-end whitespace-nowrap">
+                    <button
+                      type="button"
+                      (click)="selectRun(run)"
+                      class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer shadow-2xs active:scale-98"
+                      [ngClass]="selectedRun()?.runId === run.runId ? 'bg-[#C27938] text-white shadow-sm' : 'border border-[#E8D5BE] bg-[#FBF8F4] text-[#5C4936] hover:bg-[#F3EDE5] hover:text-[#181A1D]'"
+                    >
+                      <i class="pi" [ngClass]="selectedRun()?.runId === run.runId ? 'pi-eye' : 'pi-chevron-left rtl:rotate-180'"></i>
+                      <span>{{ 'priceRefreshLogs.openRun' | t }}</span>
+                    </button>
+                  </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
 
-        <!-- Items filters -->
-        <div class="filters items-filters" role="search">
-          <div class="filter-item">
-            <label for="prl-items-pharmacy">{{ 'priceRefreshLogs.filterPharmacy' | t }}</label>
-            <select id="prl-items-pharmacy" [value]="itemsPharmacyFilter()" (change)="itemsPharmacyFilter.set($any($event.target).value); onItemsFilterChanged()">
-              <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
-              @for (ph of report.pharmacies; track ph.code) {
-                <option [value]="ph.pharmacyId ?? ''">{{ pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic) }}</option>
-              }
-            </select>
+        <!-- Pager Footer -->
+        <div class="flex items-center justify-between border-t border-[#EDE0D0] bg-[#FAF8F5] px-4 py-3">
+          <span class="text-xs font-bold text-[#8A735C]">
+            {{ runsPage() }} / {{ totalPages() }}
+          </span>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              [disabled]="runsPage() <= 1"
+              (click)="goToRunsPage(runsPage() - 1)"
+              class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-xs font-bold text-[#181A1D] transition shadow-2xs hover:bg-[#FBF8F4] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <i class="pi pi-chevron-right rtl:rotate-180 text-[10px]"></i>
+            </button>
+            <button
+              type="button"
+              [disabled]="runsPage() >= totalPages()"
+              (click)="goToRunsPage(runsPage() + 1)"
+              class="inline-flex size-8 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-xs font-bold text-[#181A1D] transition shadow-2xs hover:bg-[#FBF8F4] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <i class="pi pi-chevron-left rtl:rotate-180 text-[10px]"></i>
+            </button>
           </div>
-          <div class="filter-item">
-            <label for="prl-items-status">{{ 'priceRefreshLogs.filterStatus' | t }}</label>
-            <select id="prl-items-status" [value]="itemsStatusFilter()" (change)="itemsStatusFilter.set($any($event.target).value); onItemsFilterChanged()">
-              <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
-              @for (status of itemStatuses; track status) {
-                <option [value]="status">{{ statusKey(status) | t }}</option>
-              }
-            </select>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Selected Run Details Drawer / Panel -->
+  @if (selectedRun(); as run) {
+    <section class="animate-slide-in space-y-5 rounded-2xl border-2 border-[#C27938]/40 bg-white p-5 sm:p-6 shadow-sm">
+      <!-- Details Header -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#EDE0D0] pb-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1 rounded-full bg-[#F8EEE2] px-2.5 py-0.5 text-[11px] font-bold text-[#C27938]">
+              <i class="pi pi-hashtag text-[10px]"></i>
+              <span class="font-mono">{{ run.runId.slice(0, 8) }}</span>
+            </span>
+            <button
+              type="button"
+              (click)="copyRunId(run.runId)"
+              class="text-[11px] font-bold text-[#A68B6D] hover:text-[#C27938] transition cursor-pointer"
+              [title]="'priceRefreshLogs.copyRunId' | t"
+            >
+              <i class="pi pi-copy text-xs"></i>
+            </button>
           </div>
-          <div class="filter-item grow">
-            <label for="prl-items-search">{{ 'priceRefreshLogs.filterSearch' | t }}</label>
-            <input id="prl-items-search" type="search" [value]="itemsSearch()" (change)="itemsSearch.set($any($event.target).value); onItemsFilterChanged()" [placeholder]="'priceRefreshLogs.filterSearch' | t" />
+          <h2 class="text-lg font-black text-[#181A1D] sm:text-xl">
+            {{ 'priceRefreshLogs.runDetails' | t }}
+          </h2>
+          <p class="text-xs font-medium text-[#8A735C]">
+            {{ triggerKey(run.triggerType) | t }} · {{ formatDate(run.createdAtUtc) }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          (click)="closeRunDetails()"
+          class="inline-flex h-9 items-center gap-1.5 self-start rounded-xl border border-[#E8D5BE] bg-[#FBF8F4] px-3.5 text-xs font-bold text-[#5C4936] hover:bg-[#F3EDE5] hover:text-[#181A1D] transition shadow-2xs cursor-pointer"
+        >
+          <i class="pi pi-times text-xs"></i>
+          <span>{{ 'priceRefreshLogs.close' | t }}</span>
+        </button>
+      </div>
+
+      @if (runReportLoading()) {
+        <div class="flex flex-col items-center justify-center p-8 text-center">
+          <i class="pi pi-spin pi-spinner text-2xl text-[#C27938]"></i>
+          <p class="mt-2 text-xs font-bold text-[#8A735C]">{{ 'priceRefreshLogs.loading' | t }}</p>
+        </div>
+      } @else if (runReportError()) {
+        <div class="p-6 text-center space-y-2">
+          <p class="text-xs font-bold text-rose-600">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
+          <button
+            type="button"
+            class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#C27938] px-3 text-xs font-bold text-white"
+            (click)="loadRunReport(run.runId)"
+          >
+            {{ 'priceRefreshLogs.retry' | t }}
+          </button>
+        </div>
+      } @else if (runReport(); as report) {
+        <!-- Pharmacy Breakdown Card -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-[#181A1D] sm:text-base">
+              {{ 'priceRefreshLogs.pharmacyBreakdown' | t }}
+            </h3>
+            <span class="text-xs font-bold text-[#8A735C]">
+              {{ report.pharmacies.length }} {{ 'priceRefreshLogs.colPharmacy' | t }}
+            </span>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-[#E8D5BE]">
+            <table class="w-full text-start text-xs">
+              <thead class="border-b border-[#EDE0D0] bg-[#FAF8F5] text-[11px] font-bold text-[#8A735C] uppercase">
+                <tr>
+                  <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colPharmacy' | t }}</th>
+                  <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colSuccess' | t }}</th>
+                  <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colUpdated' | t }}</th>
+                  <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colUnchanged' | t }}</th>
+                  <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colFailed' | t }}</th>
+                  <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colSkipped' | t }}</th>
+                  <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colPending' | t }}</th>
+                  <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colAvailabilityOnly' | t }}</th>
+                  @if (canRetry()) {
+                    <th scope="col" class="px-3.5 py-2.5 text-end"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#EDE0D0]">
+                @for (ph of report.pharmacies; track ph.code) {
+                  <tr class="hover:bg-[#FBF8F4]/80 transition">
+                    <td class="px-3.5 py-2.5 whitespace-nowrap">
+                      <span class="font-bold text-[#181A1D]">{{ pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic) }}</span>
+                      <span class="ms-1 text-[11px] text-[#8A735C]">({{ ph.code }})</span>
+                    </td>
+                    <td class="px-3.5 py-2.5 whitespace-nowrap font-bold text-emerald-700 tabular-nums">{{ ph.successCount }}</td>
+                    <td class="px-3.5 py-2.5 whitespace-nowrap tabular-nums text-[#5C4936]">{{ ph.updated }}</td>
+                    <td class="px-3.5 py-2.5 whitespace-nowrap tabular-nums text-[#8A735C]">{{ ph.unchanged }}</td>
+                    <td class="px-3.5 py-2.5 whitespace-nowrap font-bold tabular-nums" [class.text-rose-600]="ph.failedCount > 0" [class.text-[#8A735C]]="ph.failedCount === 0">{{ ph.failedCount }}</td>
+                    <td class="px-3.5 py-2.5 whitespace-nowrap tabular-nums text-[#8A735C]">{{ ph.skippedCount }}</td>
+                    <td class="px-3.5 py-2.5 whitespace-nowrap tabular-nums text-[#8A735C]">{{ ph.pendingWorkCount }}</td>
+                    <td class="px-3.5 py-2.5 whitespace-nowrap tabular-nums text-[#8A735C]">{{ ph.availabilityOnly }}</td>
+                    @if (canRetry()) {
+                      <td class="px-3.5 py-2.5 text-end whitespace-nowrap">
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition shadow-xs cursor-pointer active:scale-98 disabled:opacity-40 disabled:cursor-not-allowed"
+                          [ngClass]="ph.failedCount > 0 ? 'bg-[#C27938] text-white hover:bg-[#A15D2A]' : 'bg-[#F3EDE5] text-[#8A735C]'"
+                          [disabled]="ph.failedCount === 0 || busyFor('pharmacy:' + (ph.pharmacyId ?? ph.code))"
+                          (click)="retryPharmacyFailures(ph.pharmacyId ?? '', pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic), ph.failedCount)"
+                        >
+                          <i class="pi" [ngClass]="busyFor('pharmacy:' + (ph.pharmacyId ?? ph.code)) ? 'pi-spin pi-spinner' : 'pi-replay'"></i>
+                          <span>{{ 'priceRefreshLogs.retryPharmacyBtn' | t }} ({{ ph.failedCount }})</span>
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Items table -->
-        @if (itemsLoading()) {
-          <p class="muted">{{ 'priceRefreshLogs.loading' | t }}</p>
-        } @else if (itemsError()) {
-          <p class="error-text">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
-        } @else if (items(); as itemsData) {
-          @if (itemsData.items.length === 0) {
-            <p class="muted">{{ 'priceRefreshLogs.emptyItems' | t }}</p>
-          } @else {
-            <div class="table-scroll">
-              <table class="table">
-                <caption class="sr-only">{{ 'priceRefreshLogs.itemsTable' | t }}</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">{{ 'priceRefreshLogs.colProduct' | t }}</th>
-                    <th scope="col">{{ 'priceRefreshLogs.colPharmacy' | t }}</th>
-                    <th scope="col">{{ 'priceRefreshLogs.colStatus' | t }}</th>
-                    <th scope="col">{{ 'priceRefreshLogs.colReason' | t }}</th>
-                    <th scope="col">{{ 'priceRefreshLogs.colAttempts' | t }}</th>
-                    <th scope="col">{{ 'priceRefreshLogs.colLastObserved' | t }}</th>
-                    @if (canRetry()) {
-                      <th scope="col"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of itemsData.items; track item.itemId) {
+        <!-- Items Table Section -->
+        <div class="space-y-3 pt-3">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h3 class="text-sm font-bold text-[#181A1D] sm:text-base">
+              {{ 'priceRefreshLogs.itemsTitle' | t }}
+            </h3>
+          </div>
+
+          <!-- Items Filters Toolbar -->
+          <div class="rounded-xl border border-[#E8D5BE] bg-[#FDFBF7] p-3">
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4 items-end">
+              <!-- Pharmacy Filter -->
+              <div class="space-y-1">
+                <label for="prl-items-pharmacy" class="text-[10px] font-bold text-[#8A735C] uppercase">{{ 'priceRefreshLogs.filterPharmacy' | t }}</label>
+                <select
+                  id="prl-items-pharmacy"
+                  [value]="itemsPharmacyFilter()"
+                  (change)="itemsPharmacyFilter.set($any($event.target).value); onItemsFilterChanged()"
+                  class="h-9 w-full rounded-xl border border-[#E8D5BE] bg-white px-2.5 text-xs font-medium text-[#181A1D] outline-none focus:border-[#C27938]"
+                >
+                  <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
+                  @for (ph of report.pharmacies; track ph.code) {
+                    <option [value]="ph.pharmacyId ?? ''">{{ pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic) }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Item Status Filter -->
+              <div class="space-y-1">
+                <label for="prl-items-status" class="text-[10px] font-bold text-[#8A735C] uppercase">{{ 'priceRefreshLogs.filterStatus' | t }}</label>
+                <select
+                  id="prl-items-status"
+                  [value]="itemsStatusFilter()"
+                  (change)="itemsStatusFilter.set($any($event.target).value); onItemsFilterChanged()"
+                  class="h-9 w-full rounded-xl border border-[#E8D5BE] bg-white px-2.5 text-xs font-medium text-[#181A1D] outline-none focus:border-[#C27938]"
+                >
+                  <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
+                  @for (status of itemStatuses; track status) {
+                    <option [value]="status">{{ statusKey(status) | t }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Search -->
+              <div class="space-y-1 sm:col-span-2">
+                <label for="prl-items-search" class="text-[10px] font-bold text-[#8A735C] uppercase">{{ 'priceRefreshLogs.filterSearch' | t }}</label>
+                <div class="relative">
+                  <i class="pi pi-search absolute top-2.5 start-3 text-xs text-[#A68B6D]"></i>
+                  <input
+                    id="prl-items-search"
+                    type="search"
+                    [value]="itemsSearch()"
+                    (change)="itemsSearch.set($any($event.target).value); onItemsFilterChanged()"
+                    [placeholder]="'priceRefreshLogs.filterSearch' | t"
+                    class="h-9 w-full rounded-xl border border-[#E8D5BE] bg-white ps-8 pe-3 text-xs font-medium text-[#181A1D] outline-none focus:border-[#C27938]"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Table Result -->
+          @if (itemsLoading()) {
+            <div class="p-8 text-center">
+              <i class="pi pi-spin pi-spinner text-xl text-[#C27938]"></i>
+              <p class="mt-2 text-xs text-[#8A735C]">{{ 'priceRefreshLogs.loading' | t }}</p>
+            </div>
+          } @else if (itemsError()) {
+            <div class="p-6 text-center space-y-2">
+              <p class="text-xs font-bold text-rose-600">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
+              <button type="button" class="btn btn-secondary" (click)="loadItems()">{{ 'priceRefreshLogs.retry' | t }}</button>
+            </div>
+          } @else if (items(); as itemsData) {
+            @if (itemsData.items.length === 0) {
+              <div class="p-8 text-center">
+                <p class="text-xs font-bold text-[#8A735C]">{{ 'priceRefreshLogs.emptyItems' | t }}</p>
+              </div>
+            } @else {
+              <div class="overflow-x-auto rounded-xl border border-[#E8D5BE]">
+                <table class="w-full text-start text-xs">
+                  <thead class="border-b border-[#EDE0D0] bg-[#FAF8F5] text-[11px] font-bold text-[#8A735C] uppercase">
                     <tr>
-                      <td>{{ item.productName || item.pharmacyProductId }}</td>
-                      <td>{{ pharmacyLabel(item.pharmacyId, item.pharmacyCode, item.pharmacyName, item.pharmacyNameArabic) }}</td>
-                      <td><span class="badge" [class.badge-on]="item.status === 'Updated' || item.status === 'Unchanged'" [class.badge-warn]="item.status === 'Blocked' || item.status === 'FailedFinal'" [class.badge-off]="item.status === 'NotFound' || item.status === 'TargetChanged'">{{ statusKey(item.status) | t }}</span></td>
-                      <td>{{ reasonKey(item.reasonCode) | t }}</td>
-                      <td>{{ item.attempts }}</td>
-                      <td>{{ formatDate(item.lastObservedAtUtc) }}</td>
+                      <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colProduct' | t }}</th>
+                      <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colPharmacy' | t }}</th>
+                      <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colStatus' | t }}</th>
+                      <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colReason' | t }}</th>
+                      <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colAttempts' | t }}</th>
+                      <th scope="col" class="px-3.5 py-2.5 text-start">{{ 'priceRefreshLogs.colLastObserved' | t }}</th>
                       @if (canRetry()) {
-                        <td>
-                          @if (item.canRetry) {
-                            <button
-                              type="button"
-                              class="btn btn-primary"
-                              [disabled]="busyFor('item:' + item.itemId)"
-                              [attr.aria-label]="('priceRefreshLogs.retrySingleBtn' | t) + ' ' + (item.productName || item.pharmacyCode)"
-                              (click)="retrySingleItem(item)">
-                              {{ 'priceRefreshLogs.retrySingleBtn' | t }}
-                            </button>
-                          } @else {
-                            <span class="muted" [title]="retryBlockedKey(item.retryBlockedReasonCode) | t">{{ 'priceRefreshLogs.retryBlocked' | t }}</span>
-                          }
-                        </td>
+                        <th scope="col" class="px-3.5 py-2.5 text-end"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
                       }
                     </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-            <nav class="pager" [attr.aria-label]="'priceRefreshLogs.pager' | t">
-              <button type="button" class="btn btn-secondary" [disabled]="itemsPage() <= 1" (click)="goToItemsPage(itemsPage() - 1)">‹</button>
-              <span>{{ itemsPage() }} / {{ itemsTotalPages() }}</span>
-              <button type="button" class="btn btn-secondary" [disabled]="itemsPage() >= itemsTotalPages()" (click)="goToItemsPage(itemsPage() + 1)">›</button>
-            </nav>
+                  </thead>
+                  <tbody class="divide-y divide-[#EDE0D0]">
+                    @for (item of itemsData.items; track item.itemId) {
+                      <tr class="hover:bg-[#FBF8F4]/80 transition">
+                        <td class="px-3.5 py-2.5 font-bold text-[#181A1D]">
+                          {{ item.productName || item.pharmacyProductId }}
+                        </td>
+                        <td class="px-3.5 py-2.5 whitespace-nowrap text-[#5C4936]">
+                          {{ pharmacyLabel(item.pharmacyId, item.pharmacyCode, item.pharmacyName, item.pharmacyNameArabic) }}
+                        </td>
+                        <td class="px-3.5 py-2.5 whitespace-nowrap">
+                          @if (item.status === 'Updated' || item.status === 'Unchanged') {
+                            <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                              {{ statusKey(item.status) | t }}
+                            </span>
+                          } @else if (item.status === 'Blocked' || item.status === 'FailedFinal') {
+                            <span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+                              {{ statusKey(item.status) | t }}
+                            </span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                              {{ statusKey(item.status) | t }}
+                            </span>
+                          }
+                        </td>
+                        <td class="px-3.5 py-2.5 text-[#5C4936]">
+                          <span class="text-[11px]">{{ reasonKey(item.reasonCode) | t }}</span>
+                        </td>
+                        <td class="px-3.5 py-2.5 whitespace-nowrap font-mono tabular-nums text-[#8A735C]">
+                          {{ item.attempts }}
+                        </td>
+                        <td class="px-3.5 py-2.5 whitespace-nowrap font-mono tabular-nums text-[#8A735C]">
+                          {{ formatDate(item.lastObservedAtUtc) }}
+                        </td>
+                        @if (canRetry()) {
+                          <td class="px-3.5 py-2.5 text-end whitespace-nowrap">
+                            @if (item.canRetry) {
+                              <button
+                                type="button"
+                                class="inline-flex items-center gap-1 rounded-xl bg-[#C27938] px-2.5 py-1 text-xs font-bold text-white shadow-xs hover:bg-[#A15D2A] transition disabled:opacity-50 cursor-pointer active:scale-98"
+                                [disabled]="busyFor('item:' + item.itemId)"
+                                [attr.aria-label]="('priceRefreshLogs.retrySingleBtn' | t) + ' ' + (item.productName || item.pharmacyCode)"
+                                (click)="retrySingleItem(item)"
+                              >
+                                <i class="pi" [ngClass]="busyFor('item:' + item.itemId) ? 'pi-spin pi-spinner' : 'pi-refresh'"></i>
+                                <span>{{ 'priceRefreshLogs.retrySingleBtn' | t }}</span>
+                              </button>
+                            } @else {
+                              <span class="inline-flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-600" [title]="retryBlockedKey(item.retryBlockedReasonCode) | t">
+                                <i class="pi pi-ban text-[9px]"></i>
+                                {{ 'priceRefreshLogs.retryBlocked' | t }}
+                              </span>
+                            }
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Items Pager Footer -->
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-xs font-medium text-[#8A735C]">
+                  {{ itemsPage() }} / {{ itemsTotalPages() }}
+                </span>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    [disabled]="itemsPage() <= 1"
+                    (click)="goToItemsPage(itemsPage() - 1)"
+                    class="inline-flex size-7 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-xs text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40 cursor-pointer"
+                  >
+                    <i class="pi pi-chevron-right rtl:rotate-180 text-[10px]"></i>
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="itemsPage() >= itemsTotalPages()"
+                    (click)="goToItemsPage(itemsPage() + 1)"
+                    class="inline-flex size-7 items-center justify-center rounded-lg border border-[#E8D5BE] bg-white text-xs text-[#181A1D] hover:bg-[#FBF8F4] disabled:opacity-40 cursor-pointer"
+                  >
+                    <i class="pi pi-chevron-left rtl:rotate-180 text-[10px]"></i>
+                  </button>
+                </div>
+              </div>
+            }
           }
-        }
+        </div>
       }
     </section>
   }
