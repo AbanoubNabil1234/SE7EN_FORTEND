@@ -1,0 +1,277 @@
+<section class="page" aria-labelledby="prl-title">
+  <header class="page-header">
+    <div>
+      <h1 id="prl-title" class="title">{{ 'priceRefreshLogs.title' | t }}</h1>
+      <p class="subtitle">{{ 'priceRefreshLogs.subtitle' | t }}</p>
+    </div>
+  </header>
+
+  <!-- Schedule panel -->
+  <div class="card schedule-card" role="status" [attr.aria-busy]="scheduleLoading()">
+    @if (scheduleLoading()) {
+      <p class="muted">{{ 'priceRefreshLogs.loading' | t }}</p>
+    } @else if (scheduleError()) {
+      <p class="error-text">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
+      <button type="button" class="btn btn-secondary" (click)="loadSchedule()">
+        {{ 'priceRefreshLogs.retry' | t }}
+      </button>
+    } @else if (schedule(); as s) {
+      <div class="schedule-row">
+        <span class="schedule-icon pi pi-clock" aria-hidden="true"></span>
+        <div class="schedule-text">
+          <strong>{{ 'priceRefreshLogs.scheduleDaily' | t }}</strong>
+          <span class="schedule-value">{{ s.localTime }} ({{ s.timeZoneId }})</span>
+        </div>
+        @if (s.enabled) {
+          <span class="badge badge-on">{{ 'priceRefreshLogs.scheduleEnabled' | t }}</span>
+          @if (s.nextRunAtUtc) {
+            <span class="muted">{{ 'priceRefreshLogs.nextRun' | t }}: {{ formatDate(s.nextRunAtUtc) }}</span>
+          }
+        } @else {
+          <span class="badge badge-off">{{ 'priceRefreshLogs.scheduleDisabled' | t }}</span>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Runs filters -->
+  <div class="card filters" role="search">
+    <div class="filter-item">
+      <label for="prl-status-filter">{{ 'priceRefreshLogs.filterStatus' | t }}</label>
+      <select id="prl-status-filter" [value]="runsStatusFilter()" (change)="runsStatusFilter.set($any($event.target).value); onRunsFilterChanged()">
+        <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
+        @for (status of runStatuses; track status) {
+          <option [value]="status">{{ statusKey(status) | t }}</option>
+        }
+      </select>
+    </div>
+    <div class="filter-item">
+      <label for="prl-from-filter">{{ 'priceRefreshLogs.filterFrom' | t }}</label>
+      <input id="prl-from-filter" type="date" [value]="runsFromFilter()" (change)="runsFromFilter.set($any($event.target).value); onRunsFilterChanged()" />
+    </div>
+    <div class="filter-item">
+      <label for="prl-to-filter">{{ 'priceRefreshLogs.filterTo' | t }}</label>
+      <input id="prl-to-filter" type="date" [value]="runsToFilter()" (change)="runsToFilter.set($any($event.target).value); onRunsFilterChanged()" />
+    </div>
+  </div>
+
+  <!-- Runs list -->
+  @if (runsLoading()) {
+    <div class="card"><p class="muted">{{ 'priceRefreshLogs.loading' | t }}</p></div>
+  } @else if (runsError()) {
+    <div class="card">
+      <p class="error-text">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
+      <button type="button" class="btn btn-secondary" (click)="loadRuns()">{{ 'priceRefreshLogs.retry' | t }}</button>
+    </div>
+  } @else if (runs(); as runsData) {
+    @if (runsData.items.length === 0) {
+      <div class="card"><p class="muted">{{ 'priceRefreshLogs.emptyRuns' | t }}</p></div>
+    } @else {
+      <div class="card table-card">
+        <table class="table">
+          <caption class="sr-only">{{ 'priceRefreshLogs.title' | t }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'priceRefreshLogs.colRun' | t }}</th>
+              <th scope="col">{{ 'priceRefreshLogs.colTrigger' | t }}</th>
+              <th scope="col">{{ 'priceRefreshLogs.colStarted' | t }}</th>
+              <th scope="col">{{ 'priceRefreshLogs.colStatus' | t }}</th>
+              <th scope="col">{{ 'priceRefreshLogs.colTargets' | t }}</th>
+              <th scope="col">{{ 'priceRefreshLogs.colSuccess' | t }}</th>
+              <th scope="col">{{ 'priceRefreshLogs.colFailed' | t }}</th>
+              <th scope="col">{{ 'priceRefreshLogs.colSkipped' | t }}</th>
+              <th scope="col">{{ 'priceRefreshLogs.colPending' | t }}</th>
+              <th scope="col"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (run of runsData.items; track run.runId) {
+              <tr [class.selected]="selectedRun()?.runId === run.runId">
+                <td>
+                  <span class="run-id" [title]="run.runId">{{ run.runId.slice(0, 8) }}</span>
+                  @if (run.parentRunId) {
+                    <span class="child-tag">{{ 'priceRefreshLogs.childOf' | t }} {{ run.parentRunId.slice(0, 8) }}</span>
+                  }
+                </td>
+                <td>{{ triggerKey(run.triggerType) | t }}</td>
+                <td>{{ formatDate(run.createdAtUtc) }}</td>
+                <td><span class="badge" [class.badge-on]="run.status === 'Completed'" [class.badge-warn]="run.status === 'CompletedWithIssues' || run.status === 'Running'" [class.badge-off]="run.status === 'Failed' || run.status === 'Cancelled'">{{ statusKey(run.status) | t }}</span></td>
+                <td>{{ run.totalTargets }}</td>
+                <td class="ok">{{ run.successCount }}</td>
+                <td class="bad">{{ run.failedCount }}</td>
+                <td class="muted">{{ run.skippedCount }}</td>
+                <td class="muted">{{ run.pendingWorkCount }}</td>
+                <td>
+                  <button type="button" class="btn btn-secondary" (click)="selectRun(run)">
+                    {{ 'priceRefreshLogs.openRun' | t }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <nav class="pager" [attr.aria-label]="'priceRefreshLogs.pager' | t">
+          <button type="button" class="btn btn-secondary" [disabled]="runsPage() <= 1" (click)="goToRunsPage(runsPage() - 1)">‹</button>
+          <span>{{ runsPage() }} / {{ totalPages() }}</span>
+          <button type="button" class="btn btn-secondary" [disabled]="runsPage() >= totalPages()" (click)="goToRunsPage(runsPage() + 1)">›</button>
+        </nav>
+      </div>
+    }
+  }
+
+  <!-- Selected run details -->
+  @if (selectedRun(); as run) {
+    <section class="card details" [attr.aria-label]="'priceRefreshLogs.runDetails' | t">
+      <header class="details-header">
+        <h2 class="section-title">{{ 'priceRefreshLogs.runDetails' | t }} — {{ run.runId.slice(0, 8) }}</h2>
+        <button type="button" class="btn btn-secondary" (click)="closeRunDetails()">{{ 'priceRefreshLogs.close' | t }}</button>
+      </header>
+
+      @if (runReportLoading()) {
+        <p class="muted">{{ 'priceRefreshLogs.loading' | t }}</p>
+      } @else if (runReportError()) {
+        <p class="error-text">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
+        <button type="button" class="btn btn-secondary" (click)="loadRunReport(run.runId)">{{ 'priceRefreshLogs.retry' | t }}</button>
+      } @else if (runReport(); as report) {
+        <!-- Per-pharmacy breakdown -->
+        <div class="table-scroll">
+          <table class="table">
+            <caption class="sr-only">{{ 'priceRefreshLogs.pharmacyBreakdown' | t }}</caption>
+            <thead>
+              <tr>
+                <th scope="col">{{ 'priceRefreshLogs.colPharmacy' | t }}</th>
+                <th scope="col">{{ 'priceRefreshLogs.colSuccess' | t }}</th>
+                <th scope="col">{{ 'priceRefreshLogs.colUpdated' | t }}</th>
+                <th scope="col">{{ 'priceRefreshLogs.colUnchanged' | t }}</th>
+                <th scope="col">{{ 'priceRefreshLogs.colFailed' | t }}</th>
+                <th scope="col">{{ 'priceRefreshLogs.colSkipped' | t }}</th>
+                <th scope="col">{{ 'priceRefreshLogs.colPending' | t }}</th>
+                <th scope="col">{{ 'priceRefreshLogs.colAvailabilityOnly' | t }}</th>
+                @if (canRetry()) {
+                  <th scope="col"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (ph of report.pharmacies; track ph.code) {
+                <tr>
+                  <td>
+                    <strong>{{ pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic) }}</strong>
+                    <span class="muted">({{ ph.code }})</span>
+                  </td>
+                  <td class="ok">{{ ph.successCount }}</td>
+                  <td>{{ ph.updated }}</td>
+                  <td>{{ ph.unchanged }}</td>
+                  <td class="bad">{{ ph.failedCount }}</td>
+                  <td class="muted">{{ ph.skippedCount }}</td>
+                  <td class="muted">{{ ph.pendingWorkCount }}</td>
+                  <td class="muted">{{ ph.availabilityOnly }}</td>
+                  @if (canRetry()) {
+                    <td>
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        [disabled]="ph.failedCount === 0 || busyFor('pharmacy:' + (ph.pharmacyId ?? ph.code))"
+                        (click)="retryPharmacyFailures(ph.pharmacyId ?? '', pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic), ph.failedCount)">
+                        {{ 'priceRefreshLogs.retryPharmacyBtn' | t }} ({{ ph.failedCount }})
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Items filters -->
+        <div class="filters items-filters" role="search">
+          <div class="filter-item">
+            <label for="prl-items-pharmacy">{{ 'priceRefreshLogs.filterPharmacy' | t }}</label>
+            <select id="prl-items-pharmacy" [value]="itemsPharmacyFilter()" (change)="itemsPharmacyFilter.set($any($event.target).value); onItemsFilterChanged()">
+              <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
+              @for (ph of report.pharmacies; track ph.code) {
+                <option [value]="ph.pharmacyId ?? ''">{{ pharmacyLabel(ph.pharmacyId, ph.code, ph.pharmacyName, ph.pharmacyNameArabic) }}</option>
+              }
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="prl-items-status">{{ 'priceRefreshLogs.filterStatus' | t }}</label>
+            <select id="prl-items-status" [value]="itemsStatusFilter()" (change)="itemsStatusFilter.set($any($event.target).value); onItemsFilterChanged()">
+              <option value="">{{ 'priceRefreshLogs.filterAll' | t }}</option>
+              @for (status of itemStatuses; track status) {
+                <option [value]="status">{{ statusKey(status) | t }}</option>
+              }
+            </select>
+          </div>
+          <div class="filter-item grow">
+            <label for="prl-items-search">{{ 'priceRefreshLogs.filterSearch' | t }}</label>
+            <input id="prl-items-search" type="search" [value]="itemsSearch()" (change)="itemsSearch.set($any($event.target).value); onItemsFilterChanged()" [placeholder]="'priceRefreshLogs.filterSearch' | t" />
+          </div>
+        </div>
+
+        <!-- Items table -->
+        @if (itemsLoading()) {
+          <p class="muted">{{ 'priceRefreshLogs.loading' | t }}</p>
+        } @else if (itemsError()) {
+          <p class="error-text">{{ 'priceRefreshLogs.errorLoad' | t }}</p>
+        } @else if (items(); as itemsData) {
+          @if (itemsData.items.length === 0) {
+            <p class="muted">{{ 'priceRefreshLogs.emptyItems' | t }}</p>
+          } @else {
+            <div class="table-scroll">
+              <table class="table">
+                <caption class="sr-only">{{ 'priceRefreshLogs.itemsTable' | t }}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{{ 'priceRefreshLogs.colProduct' | t }}</th>
+                    <th scope="col">{{ 'priceRefreshLogs.colPharmacy' | t }}</th>
+                    <th scope="col">{{ 'priceRefreshLogs.colStatus' | t }}</th>
+                    <th scope="col">{{ 'priceRefreshLogs.colReason' | t }}</th>
+                    <th scope="col">{{ 'priceRefreshLogs.colAttempts' | t }}</th>
+                    <th scope="col">{{ 'priceRefreshLogs.colLastObserved' | t }}</th>
+                    @if (canRetry()) {
+                      <th scope="col"><span class="sr-only">{{ 'priceRefreshLogs.colActions' | t }}</span></th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of itemsData.items; track item.itemId) {
+                    <tr>
+                      <td>{{ item.productName || item.pharmacyProductId }}</td>
+                      <td>{{ pharmacyLabel(item.pharmacyId, item.pharmacyCode, item.pharmacyName, item.pharmacyNameArabic) }}</td>
+                      <td><span class="badge" [class.badge-on]="item.status === 'Updated' || item.status === 'Unchanged'" [class.badge-warn]="item.status === 'Blocked' || item.status === 'FailedFinal'" [class.badge-off]="item.status === 'NotFound' || item.status === 'TargetChanged'">{{ statusKey(item.status) | t }}</span></td>
+                      <td>{{ reasonKey(item.reasonCode) | t }}</td>
+                      <td>{{ item.attempts }}</td>
+                      <td>{{ formatDate(item.lastObservedAtUtc) }}</td>
+                      @if (canRetry()) {
+                        <td>
+                          @if (item.canRetry) {
+                            <button
+                              type="button"
+                              class="btn btn-primary"
+                              [disabled]="busyFor('item:' + item.itemId)"
+                              [attr.aria-label]="('priceRefreshLogs.retrySingleBtn' | t) + ' ' + (item.productName || item.pharmacyCode)"
+                              (click)="retrySingleItem(item)">
+                              {{ 'priceRefreshLogs.retrySingleBtn' | t }}
+                            </button>
+                          } @else {
+                            <span class="muted" [title]="retryBlockedKey(item.retryBlockedReasonCode) | t">{{ 'priceRefreshLogs.retryBlocked' | t }}</span>
+                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <nav class="pager" [attr.aria-label]="'priceRefreshLogs.pager' | t">
+              <button type="button" class="btn btn-secondary" [disabled]="itemsPage() <= 1" (click)="goToItemsPage(itemsPage() - 1)">‹</button>
+              <span>{{ itemsPage() }} / {{ itemsTotalPages() }}</span>
+              <button type="button" class="btn btn-secondary" [disabled]="itemsPage() >= itemsTotalPages()" (click)="goToItemsPage(itemsPage() + 1)">›</button>
+            </nav>
+          }
+        }
+      }
+    </section>
+  }
+</section>

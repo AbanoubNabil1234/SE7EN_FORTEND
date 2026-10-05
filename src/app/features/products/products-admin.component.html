@@ -434,7 +434,8 @@
                         ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
                         : 'border-rose-200 bg-rose-50 text-rose-800'
                     "
-                    [disabled]="!cardMasterId(family) || (cardMasterId(family) || '').startsWith('live:') || priceSyncBusyId() === cardMasterId(family)"
+                    [disabled]="priceSyncUnavailable(family) || priceSyncBusyIds().has(cardMasterId(family) || '')"
+                    [title]="priceSyncUnavailable(family) ? ('productsAdmin.priceSyncUnavailableReason' | t) : ('productsAdmin.priceSyncLabel' | t)"
                     (click)="togglePriceSync(family)"
                   >
                     <span

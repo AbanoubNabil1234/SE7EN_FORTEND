@@ -56,6 +56,15 @@ export const routes: Routes = [
           import('./features/products/products-admin.component').then((m) => m.ProductsAdminComponent)
       },
       {
+        path: 'price-refresh-logs',
+        canActivate: [permissionGuard],
+        data: { permission: 'products.view' },
+        loadComponent: () =>
+          import('./features/price-refresh-logs/price-refresh-logs.component').then(
+            (m) => m.PriceRefreshLogsComponent
+          )
+      },
+      {
         path: 'product-linking',
         canActivate: [permissionGuard],
         data: { permission: 'product_linking.view' },

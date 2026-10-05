@@ -120,7 +120,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly linkingId = signal<string | null>(null);
   readonly unlinkingId = signal<string | null>(null);
   readonly openOfferKeys = signal<ReadonlySet<string>>(new Set());
-  readonly priceSyncBusyId = signal<string | null>(null);
+  /** Masters with a price-sync toggle in flight; per-master so a second card's
+   *  click can never release the first card's busy state. */
+  readonly priceSyncBusyIds = signal<ReadonlySet<string>>(new Set());
   readonly barcodeDrafts = signal<Record<string, string>>({});
   readonly barcodeErrors = signal<Record<string, string>>({});
   readonly barcodeBusyId = signal<string | null>(null);
@@ -743,9 +745,14 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     return code || null;
   }
 
+  // One pack resolver for both the displayed state and the toggle target, so the
+  // operation always mutates exactly the master the user is looking at.
+  private priceSyncPack(family: CatalogFamily): CatalogPack | null {
+    return this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
+  }
+
   cardMasterId(family: CatalogFamily): string | null {
-    const pack = this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
-    const id = pack?.masterId?.trim();
+    const id = this.priceSyncPack(family)?.masterId?.trim();
     return id || null;
   }
 
@@ -832,8 +839,13 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   priceSyncOn(family: CatalogFamily): boolean {
-    const pack = this.offersOpen(family) ? this.selectedPack(family) : family.packs[0];
-    return pack?.priceSyncEnabled !== false;
+    return this.priceSyncPack(family)?.priceSyncEnabled !== false;
+  }
+
+  /** Products without a permanent master id (standalone/live) cannot toggle sync. */
+  priceSyncUnavailable(family: CatalogFamily): boolean {
+    const id = this.cardMasterId(family);
+    return !id || id.startsWith('live:');
   }
 
   copyCode(code: string): void {
@@ -844,15 +856,21 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   togglePriceSync(family: CatalogFamily): void {
     const id = this.cardMasterId(family);
-    if (!id || id.startsWith('live:') || this.priceSyncBusyId() === id) return;
+    if (!id || id.startsWith('live:') || this.priceSyncBusyIds().has(id)) return;
 
     const next = !this.priceSyncOn(family);
-    this.priceSyncBusyId.set(id);
+    this.priceSyncBusyIds.update((busy) => new Set(busy).add(id));
     this.catalog
       .setPriceSyncEnabled(id, next)
-      .pipe(finalize(() => this.priceSyncBusyId.set(null)))
+      .pipe(finalize(() => this.priceSyncBusyIds.update((busy) => {
+        const nextBusy = new Set(busy);
+        nextBusy.delete(id);
+        return nextBusy;
+      })))
       .subscribe({
         next: (res) => {
+          // Only a verified server response updates the displayed state; the pack's
+          // own master is matched so no other card is touched.
           this.families.update((list) =>
             list.map((row) => ({
               ...row,
@@ -863,6 +881,14 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
           );
           this.notifications.showSuccess(
             this.i18n.t(res.enabled ? 'productsAdmin.priceSyncOnMsg' : 'productsAdmin.priceSyncOffMsg'),
+            this.i18n.t('productsAdmin.priceSyncLabel')
+          );
+        },
+        error: () => {
+          // 403/404/500/network: keep the previous value on screen, release busy,
+          // and surface a translated error — never a fabricated success.
+          this.notifications.showError(
+            this.i18n.t('productsAdmin.priceSyncErrorMsg'),
             this.i18n.t('productsAdmin.priceSyncLabel')
           );
         }

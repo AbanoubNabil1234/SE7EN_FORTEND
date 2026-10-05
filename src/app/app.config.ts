@@ -34,6 +34,8 @@ import { AuditLogRepository } from './core/domain/repositories/audit-log.reposit
 import { HttpAuditLogRepository } from './core/infrastructure/repositories/http-audit-log.repository';
 import { NotificationRepository } from './core/domain/repositories/notification.repository';
 import { HttpNotificationRepository } from './core/infrastructure/repositories/http-notification.repository';
+import { PriceRefreshRepository } from './core/domain/repositories/price-refresh.repository';
+import { HttpPriceRefreshRepository } from './core/infrastructure/repositories/http-price-refresh.repository';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -57,6 +59,7 @@ export const appConfig: ApplicationConfig = {
     { provide: DashboardRepository, useClass: HttpDashboardRepository },
     { provide: MatchReviewRepository, useClass: HttpMatchReviewRepository },
     { provide: AuditLogRepository, useClass: HttpAuditLogRepository },
-    { provide: NotificationRepository, useClass: HttpNotificationRepository }
+    { provide: NotificationRepository, useClass: HttpNotificationRepository },
+    { provide: PriceRefreshRepository, useClass: HttpPriceRefreshRepository }
   ]
 };

@@ -327,10 +327,16 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     return this.http
       .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_MASTER_PRICE_SYNC(masterProductId), { enabled })
       .pipe(
-        map((raw) => ({
-          id: String(raw['id'] ?? raw['Id'] ?? masterProductId),
-          enabled: Boolean(raw['enabled'] ?? raw['Enabled'] ?? enabled)
-        }))
+        map((raw) => {
+          // A missing field means a malformed response, not the requested value:
+          // never fabricate success from the optimistic input.
+          const served = raw['enabled'] ?? raw['Enabled'];
+          if (typeof served !== 'boolean') {
+            throw new Error('price_sync_malformed_response');
+          }
+          this.clearModerationCaches();
+          return { id: String(raw['id'] ?? raw['Id'] ?? masterProductId), enabled: served };
+        })
       );
   }
 
