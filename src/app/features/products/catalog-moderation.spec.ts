@@ -64,6 +64,7 @@ describe('productsAdmin.moderation translations', () => {
     'hide',
     'show',
     'delete',
+    'visible',
     'hidden',
     'hiddenByFamily',
     'hideFamilyConfirm',

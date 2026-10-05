@@ -448,11 +448,13 @@
                   @if (canModerateCatalog()) {
                     <button
                       type="button"
-                      class="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-lg border px-2 text-[11px] font-bold transition"
+                      role="switch"
+                      [attr.aria-checked]="family.isHidden !== true"
+                      class="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 text-[11px] font-bold transition"
                       [ngClass]="
                         family.isHidden
-                          ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                          : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                          ? 'border-rose-200 bg-rose-50 text-rose-800'
+                          : 'border-emerald-300 bg-emerald-50 text-emerald-800'
                       "
                       [disabled]="!canModerateFamily(family) || moderationBusyId() !== null"
                       [title]="canModerateFamily(family)
@@ -463,8 +465,15 @@
                         : ('productsAdmin.moderation.hide' | t)"
                       (click)="toggleFamilyVisibility(family)"
                     >
-                      <i class="pi text-xs" [class]="family.isHidden ? 'pi-eye' : 'pi-eye-slash'" aria-hidden="true"></i>
-                      <span>{{ (family.isHidden ? 'productsAdmin.moderation.show' : 'productsAdmin.moderation.hide') | t }}</span>
+                      @if (familyModerationBusy(family)) {
+                        <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+                      } @else {
+                        <span
+                          class="size-2 rounded-full"
+                          [class]="family.isHidden ? 'bg-rose-500' : 'bg-emerald-500'"
+                        ></span>
+                      }
+                      <span>{{ (family.isHidden ? 'productsAdmin.moderation.hidden' : 'productsAdmin.moderation.visible') | t }}</span>
                     </button>
                     <button
                       type="button"
@@ -682,11 +691,13 @@
                           @if (canModerateCatalog()) {
                             <button
                               type="button"
+                              role="switch"
+                              [attr.aria-checked]="offer.isHidden !== true"
                               class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-bold disabled:opacity-50 transition-colors shadow-2xs"
                               [ngClass]="
                                 offer.isHidden
-                                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                                  : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                                  ? 'border-rose-200 bg-rose-50 text-rose-800'
+                                  : 'border-emerald-300 bg-emerald-50 text-emerald-800'
                               "
                               [disabled]="!canModerateOffer(offer) || moderationBusyId() !== null"
                               [title]="canModerateOffer(offer)
@@ -697,8 +708,15 @@
                                 : ('productsAdmin.moderation.hide' | t)"
                               (click)="toggleOfferVisibility(offer, family)"
                             >
-                              <i class="pi text-xs" [class]="offer.isHidden ? 'pi-eye' : 'pi-eye-slash'" aria-hidden="true"></i>
-                              <span>{{ (offer.isHidden ? 'productsAdmin.moderation.show' : 'productsAdmin.moderation.hide') | t }}</span>
+                              @if (offerModerationBusy(offer)) {
+                                <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+                              } @else {
+                                <span
+                                  class="size-2 rounded-full"
+                                  [class]="offer.isHidden ? 'bg-rose-500' : 'bg-emerald-500'"
+                                ></span>
+                              }
+                              <span>{{ (offer.isHidden ? 'productsAdmin.moderation.hidden' : 'productsAdmin.moderation.visible') | t }}</span>
                             </button>
                             <button
                               type="button"
