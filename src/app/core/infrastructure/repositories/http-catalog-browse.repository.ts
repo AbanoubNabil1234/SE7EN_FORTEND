@@ -4,9 +4,11 @@ import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
 import { CatalogBrowseRepository, CatalogFamilySort } from '../../domain/repositories/catalog-browse.repository';
 import { CategoryNode } from '../../domain/models/category.model';
 import { categoryEnglishName } from '../../domain/category-display';
+import { normalizeHiddenFlag } from '../../domain/models/catalog-family.model';
 import {
   CatalogFamily,
   CatalogFamilyPage,
+  CatalogModerationResult,
   CatalogOffer,
   CatalogPack,
   FamilyAiSuggestion,
@@ -332,6 +334,71 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       );
   }
 
+  setFamilyVisibility(familyKey: string, isHidden: boolean): Observable<CatalogModerationResult> {
+    return this.http
+      .put<Record<string, unknown>>(API_ENDPOINTS.ADMIN_CATALOG_MODERATION_FAMILY_VISIBILITY, { familyKey, isHidden })
+      .pipe(
+        map((raw) => {
+          this.clearModerationCaches();
+          return this.normalizeModerationResult(raw, familyKey);
+        })
+      );
+  }
+
+  deleteFamily(familyKey: string): Observable<CatalogModerationResult> {
+    const params = new HttpParams().set('familyKey', familyKey);
+    return this.http
+      .delete<Record<string, unknown>>(API_ENDPOINTS.ADMIN_CATALOG_MODERATION_FAMILIES, { params })
+      .pipe(
+        map((raw) => {
+          this.clearModerationCaches();
+          return this.normalizeModerationResult(raw, familyKey);
+        })
+      );
+  }
+
+  setProductVisibility(pharmacyProductId: string, isHidden: boolean): Observable<CatalogModerationResult> {
+    return this.http
+      .put<Record<string, unknown>>(
+        API_ENDPOINTS.ADMIN_CATALOG_MODERATION_PRODUCT_VISIBILITY(pharmacyProductId),
+        { isHidden }
+      )
+      .pipe(
+        map((raw) => {
+          this.clearModerationCaches();
+          return this.normalizeModerationResult(raw, pharmacyProductId);
+        })
+      );
+  }
+
+  deleteProduct(pharmacyProductId: string): Observable<CatalogModerationResult> {
+    return this.http
+      .delete<Record<string, unknown>>(
+        API_ENDPOINTS.ADMIN_CATALOG_MODERATION_PRODUCT(pharmacyProductId)
+      )
+      .pipe(
+        map((raw) => {
+          this.clearModerationCaches();
+          return this.normalizeModerationResult(raw, pharmacyProductId);
+        })
+      );
+  }
+
+  private clearModerationCaches(): void {
+    this.familiesCache.clear();
+    this.searchCache.clear();
+    this.distributionCache.clear();
+  }
+
+  private normalizeModerationResult(raw: Record<string, unknown>, fallbackKey: string): CatalogModerationResult {
+    return {
+      targetKey: String(raw['targetKey'] ?? raw['TargetKey'] ?? fallbackKey),
+      isHidden: (raw['isHidden'] ?? raw['IsHidden']) === true,
+      isDeleted: (raw['isDeleted'] ?? raw['IsDeleted']) === true,
+      affectedProducts: Number(raw['affectedProducts'] ?? raw['AffectedProducts'] ?? 0)
+    };
+  }
+
   setMasterBarcode(masterProductId: string, barcode: string): Observable<{ id: string; barcode: string }> {
     return this.http
       .post<Record<string, unknown>>(API_ENDPOINTS.ADMIN_MASTER_BARCODE(masterProductId), { barcode })
@@ -547,6 +614,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       strength: (r['strength'] ?? r['Strength'] ?? null) as string | null,
       imageUrl: resolveApiUrl((r['imageUrl'] ?? r['ImageUrl'] ?? null) as string | null),
       groupCode: this.optionalText(r['groupCode'] ?? r['GroupCode']),
+      isHidden: normalizeHiddenFlag(r['isHidden'] ?? r['IsHidden']) ? true : undefined,
       packs
     };
   }
@@ -598,7 +666,8 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
       listingName: String(r['listingName'] ?? r['ListingName'] ?? '').trim() || null,
       englishListingName: this.optionalText(r['englishListingName'] ?? r['EnglishListingName'] ?? r['englishName'] ?? r['EnglishName']),
       barcode: this.optionalText(r['barcode'] ?? r['Barcode']),
-      matchMethod: this.optionalText(r['matchMethod'] ?? r['MatchMethod'])
+      matchMethod: this.optionalText(r['matchMethod'] ?? r['MatchMethod']),
+      isHidden: normalizeHiddenFlag(r['isHidden'] ?? r['IsHidden']) ? true : undefined
     };
   }
 

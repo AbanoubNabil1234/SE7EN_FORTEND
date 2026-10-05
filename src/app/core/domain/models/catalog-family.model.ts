@@ -14,6 +14,7 @@ export interface CatalogOffer {
   pharmacyProductId: string | null;
   barcode?: string | null;
   matchMethod?: string | null;
+  isHidden?: boolean;
 }
 
 export interface CatalogPack {
@@ -45,6 +46,20 @@ export interface CatalogFamily {
   imageUrl: string | null;
   groupCode: string | null;
   packs: CatalogPack[];
+  isHidden?: boolean;
+}
+
+/** Outcome of one admin catalog moderation action (hide/show/delete). */
+export interface CatalogModerationResult {
+  targetKey: string;
+  isHidden: boolean;
+  isDeleted: boolean;
+  affectedProducts: number;
+}
+
+/** Older API payloads predate the moderation flags: absent means visible. */
+export function normalizeHiddenFlag(value: unknown): boolean {
+  return value === true;
 }
 
 export interface CatalogFamilyPage {

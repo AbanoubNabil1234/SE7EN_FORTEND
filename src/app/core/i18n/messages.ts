@@ -1,6 +1,34 @@
 export type MessageTree = { [key: string]: string | MessageTree };
 
 export const messagesAr: MessageTree = {
+  email: {
+    common: {
+      brandName: 'SE7EN',
+      brandTagline: 'اختيار أذكى. سعر أفضل.',
+      sectionLabel: 'الحساب والأمان',
+      logoAlt: 'شعار SE7EN',
+      heroAlt: 'رسالة تحقق آمنة من SE7EN',
+      codeLabel: 'رمز التحقق الخاص بك',
+      expiry: 'صالح لمدة {minutes} دقيقة',
+      securityTitle: 'حماية حسابك تبدأ منك',
+      securityBody: 'لا تشارك هذا الرمز مع أي شخص. لن يطلب منك فريق SE7EN رمز التحقق.',
+      ignore: 'إذا لم تطلب هذا الرمز، يمكنك تجاهل هذه الرسالة بأمان.',
+      footer: 'هذه رسالة تلقائية من SE7EN. لا يلزم الرد عليها.',
+      copyright: '© {year} SE7EN. جميع الحقوق محفوظة.'
+    },
+    register: {
+      subject: 'رمز تأكيد حسابك في SE7EN',
+      headline: 'خطوة واحدة لتأكيد حسابك',
+      description: 'أهلًا بك في SE7EN. أدخل رمز التحقق التالي في التطبيق لإكمال إنشاء حسابك وابدأ المقارنة بثقة.',
+      preheader: 'رمزك لتأكيد حساب SE7EN. صالح لمدة {minutes} دقيقة.'
+    },
+    reset: {
+      subject: 'رمز استعادة كلمة المرور في SE7EN',
+      headline: 'استعادة كلمة المرور',
+      description: 'وصلنا طلب لإعادة تعيين كلمة مرور حسابك في SE7EN. أدخل الرمز التالي في التطبيق لاختيار كلمة مرور جديدة.',
+      preheader: 'رمز استعادة كلمة مرور SE7EN. صالح لمدة {minutes} دقيقة.'
+    }
+  },
   common: {
     dismiss: 'إغلاق',
     saved: 'تم الحفظ',
@@ -930,7 +958,23 @@ export const messagesAr: MessageTree = {
     sourceFamily: 'العائلة الحالية',
     targetFamily: 'العائلة المستهدفة',
     merging: 'جاري الدمج...',
-    mergeWarning: 'سيتم نقل جميع عروض هذه العائلة إلى العائلة المستهدفة وحذف الكود القديم.'
+    mergeWarning: 'سيتم نقل جميع عروض هذه العائلة إلى العائلة المستهدفة وحذف الكود القديم.',
+    moderation: {
+      hide: 'إخفاء',
+      show: 'إظهار',
+      delete: 'حذف',
+      hidden: 'مخفي',
+      hiddenByFamily: 'مخفي ضمن عائلة مخفية',
+      hideFamilyConfirm: 'هتخفي كارت المنتج ده وكل عروضه من التطبيق، وهيفضل ظاهر عندك هنا في الإدارة لتقدر ترجعه في أي وقت. متأكد إنك عايز تكمل؟',
+      hideProductConfirm: 'هتخفي عرض الصيدلية ده بس من التطبيق، وهيفضل ظاهر عندك هنا في الإدارة لتقدر ترجعه في أي وقت. متأكد إنك عايز تكمل؟',
+      deleteFamilyConfirm: 'الحذف مش إخفاء مؤقت: هيتشيل كارت المنتج ده وكل عروضه من الإدارة ومن التطبيق نهائياً، مع الاحتفاظ بسجل الأسعار للتوثيق.',
+      deleteProductConfirm: 'الحذف مش إخفاء مؤقت: هيتشيل عرض الصيدلية ده من الإدارة ومن التطبيق نهائياً، مع الاحتفاظ بسجل الأسعار للتوثيق.',
+      affectedOffers: 'عرض متأثر',
+      updated: 'تم تحديث الظهور',
+      deleted: 'تم الحذف',
+      failed: 'تعذر تنفيذ الإجراء — حاول تاني',
+      unavailable: 'الإجراء مش متاح للهدف ده'
+    }
   },
   quickAdd: {
     addOffer: 'إضافة منتج',
@@ -1554,6 +1598,34 @@ export const messagesAr: MessageTree = {
 };
 
 export const messagesEn: MessageTree = {
+  email: {
+    common: {
+      brandName: 'SE7EN',
+      brandTagline: 'Smarter choices. Better prices.',
+      sectionLabel: 'ACCOUNT & SECURITY',
+      logoAlt: 'SE7EN logo',
+      heroAlt: 'A secure verification email from SE7EN',
+      codeLabel: 'Your verification code',
+      expiry: 'Valid for {minutes} minutes',
+      securityTitle: 'Keep your account safe',
+      securityBody: 'Never share this code with anyone. The SE7EN team will never ask for your verification code.',
+      ignore: 'If you did not request this code, you can safely ignore this email.',
+      footer: 'This is an automated email from SE7EN. No reply is needed.',
+      copyright: '© {year} SE7EN. All rights reserved.'
+    },
+    register: {
+      subject: 'Verify your SE7EN account',
+      headline: 'Verify your account',
+      description: 'Welcome to SE7EN. Enter the code below in the app to finish creating your account and start comparing with confidence.',
+      preheader: 'Your SE7EN account verification code. Valid for {minutes} minutes.'
+    },
+    reset: {
+      subject: 'Reset your SE7EN password',
+      headline: 'Reset your password',
+      description: 'We received a request to reset your SE7EN password. Enter the code below in the app to choose a new password.',
+      preheader: 'Your SE7EN password reset code. Valid for {minutes} minutes.'
+    }
+  },
   common: {
     dismiss: 'Dismiss',
     saved: 'Saved',
@@ -2431,7 +2503,23 @@ export const messagesEn: MessageTree = {
     sourceFamily: 'Current Family',
     targetFamily: 'Target Family',
     merging: 'Merging...',
-    mergeWarning: 'All offers from this family will be merged into the target family and the old code will be removed.'
+    mergeWarning: 'All offers from this family will be merged into the target family and the old code will be removed.',
+    moderation: {
+      hide: 'Hide',
+      show: 'Show',
+      delete: 'Delete',
+      hidden: 'Hidden',
+      hiddenByFamily: 'Hidden by family',
+      hideFamilyConfirm: 'This hides the product card and all its offers from the app. It stays visible here in management so you can show it again at any time. Continue?',
+      hideProductConfirm: 'This hides only this pharmacy offer from the app. It stays visible here in management so you can show it again at any time. Continue?',
+      deleteFamilyConfirm: 'Deleting is not a temporary hide: the product card and all its offers are removed from management and the app permanently, while the price history is retained for records.',
+      deleteProductConfirm: 'Deleting is not a temporary hide: this pharmacy offer is removed from management and the app permanently, while the price history is retained for records.',
+      affectedOffers: 'affected offers',
+      updated: 'Visibility updated',
+      deleted: 'Deleted',
+      failed: 'The action failed — please try again',
+      unavailable: 'Not available for this target'
+    }
   },
   quickAdd: {
     addOffer: 'Add Product',

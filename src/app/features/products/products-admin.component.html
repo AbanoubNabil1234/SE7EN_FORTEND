@@ -282,6 +282,11 @@
                   </h2>
                   <div class="mt-1 flex flex-wrap items-center gap-1.5">
                     <span [class]="matchBadgeClass(family)">{{ matchLabelKey(family) | t }}</span>
+                    @if (family.isHidden) {
+                      <span class="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                        {{ 'productsAdmin.moderation.hidden' | t }}
+                      </span>
+                    }
                     @if (hasAiMatch(family) && canManageMatchReview()) {
                       <button
                         type="button"
@@ -440,6 +445,45 @@
                       (priceSyncOn(family) ? 'productsAdmin.priceSyncOn' : 'productsAdmin.priceSyncOff') | t
                     }}
                   </button>
+                  @if (canModerateCatalog()) {
+                    <button
+                      type="button"
+                      class="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-lg border px-2 text-[11px] font-bold transition"
+                      [ngClass]="
+                        family.isHidden
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                          : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                      "
+                      [disabled]="!canModerateFamily(family) || moderationBusyId() !== null"
+                      [title]="canModerateFamily(family)
+                        ? (family.isHidden ? ('productsAdmin.moderation.show' | t) : ('productsAdmin.moderation.hide' | t))
+                        : ('productsAdmin.moderation.unavailable' | t)"
+                      [attr.aria-label]="family.isHidden
+                        ? ('productsAdmin.moderation.show' | t)
+                        : ('productsAdmin.moderation.hide' | t)"
+                      (click)="toggleFamilyVisibility(family)"
+                    >
+                      <i class="pi text-xs" [class]="family.isHidden ? 'pi-eye' : 'pi-eye-slash'" aria-hidden="true"></i>
+                      <span>{{ (family.isHidden ? 'productsAdmin.moderation.show' : 'productsAdmin.moderation.hide') | t }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex min-h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-rose-200 bg-rose-50 px-2 text-[11px] font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 disabled:opacity-50 transition-colors"
+                      [disabled]="!canModerateFamily(family) || moderationBusyId() !== null"
+                      [title]="canModerateFamily(family)
+                        ? ('productsAdmin.moderation.delete' | t)
+                        : ('productsAdmin.moderation.unavailable' | t)"
+                      [attr.aria-label]="'productsAdmin.moderation.delete' | t"
+                      (click)="deleteFamily(family)"
+                    >
+                      @if (familyModerationBusy(family)) {
+                        <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+                      } @else {
+                        <i class="pi pi-trash text-xs" aria-hidden="true"></i>
+                      }
+                      <span>{{ 'productsAdmin.moderation.delete' | t }}</span>
+                    </button>
+                  }
                 </div>
               </div>
 
@@ -578,6 +622,17 @@
                                   <span>{{ 'productsAdmin.aiMatchBadge' | t }}</span>
                                 </span>
                               }
+                              @if (offer.isHidden) {
+                                <span aria-hidden="true">Â·</span>
+                                <span class="rounded-full border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">
+                                  {{ 'productsAdmin.moderation.hidden' | t }}
+                                </span>
+                              } @else if (family.isHidden) {
+                                <span aria-hidden="true">Â·</span>
+                                <span class="rounded-full border border-amber-200 bg-amber-50/60 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                                  {{ 'productsAdmin.moderation.hiddenByFamily' | t }}
+                                </span>
+                              }
                             </div>
                           </div>
                         </div>
@@ -622,6 +677,45 @@
                                 <i class="pi pi-unlink text-xs"></i>
                               }
                               <span>{{ 'productsAdmin.unlink' | t }}</span>
+                            </button>
+                          }
+                          @if (canModerateCatalog()) {
+                            <button
+                              type="button"
+                              class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-bold disabled:opacity-50 transition-colors shadow-2xs"
+                              [ngClass]="
+                                offer.isHidden
+                                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                  : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                              "
+                              [disabled]="!canModerateOffer(offer) || moderationBusyId() !== null"
+                              [title]="canModerateOffer(offer)
+                                ? (offer.isHidden ? ('productsAdmin.moderation.show' | t) : ('productsAdmin.moderation.hide' | t))
+                                : ('productsAdmin.moderation.unavailable' | t)"
+                              [attr.aria-label]="offer.isHidden
+                                ? ('productsAdmin.moderation.show' | t)
+                                : ('productsAdmin.moderation.hide' | t)"
+                              (click)="toggleOfferVisibility(offer, family)"
+                            >
+                              <i class="pi text-xs" [class]="offer.isHidden ? 'pi-eye' : 'pi-eye-slash'" aria-hidden="true"></i>
+                              <span>{{ (offer.isHidden ? 'productsAdmin.moderation.show' : 'productsAdmin.moderation.hide') | t }}</span>
+                            </button>
+                            <button
+                              type="button"
+                              class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/70 px-2.5 text-[11px] font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 disabled:opacity-50 transition-colors shadow-2xs"
+                              [disabled]="!canModerateOffer(offer) || moderationBusyId() !== null"
+                              [title]="canModerateOffer(offer)
+                                ? ('productsAdmin.moderation.delete' | t)
+                                : ('productsAdmin.moderation.unavailable' | t)"
+                              [attr.aria-label]="'productsAdmin.moderation.delete' | t"
+                              (click)="deleteOffer(offer, family)"
+                            >
+                              @if (offerModerationBusy(offer)) {
+                                <i class="pi pi-spin pi-spinner text-xs" aria-hidden="true"></i>
+                              } @else {
+                                <i class="pi pi-trash text-xs" aria-hidden="true"></i>
+                              }
+                              <span>{{ 'productsAdmin.moderation.delete' | t }}</span>
                             </button>
                           }
                         </div>

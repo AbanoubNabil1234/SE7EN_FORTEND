@@ -43,6 +43,7 @@ import { AiMatchReviewModalComponent } from './components/ai-match-review-modal/
 import { ProductImageModalComponent } from './components/product-image-modal/product-image-modal.component';
 import { PermissionService } from '../../core/services/permission.service';
 import { CatalogReloadScheduler } from './catalog-reload-scheduler';
+import { isAdminRole } from './catalog-moderation';
 
 /** Server-side page size — do not load the full catalog into the browser. */
 const CATALOG_PAGE_SIZE = 24;
@@ -85,6 +86,8 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly canManageLinking = computed(() => this.permissionService.hasPermission('product_linking.manage'));
   readonly canViewMatchReview = computed(() => this.permissionService.hasPermission('match_review.view'));
   readonly canManageMatchReview = computed(() => this.permissionService.hasPermission('match_review.manage'));
+  /** Moderation is strictly Admin: staff permissions (even wildcard) never qualify. */
+  readonly canModerateCatalog = computed(() => isAdminRole(this.permissionService.currentRole()));
 
   readonly activeTab = signal<'catalog' | 'model-review'>('catalog');
   readonly modelReviewCount = signal<number>(3712);
@@ -123,6 +126,9 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly barcodeBusyId = signal<string | null>(null);
   readonly searching = signal(false);
   readonly listPageSize = signal(CATALOG_PAGE_SIZE);
+
+  /** Moderation action in flight, keyed by family key or pharmacy product id. */
+  readonly moderationBusyId = signal<string | null>(null);
 
   readonly quickAddFamily = signal<CatalogFamily | null>(null);
   readonly isQuickAddOpen = signal<boolean>(false);
@@ -878,6 +884,210 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
         return 'productsAdmin.matchPending';
     }
   }
+
+  // ── Admin catalog moderation (hide/show/delete) ────────────────────────────
+
+  canModerateFamily(family: CatalogFamily): boolean {
+    const key = family.familyKey?.trim();
+    return this.canModerateCatalog() && !!key && !key.startsWith('live:');
+  }
+
+  canModerateOffer(offer: CatalogOffer): boolean {
+    return this.canModerateCatalog() && !!offer.pharmacyProductId;
+  }
+
+  familyModerationBusy(family: CatalogFamily): boolean {
+    return this.moderationBusyId() === family.familyKey;
+  }
+
+  offerModerationBusy(offer: CatalogOffer): boolean {
+    return this.moderationBusyId() === offer.pharmacyProductId;
+  }
+
+  async toggleFamilyVisibility(family: CatalogFamily): Promise<void> {
+    const key = family.familyKey;
+    if (!this.canModerateFamily(family) || this.moderationBusyId() !== null) return;
+
+    const willHide = family.isHidden !== true;
+    this.moderationBusyId.set(key);
+    if (willHide) {
+      const confirmed = await this.confirmDialog.confirm({
+        title: this.i18n.t('productsAdmin.moderation.hide'),
+        message: this.i18n.t('productsAdmin.moderation.hideFamilyConfirm'),
+        type: 'warning',
+        confirmText: this.i18n.t('productsAdmin.moderation.hide')
+      });
+      if (!confirmed) {
+        this.moderationBusyId.set(null);
+        return;
+      }
+    }
+
+    this.catalog
+      .setFamilyVisibility(key, willHide)
+      .pipe(finalize(() => this.moderationBusyId.set(null)))
+      .subscribe({
+        next: (res) => {
+          this.families.update((list) =>
+            list.map((f) => (f.familyKey === key ? { ...f, isHidden: res.isHidden } : f))
+          );
+          this.catalog.clearCache();
+          this.notifications.showSuccess(
+            this.i18n.t('productsAdmin.moderation.updated'),
+            this.i18n.t(willHide ? 'productsAdmin.moderation.hide' : 'productsAdmin.moderation.show')
+          );
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('productsAdmin.moderation.failed'),
+            this.i18n.t(willHide ? 'productsAdmin.moderation.hide' : 'productsAdmin.moderation.show')
+          );
+        }
+      });
+  }
+
+  async deleteFamily(family: CatalogFamily): Promise<void> {
+    const key = family.familyKey;
+    if (!this.canModerateFamily(family) || this.moderationBusyId() !== null) return;
+
+    this.moderationBusyId.set(key);
+    const offerCount = family.packs.reduce((sum, pack) => sum + pack.offers.length, 0);
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('productsAdmin.moderation.delete'),
+      message:
+        `${this.i18n.t('productsAdmin.moderation.deleteFamilyConfirm')} — ` +
+        `${offerCount} ${this.i18n.t('productsAdmin.moderation.affectedOffers')}`,
+      type: 'danger',
+      confirmText: this.i18n.t('productsAdmin.moderation.delete')
+    });
+    if (!confirmed) {
+      this.moderationBusyId.set(null);
+      return;
+    }
+
+    this.catalog
+      .deleteFamily(key)
+      .pipe(finalize(() => this.moderationBusyId.set(null)))
+      .subscribe({
+        next: () => {
+          this.families.update((list) => list.filter((f) => f.familyKey !== key));
+          this.total.update((t) => Math.max(0, t - 1));
+          this.catalog.clearCache();
+          this.notifications.showSuccess(
+            this.i18n.t('productsAdmin.moderation.deleted'),
+            this.familyTitle(family)
+          );
+          if (this.families().length === 0 && this.page() > 1) {
+            this.fetch(this.page() - 1);
+          }
+          this.loadPharmacyDistribution();
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('productsAdmin.moderation.failed'),
+            this.i18n.t('productsAdmin.moderation.delete')
+          );
+        }
+      });
+  }
+
+  async toggleOfferVisibility(offer: CatalogOffer, family: CatalogFamily): Promise<void> {
+    const id = offer.pharmacyProductId;
+    if (!this.canModerateOffer(offer) || this.moderationBusyId() !== null) return;
+
+    const willHide = offer.isHidden !== true;
+    this.moderationBusyId.set(id);
+    if (willHide) {
+      const confirmed = await this.confirmDialog.confirm({
+        title: this.i18n.t('productsAdmin.moderation.hide'),
+        message: this.i18n.t('productsAdmin.moderation.hideProductConfirm'),
+        type: 'warning',
+        confirmText: this.i18n.t('productsAdmin.moderation.hide')
+      });
+      if (!confirmed) {
+        this.moderationBusyId.set(null);
+        return;
+      }
+    }
+
+    this.catalog
+      .setProductVisibility(id!, willHide)
+      .pipe(finalize(() => this.moderationBusyId.set(null)))
+      .subscribe({
+        next: (res) => {
+          this.families.update((list) =>
+            list.map((f) => ({
+              ...f,
+              packs: f.packs.map((pack) => ({
+                ...pack,
+                offers: pack.offers.map((o) =>
+                  o.pharmacyProductId === id ? { ...o, isHidden: res.isHidden } : o
+                )
+              }))
+            }))
+          );
+          this.catalog.clearCache();
+          this.notifications.showSuccess(
+            this.i18n.t('productsAdmin.moderation.updated'),
+            this.i18n.t(willHide ? 'productsAdmin.moderation.hide' : 'productsAdmin.moderation.show')
+          );
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('productsAdmin.moderation.failed'),
+            this.i18n.t(willHide ? 'productsAdmin.moderation.hide' : 'productsAdmin.moderation.show')
+          );
+        }
+      });
+  }
+
+  async deleteOffer(offer: CatalogOffer, family: CatalogFamily): Promise<void> {
+    const id = offer.pharmacyProductId;
+    if (!this.canModerateOffer(offer) || this.moderationBusyId() !== null) return;
+
+    this.moderationBusyId.set(id);
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.i18n.t('productsAdmin.moderation.delete'),
+      message: this.i18n.t('productsAdmin.moderation.deleteProductConfirm'),
+      type: 'danger',
+      confirmText: this.i18n.t('productsAdmin.moderation.delete')
+    });
+    if (!confirmed) {
+      this.moderationBusyId.set(null);
+      return;
+    }
+
+    this.catalog
+      .deleteProduct(id!)
+      .pipe(finalize(() => this.moderationBusyId.set(null)))
+      .subscribe({
+        next: () => {
+          this.removeOfferLocally(id!);
+          this.catalog.clearCache();
+          this.notifications.showSuccess(
+            this.i18n.t('productsAdmin.moderation.deleted'),
+            this.pharmacyLabel(offer)
+          );
+          if (family.familyKey) {
+            const key = family.familyKey;
+            const stillHasOffers = this.families().some((f) =>
+              f.familyKey === key && f.packs.some((pack) => pack.offers.length > 0)
+            );
+            if (!stillHasOffers) {
+              this.reloadKeepingSelection();
+            }
+          }
+          this.loadPharmacyDistribution();
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('productsAdmin.moderation.failed'),
+            this.i18n.t('productsAdmin.moderation.delete')
+          );
+        }
+      });
+  }
+
 
   matchBadgeClass(family: CatalogFamily): string {
     if (family.groupCode) {
