@@ -124,17 +124,23 @@
           iconColorClass="text-emerald-600"
         />
 
+        @if (snap.priceRefresh; as refresh) {
         <app-kpi-card
-          [title]="'dashboard.syncHealth' | t"
-          [value]="snap.scrapingSuccessPercent24h"
+          [title]="'dashboard.priceRefresh.catalogCoverageTitle' | t"
+          [value]="refresh.catalogFreshPercent"
           [isPercent]="true"
-          [subtitle]="'dashboard.successRate24h' | t"
-          [badge]="snap.pricesUpdated24h + ' ' + ('dashboard.updatedPrices' | t)"
+          [subtitle]="'dashboard.priceRefresh.catalogSubtitle' | t"
+          [badge]="(refresh.freshPrices24h | number) + ' ' + ('dashboard.priceRefresh.freshBadge' | t)"
           icon="pi-bolt"
           accentColor="bg-amber-500"
           iconBgClass="bg-amber-50 dark:bg-amber-950"
           iconColorClass="text-amber-600"
         />
+        } @else {
+          <div class="flex items-center rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400" role="status">
+            {{ 'dashboard.priceRefresh.unavailable' | t }}
+          </div>
+        }
 
         <app-kpi-card
           [title]="'dashboard.barcodeCoverage' | t"
@@ -150,6 +156,11 @@
       </div>
 
       <!-- Market Spread & Savings Disparity Widget -->
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <app-price-refresh-chart [data]="snap.priceRefresh" mode="run" />
+        <app-price-refresh-chart [data]="snap.priceRefresh" mode="catalog" />
+      </div>
+
       <app-market-spread-widget [data]="snap.priceSpread" />
 
       <!-- Main Pharmacy & Market Overlap Depth Grid -->

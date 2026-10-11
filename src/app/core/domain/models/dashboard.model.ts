@@ -57,6 +57,24 @@ export interface CouponStatRow {
   isActive: boolean;
 }
 
+export interface PriceRefreshMetrics {
+  catalogTotal: number;
+  freshPrices24h: number;
+  stalePrices: number;
+  missingPrices: number;
+  catalogFreshPercent: number;
+  latestRunId: string | null;
+  latestRunStartedAtUtc: string | null;
+  runTotal: number;
+  runSucceeded: number;
+  runAvailabilityOnly: number;
+  runFailed: number;
+  runSkipped: number;
+  runPending: number;
+  runSuccessPercent: number;
+  runFailurePercent: number;
+}
+
 export interface OpsDashboardSnapshot {
   totalPharmacyProducts: number;
   masterProducts: number;
@@ -92,4 +110,5 @@ export interface OpsDashboardSnapshot {
   overlapDepth?: MultiPharmacyDepthPoint[];
   matchingBreakdown?: MatchingModelBreakdown;
   priceSpread?: MarketPriceSpreadMetrics;
+  priceRefresh?: PriceRefreshMetrics;
 }

@@ -14,7 +14,7 @@ const STALE_MS = 30 * 60_000;
 })
 export class HttpDashboardRepository implements DashboardRepository {
   private readonly http = inject(HttpClient);
-  private readonly cache = new TtlCache<OpsDashboardSnapshot>('se7en.admin.dashboard.v1', STALE_MS);
+  private readonly cache = new TtlCache<OpsDashboardSnapshot>('se7en.admin.dashboard.price-refresh.v2', STALE_MS);
 
   getSnapshot(): Observable<OpsDashboardSnapshot> {
     return this.cache.staleWhileRevalidate(

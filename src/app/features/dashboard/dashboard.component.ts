@@ -20,6 +20,7 @@ import { CouponStatsComponent } from '../../shared/components/charts/coupon-stat
 import { OverlapDepthChartComponent } from '../../shared/components/charts/overlap-depth-chart.component';
 import { MatchingBreakdownChartComponent } from '../../shared/components/charts/matching-breakdown-chart.component';
 import { MarketSpreadWidgetComponent } from '../../shared/components/charts/market-spread-widget.component';
+import { PriceRefreshChartComponent } from '../../shared/components/charts/price-refresh-chart.component';
 
 const PAGE_SIZE = 24;
 
@@ -40,7 +41,8 @@ const PAGE_SIZE = 24;
     CouponStatsComponent,
     OverlapDepthChartComponent,
     MatchingBreakdownChartComponent,
-    MarketSpreadWidgetComponent
+    MarketSpreadWidgetComponent,
+    PriceRefreshChartComponent
   ],
   templateUrl: './dashboard.component.html'
 })
