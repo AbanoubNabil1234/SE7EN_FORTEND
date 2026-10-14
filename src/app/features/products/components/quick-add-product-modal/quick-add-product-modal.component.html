@@ -426,10 +426,21 @@
                 </div>
               }
             } @else if (!loading()) {
-              <div class="py-12 text-center text-slate-400">
-                <i class="pi pi-box text-3xl mb-2 text-[#A68B6D]/60"></i>
-                <p class="text-sm font-semibold text-[#8A735C]">{{ 'quickAdd.startTyping' | t }}</p>
-              </div>
+              @if (!suggestionsLoading() && aiSuggestions().length > 0) {
+                <ng-container [ngTemplateOutlet]="nameSuggestions" />
+              } @else if (suggestionsLoading()) {
+                <div class="py-8 flex flex-col items-center justify-center gap-2 text-center">
+                  <i class="pi pi-spin pi-spinner text-xl text-[#C27938]"></i>
+                  <p class="text-xs font-bold text-[#8A735C]">
+                    {{ 'quickAddModal.loadingSuggestions' | t }}
+                  </p>
+                </div>
+              } @else {
+                <div class="py-12 text-center text-slate-400">
+                  <i class="pi pi-box text-3xl mb-2 text-[#A68B6D]/60"></i>
+                  <p class="text-sm font-semibold text-[#8A735C]">{{ 'quickAdd.startTyping' | t }}</p>
+                </div>
+              }
             }
 
             <ng-template #nameSuggestions>

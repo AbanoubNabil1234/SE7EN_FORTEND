@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -58,6 +58,18 @@ export class QuickAddProductModalComponent {
 
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
   private suggestionsLoadedFor: string | null = null;
+
+  constructor() {
+    // Load name suggestions immediately when the modal opens for a family —
+    // they are a passive helper; nothing links until the admin clicks Add.
+    effect(() => {
+      const open = this.isOpen();
+      const groupCode = this.family()?.groupCode;
+      if (open && groupCode) {
+        this.loadAiSuggestions(groupCode);
+      }
+    });
+  }
 
   readonly isRtl = computed(() => this.locale.locale() === 'ar');
 
