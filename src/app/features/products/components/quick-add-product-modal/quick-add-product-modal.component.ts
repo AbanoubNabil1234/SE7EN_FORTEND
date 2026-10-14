@@ -1,11 +1,10 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../../../core/domain/repositories/catalog-browse.repository';
 import {
   CatalogFamily,
-  FamilyAiSuggestion,
   GroupCodeMergeResult,
   PharmacyProductSearchHit,
   catalogFamilyTitle,
@@ -48,9 +47,7 @@ export class QuickAddProductModalComponent {
   readonly searchQuery = signal<string>('');
   readonly selectedPharmacy = signal<string>('all');
   readonly hits = signal<PharmacyProductSearchHit[]>([]);
-  readonly aiSuggestions = signal<FamilyAiSuggestion[]>([]);
   readonly loading = signal<boolean>(false);
-  readonly suggestionsLoading = signal<boolean>(false);
   readonly linkingId = signal<string | null>(null);
   readonly mergingCode = signal<string | null>(null);
   readonly hasSearched = signal<boolean>(false);
@@ -88,68 +85,6 @@ export class QuickAddProductModalComponent {
     if (!code || code === 'all') return null;
     return PHARMACY_BRANDS.find((b) => b.code.toLowerCase() === code.toLowerCase()) ?? null;
   });
-
-  private lastLoadedGroupCode: string | null = null;
-
-  constructor() {
-    effect(() => {
-      const open = this.isOpen();
-      const fam = this.family();
-      const code = fam?.groupCode;
-      if (open && code) {
-        if (this.lastLoadedGroupCode !== code) {
-          this.lastLoadedGroupCode = code;
-          this.loadAiSuggestions(code);
-        }
-      } else {
-        this.lastLoadedGroupCode = null;
-        this.aiSuggestions.set([]);
-        this.searchQuery.set('');
-        this.selectedPharmacy.set('all');
-        this.hits.set([]);
-        this.hasSearched.set(false);
-      }
-    });
-  }
-
-  loadAiSuggestions(groupCode: string): void {
-    this.suggestionsLoading.set(true);
-    this.catalog
-      .getFamilyAiSuggestions(groupCode, 8)
-      .pipe(finalize(() => this.suggestionsLoading.set(false)))
-      .subscribe({
-        next: (items) => this.aiSuggestions.set(items),
-        error: () => this.aiSuggestions.set([])
-      });
-  }
-
-  formatConfidence(conf: number): string {
-    if (conf == null) return '0%';
-    const pct = conf <= 1 ? Math.round(conf * 100) : Math.round(conf);
-    return `${pct}%`;
-  }
-
-  addSuggestionToFamily(sug: FamilyAiSuggestion): void {
-    const hit: PharmacyProductSearchHit = {
-      id: sug.id,
-      name: sug.name,
-      englishName: sug.englishName,
-      pharmacyCode: sug.pharmacyCode,
-      pharmacyName: sug.pharmacyName,
-      barcode: sug.barcode,
-      price: sug.price,
-      oldPrice: sug.oldPrice,
-      currency: sug.currency,
-      imageUrl: sug.imageUrl,
-      productUrl: sug.productUrl,
-      packSize: sug.packSize,
-      manualGroupCode: sug.manualGroupCode,
-      masterProductId: null
-    };
-    this.addHitToFamily(hit);
-    // Remove added item from local suggestions
-    this.aiSuggestions.update((list) => list.filter((s) => s.id !== sug.id));
-  }
 
   currentFamilyTitle(): string {
     return catalogFamilyTitle(this.family(), this.locale.locale());

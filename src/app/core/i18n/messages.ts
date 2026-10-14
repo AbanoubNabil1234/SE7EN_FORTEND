@@ -1601,15 +1601,6 @@ export const messagesAr: MessageTree = {
     unlinkSuccess: 'تم فصل المنتج وإلغاء ربطه من الكتالوج بنجاح',
     unlinkError: 'فشل فصل المنتج'
   },
-  quickAddModal: {
-    aiSuggestionsTitle: 'مقترحات الذكاء الاصطناعي لهذه العائلة',
-    aiSuggestionsSubtitle: 'أصناف قريبة تم ترشيحها تلقائياً للانضمام إلى العائلة',
-    suggestionsCount: 'مقترحات',
-    aiMatch: 'تطابق ذكي',
-    adding: 'جاري الإضافة...',
-    addToFamily: 'إضافة للعائلة',
-    loadingSuggestions: 'جاري جلب مقترحات الذكاء الاصطناعي لهذه العائلة...'
-  },
   charts: {
     matchingBreakdown: {
       title: 'محرك المطابقة والذكاء الاصطناعي',
@@ -3301,15 +3292,6 @@ export const messagesEn: MessageTree = {
     acceptError: 'Failed to accept match',
     unlinkSuccess: 'Match unlinked successfully',
     unlinkError: 'Failed to unlink match'
-  },
-  quickAddModal: {
-    aiSuggestionsTitle: 'AI Suggestions for this Family',
-    aiSuggestionsSubtitle: 'Candidate products automatically suggested to join this family',
-    suggestionsCount: 'suggestions',
-    aiMatch: 'AI match',
-    adding: 'Adding...',
-    addToFamily: 'Add to Family',
-    loadingSuggestions: 'Loading AI suggestions for this family...'
   },
   charts: {
     matchingBreakdown: {
