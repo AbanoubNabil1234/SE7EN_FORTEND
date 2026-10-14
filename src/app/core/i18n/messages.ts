@@ -1601,6 +1601,16 @@ export const messagesAr: MessageTree = {
     unlinkSuccess: 'تم فصل المنتج وإلغاء ربطه من الكتالوج بنجاح',
     unlinkError: 'فشل فصل المنتج'
   },
+  quickAddModal: {
+    nameSuggestionsTitle: 'اقتراحات بالاسم — مساعد بحث فقط',
+    nameSuggestionsSubtitle: 'أقرب الأسماء لهذا المنتج. مفيش ربط تلقائي — الإضافة بزرارك إنت بس',
+    noExactResults: 'مفيش نتايج مطابقة لبحثك — دي أقرب الأسماء عند باقي الصيدليات:',
+    suggestionsCount: 'اقتراح',
+    aiMatch: 'تشابه اسم',
+    adding: 'جاري الإضافة...',
+    addToFamily: 'إضافة للعائلة',
+    loadingSuggestions: 'جاري جلب أقرب الأسماء...'
+  },
   charts: {
     matchingBreakdown: {
       title: 'محرك المطابقة والذكاء الاصطناعي',
@@ -3292,6 +3302,16 @@ export const messagesEn: MessageTree = {
     acceptError: 'Failed to accept match',
     unlinkSuccess: 'Match unlinked successfully',
     unlinkError: 'Failed to unlink match'
+  },
+  quickAddModal: {
+    nameSuggestionsTitle: 'Name suggestions — search helper only',
+    nameSuggestionsSubtitle: 'Closest names for this product. Nothing links automatically — adding happens only via your click',
+    noExactResults: 'No exact matches for your search — these are the closest names at other pharmacies:',
+    suggestionsCount: 'suggestions',
+    aiMatch: 'name match',
+    adding: 'Adding...',
+    addToFamily: 'Add to Family',
+    loadingSuggestions: 'Loading closest names...'
   },
   charts: {
     matchingBreakdown: {

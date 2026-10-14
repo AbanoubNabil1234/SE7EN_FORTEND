@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../../../core/domain/repositories/catalog-browse.repository';
 import {
   CatalogFamily,
+  FamilyAiSuggestion,
   GroupCodeMergeResult,
   PharmacyProductSearchHit,
   catalogFamilyTitle,
@@ -47,13 +48,16 @@ export class QuickAddProductModalComponent {
   readonly searchQuery = signal<string>('');
   readonly selectedPharmacy = signal<string>('all');
   readonly hits = signal<PharmacyProductSearchHit[]>([]);
+  readonly aiSuggestions = signal<FamilyAiSuggestion[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly suggestionsLoading = signal<boolean>(false);
   readonly linkingId = signal<string | null>(null);
   readonly mergingCode = signal<string | null>(null);
   readonly hasSearched = signal<boolean>(false);
   readonly targetImageError = signal<boolean>(false);
 
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
+  private suggestionsLoadedFor: string | null = null;
 
   readonly isRtl = computed(() => this.locale.locale() === 'ar');
 
@@ -88,6 +92,51 @@ export class QuickAddProductModalComponent {
 
   currentFamilyTitle(): string {
     return catalogFamilyTitle(this.family(), this.locale.locale());
+  }
+
+  /**
+   * Name-based search helper. Loaded once per family, only from inside the
+   * search flow. Suggestions never link anything by themselves — the admin
+   * attaches an offer explicitly via the add button.
+   */
+  loadAiSuggestions(groupCode: string): void {
+    if (this.suggestionsLoadedFor === groupCode) return;
+    this.suggestionsLoadedFor = groupCode;
+    this.suggestionsLoading.set(true);
+    this.catalog
+      .getFamilyAiSuggestions(groupCode, 8)
+      .pipe(finalize(() => this.suggestionsLoading.set(false)))
+      .subscribe({
+        next: (items) => this.aiSuggestions.set(items),
+        error: () => this.aiSuggestions.set([])
+      });
+  }
+
+  formatConfidence(conf: number): string {
+    if (conf == null) return '0%';
+    const pct = conf <= 1 ? Math.round(conf * 100) : Math.round(conf);
+    return `${pct}%`;
+  }
+
+  addSuggestionToFamily(sug: FamilyAiSuggestion): void {
+    const hit: PharmacyProductSearchHit = {
+      id: sug.id,
+      name: sug.name,
+      englishName: sug.englishName,
+      pharmacyCode: sug.pharmacyCode,
+      pharmacyName: sug.pharmacyName,
+      barcode: sug.barcode,
+      price: sug.price,
+      oldPrice: sug.oldPrice,
+      currency: sug.currency,
+      imageUrl: sug.imageUrl,
+      productUrl: sug.productUrl,
+      packSize: sug.packSize,
+      manualGroupCode: sug.manualGroupCode,
+      masterProductId: null
+    };
+    this.addHitToFamily(hit);
+    this.aiSuggestions.update((list) => list.filter((s) => s.id !== sug.id));
   }
 
   targetImageUrl(): string | null {
@@ -161,10 +210,18 @@ export class QuickAddProductModalComponent {
     this.hits.set([]);
     this.hasSearched.set(false);
     this.loading.set(false);
+    this.aiSuggestions.set([]);
+    this.suggestionsLoading.set(false);
+    this.suggestionsLoadedFor = null;
   }
 
   private executeSearch(term: string, pharmacyCode: string = this.selectedPharmacy()): void {
     const code = pharmacyCode === 'all' ? null : pharmacyCode;
+    // Name-only helper: never for group-code or barcode lookups.
+    const groupCode = this.family()?.groupCode;
+    if (groupCode && !this.isGroupCodeQuery(term) && !/^\d{7,}$/.test(term)) {
+      this.loadAiSuggestions(groupCode);
+    }
     this.catalog
       .searchPharmacyProducts(term, code, 30)
       .pipe(finalize(() => this.loading.set(false)))
