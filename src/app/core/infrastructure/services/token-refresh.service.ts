@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from '../http/api-endpoints.constants';
 import { AuthTokenResponse, User } from '../../domain/models/user.model';
 import { NotificationService } from '../../services/notification.service';
 import { I18nService } from '../../i18n/i18n.service';
+import { AuthRepository } from '../../domain/repositories/auth.repository';
 
 const AUTH_USER_KEY = 'se7en_auth_user';
 
@@ -23,6 +24,7 @@ export class TokenRefreshService {
   private readonly router = inject(Router);
   private readonly notificationService = inject(NotificationService);
   private readonly i18n = inject(I18nService);
+  private readonly auth = inject(AuthRepository);
 
   private refreshInFlight$: Observable<string> | null = null;
   private isLoggingOut = false;
@@ -51,7 +53,7 @@ export class TokenRefreshService {
               refreshToken: res.refreshToken,
               refreshTokenExpiresAt: res.refreshTokenExpiresAt
             };
-            this.storage.setItem(AUTH_USER_KEY, updatedUser);
+            this.auth.syncSession(updatedUser);
             return res.accessToken;
           }),
           catchError((err) => {

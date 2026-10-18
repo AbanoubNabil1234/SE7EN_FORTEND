@@ -38,6 +38,8 @@ export interface ChangePasswordPayload {
 export abstract class AuthRepository {
   abstract login(credentials: LoginCredentials): Observable<User>;
   abstract getCurrentUser(): Observable<User | null>;
+  /** Synchronizes the reactive session state after a silent token refresh. */
+  abstract syncSession(user: User | null): void;
   abstract refreshMe(): Observable<User | null>;
   abstract refreshToken(): Observable<User>;
   abstract updateProfile(payload: UpdateProfilePayload): Observable<User>;

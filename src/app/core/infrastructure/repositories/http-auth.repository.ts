@@ -51,6 +51,10 @@ export class HttpAuthRepository extends AuthRepository {
     return this.currentUser.asObservable();
   }
 
+  syncSession(user: User | null): void {
+    this.storeUser(user);
+  }
+
   refreshMe(): Observable<User | null> {
     const cached = this.storage.getItem<User>(AUTH_USER_KEY);
     if (!cached?.token) {

@@ -59,6 +59,20 @@ it('updates existing user subscriptions when login and logout change the session
   assert.equal(user, null);
 });
 
+it('updates existing user subscriptions when a refreshed token is stored', () => {
+  const { auth } = setup();
+  let user;
+  auth.getCurrentUser().subscribe((value) => { user = value; });
+  const refreshed = {
+    id: '1', email: 'editor@example.test', firstName: 'Test', lastName: 'User',
+    fullName: 'Test User', role: 'CatalogEditor', permissions: ['products.view'],
+    token: 'new-token', refreshToken: 'new-refresh'
+  };
+  auth.syncSession(refreshed);
+  assert.equal(user.token, 'new-token');
+  assert.equal(user.refreshToken, 'new-refresh');
+});
+
 for (const [role, allowed] of [['CatalogEditor', true], ['Admin', true], ['Customer', false]]) {
   it(`login ${allowed ? 'accepts' : 'rejects'} ${role}`, () => {
     const { LoginComponent } = load('../../../features/auth/login/login.component.ts', {
