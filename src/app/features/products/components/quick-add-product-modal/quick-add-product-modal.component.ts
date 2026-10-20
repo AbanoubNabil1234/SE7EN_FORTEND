@@ -327,12 +327,21 @@ export class QuickAddProductModalComponent {
           this.familyMerged.emit(res);
           this.onClose();
         },
-        error: (err: { status?: number; error?: { code?: string; message?: string } }) => {
+        error: (err: {
+          status?: number;
+          error?: {
+            code?: string;
+            message?: string;
+            conflictingPharmacyName?: string | null;
+            conflictingPharmacyCode?: string | null;
+          };
+        }) => {
           if (err?.status === 409 || err?.error?.code === 'same_pharmacy_in_family') {
-            this.notifications.showError(
-              this.i18n.t('productsAdmin.mergeConflictError'),
-              this.i18n.t('productsAdmin.mergeGroup')
-            );
+            const pharmacyName = err?.error?.conflictingPharmacyName || err?.error?.conflictingPharmacyCode;
+            const body = pharmacyName
+              ? this.i18n.t('productsAdmin.mergeConflictNamed').replace('{0}', pharmacyName)
+              : this.i18n.t('productsAdmin.mergeConflictError');
+            this.notifications.showError(body, this.i18n.t('productsAdmin.mergeGroup'));
           } else {
             const msg = err?.error?.message || this.i18n.t('productsAdmin.mergeFailed');
             this.notifications.showError(msg, this.i18n.t('productsAdmin.mergeGroup'));
