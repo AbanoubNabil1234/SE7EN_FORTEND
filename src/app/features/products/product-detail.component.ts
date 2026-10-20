@@ -227,10 +227,6 @@ export class ProductDetailComponent implements OnInit {
       .unlinkOffer(id)
       .pipe(finalize(() => this.unlinkingId.set(null)))
       .subscribe({
-        next: () => {
-          const key = this.family()?.familyKey;
-          if (key) this.silentRefresh(key);
-        },
         error: () => {
           // Rollback
           this.family.set(prevFamily);

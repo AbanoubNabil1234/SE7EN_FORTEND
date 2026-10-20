@@ -498,9 +498,6 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.loadPharmacyDistribution();
-          if (family?.familyKey) {
-            this.refreshFamilyInPlace(family.familyKey, family, undefined, true);
-          }
         },
         error: () => {
           // Rollback on failure
