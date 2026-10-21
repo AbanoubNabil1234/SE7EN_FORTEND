@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -51,6 +52,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly dashboardRepo = inject(DashboardRepository);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly locale = inject(LocaleService);
 
   readonly activeTab = signal<'analytics' | 'catalog'>('analytics');
@@ -74,15 +76,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly productsError = signal(false);
 
   private queryTimer: ReturnType<typeof setTimeout> | null = null;
+  private statsTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly activeSlug = computed(() => this.subSlug() || this.primarySlug());
   readonly hasMore = computed(() => this.families().length < this.total());
 
   ngOnInit(): void {
     this.loadStats();
+    this.statsTimer = setInterval(() => {
+      if (document.visibilityState === 'visible' && this.activeTab() === 'analytics') this.loadStats(false, true);
+    }, 60_000);
   }
 
   ngOnDestroy(): void {
+    if (this.statsTimer) clearInterval(this.statsTimer);
     if (this.queryTimer) {
       clearTimeout(this.queryTimer);
       this.queryTimer = null;
@@ -96,23 +103,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadStats(forceRefresh = false): void {
+  loadStats(forceRefresh = false, silent = false): void {
+    if (this.snapshotLoading()) return;
     this.snapshotLoading.set(true);
-    this.snapshotError.set(false);
+    if (!silent) this.snapshotError.set(false);
     const req$ = forceRefresh
       ? this.dashboardRepo.refreshSnapshot()
       : this.dashboardRepo.getSnapshot();
 
     req$
-      .pipe(finalize(() => this.snapshotLoading.set(false)))
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.snapshotLoading.set(false)))
       .subscribe({
         next: (data) => {
           this.snapshot.set(data);
+          this.snapshotError.set(false);
           if (forceRefresh) {
             this.notifications.showSuccess(this.i18n.t('dashboard.statsRefreshSuccess'));
           }
         },
         error: () => {
+          if (silent && this.snapshot()) return;
           this.snapshotError.set(true);
           this.notifications.showError(this.i18n.t('dashboard.statsLoadError'));
         }

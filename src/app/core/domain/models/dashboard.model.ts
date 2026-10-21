@@ -65,6 +65,9 @@ export interface PriceRefreshMetrics {
   catalogFreshPercent: number;
   latestRunId: string | null;
   latestRunStartedAtUtc: string | null;
+  latestRunFinishedAtUtc?: string | null;
+  runChanged?: number;
+  runUnchanged?: number;
   runTotal: number;
   runSucceeded: number;
   runAvailabilityOnly: number;

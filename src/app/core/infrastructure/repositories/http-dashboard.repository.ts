@@ -1,32 +1,51 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { DashboardRepository } from '../../domain/repositories/dashboard.repository';
 import { OpsDashboardSnapshot } from '../../domain/models/dashboard.model';
 import { API_ENDPOINTS } from '../http/api-endpoints.constants';
-import { TtlCache } from '../http/ttl-cache';
-
-const FRESH_MS = 3 * 60_000;
-const STALE_MS = 30 * 60_000;
+import { PriceRefreshRepository } from '../../domain/repositories/price-refresh.repository';
+import { PriceRefreshRunRow } from '../../domain/models/price-refresh.model';
+import { applyDashboardCycle, isDashboardCycle } from '../../domain/models/dashboard-cycle';
+import { PermissionService } from '../../services/permission.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HttpDashboardRepository implements DashboardRepository {
   private readonly http = inject(HttpClient);
-  private readonly cache = new TtlCache<OpsDashboardSnapshot>('se7en.admin.dashboard.price-refresh.v2', STALE_MS);
+  private readonly refresh = inject(PriceRefreshRepository);
+  private readonly permissions = inject(PermissionService);
 
   getSnapshot(): Observable<OpsDashboardSnapshot> {
-    return this.cache.staleWhileRevalidate(
-      FRESH_MS,
-      this.http.get<OpsDashboardSnapshot>(API_ENDPOINTS.ADMIN_DASHBOARD)
+    // Keep the server's catalog cache; read the latest cycle from its ledger.
+    return this.http.get<OpsDashboardSnapshot>(API_ENDPOINTS.ADMIN_DASHBOARD).pipe(
+      switchMap((snapshot) => this.withLatestCycle(snapshot))
     );
   }
 
   refreshSnapshot(): Observable<OpsDashboardSnapshot> {
-    this.cache.clear();
     return this.http.post<OpsDashboardSnapshot>(`${API_ENDPOINTS.ADMIN_DASHBOARD}/refresh`, {}).pipe(
-      tap((snap) => this.cache.write(snap))
+      switchMap((snapshot) => this.withLatestCycle(snapshot))
+    );
+  }
+
+  private withLatestCycle(snapshot: OpsDashboardSnapshot): Observable<OpsDashboardSnapshot> {
+    if (!this.permissions.hasPermission('products.view')) return of(snapshot);
+    return this.latestCycle().pipe(
+      map((run) => applyDashboardCycle(snapshot, run)),
+      catchError(() => of(snapshot))
+    );
+  }
+
+  private latestCycle(page = 1): Observable<PriceRefreshRunRow | null> {
+    return this.refresh.getRuns({ page, pageSize: 10 }).pipe(
+      switchMap((result) => {
+        const latest = result.items.find(isDashboardCycle);
+        if (latest) return of(latest);
+        if (!result.items.length || page * result.pageSize >= result.totalCount) return of(null);
+        return this.latestCycle(page + 1);
+      })
     );
   }
 }

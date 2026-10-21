@@ -100,6 +100,10 @@
         </button>
       </div>
     } @else if (snapshot(); as snap) {
+      <p class="text-xs leading-relaxed text-slate-500 dark:text-neutral-400">
+        {{ 'dashboard.catalogCountHelp' | t }}
+        <span class="ms-2">{{ 'dashboard.catalogSnapshotAt' | t }}: {{ snap.generatedAtUtc | date: 'short' }}</span>
+      </p>
       <!-- Core Catalog KPI Cards Grid -->
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <app-kpi-card
