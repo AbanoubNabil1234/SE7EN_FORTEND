@@ -160,9 +160,8 @@
       </div>
 
       <!-- Market Spread & Savings Disparity Widget -->
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div class="grid grid-cols-1 gap-6">
         <app-price-refresh-chart [data]="snap.priceRefresh" mode="run" />
-        <app-price-refresh-chart [data]="snap.priceRefresh" mode="catalog" />
       </div>
 
       <app-market-spread-widget [data]="snap.priceSpread" />
