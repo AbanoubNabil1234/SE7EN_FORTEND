@@ -28,7 +28,7 @@ const STALE_MS = 30 * 60_000;
 @Injectable({ providedIn: 'root' })
 export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
   private readonly http = inject(HttpClient);
-  private readonly familiesCache = new TtlCache<CatalogFamilyPage>('se7en.admin.families.default.v6', STALE_MS);
+  private readonly familiesCache = new TtlCache<CatalogFamilyPage>('se7en.admin.families.default.v7', STALE_MS);
   private readonly brandsCache = new TtlCache<string[]>('se7en.admin.family-brands.v1', STALE_MS);
   private readonly structureCache = new TtlCache<CategoryNode[]>('se7en.admin.category-structure.v2', STALE_MS);
   private readonly treeCache = new TtlCache<CategoryNode[]>('se7en.admin.category-tree.v2', STALE_MS);
@@ -76,6 +76,7 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     page?: number;
     pageSize?: number;
     pharmacyCount?: number;
+    hiddenOnly?: boolean;
   }): Observable<CatalogFamilyPage> {
     let httpParams = new HttpParams()
       .set('page', String(params.page ?? 1))
@@ -96,6 +97,8 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     if (params.pharmacyCount != null && params.pharmacyCount > 0) {
       httpParams = httpParams.set('pharmacyCount', String(params.pharmacyCount));
     }
+
+    httpParams = httpParams.set('hiddenOnly', String(params.hiddenOnly === true));
 
     const request$ = this.http
       .get<Record<string, unknown>>(API_ENDPOINTS.CATALOG_FAMILIES, { params: httpParams })
@@ -125,14 +128,14 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     return request$;
   }
 
-  getPharmacyDistributionCounts(categorySlug?: string): Observable<{ counts: Record<number, number>; total: number }> {
-    const key = (categorySlug ?? '').trim().toLowerCase();
+  getPharmacyDistributionCounts(categorySlug?: string, hiddenOnly = false): Observable<{ counts: Record<number, number>; total: number }> {
+    const key = `${hiddenOnly}:${(categorySlug ?? '').trim().toLowerCase()}`;
     const cached = this.distributionCache.get(key);
     if (cached && Date.now() - cached.at < 60_000) {
       return of(cached.value);
     }
 
-    let params = new HttpParams();
+    let params = new HttpParams().set('hiddenOnly', String(hiddenOnly));
     if (categorySlug?.trim()) {
       params = params.set('categorySlug', categorySlug.trim());
     }
@@ -161,8 +164,10 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
     page?: number;
     pageSize?: number;
     pharmacyCount?: number;
+    hiddenOnly?: boolean;
   }): boolean {
     return (
+      params.hiddenOnly !== true &&
       (params.page ?? 1) === 1 &&
       (params.pageSize ?? 24) === 24 &&
       !params.categorySlug?.trim() &&

@@ -105,6 +105,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly primaryCategorySlug = signal<string>('');
   readonly subcategorySlug = signal<string>('');
   readonly pharmacyCount = signal<number | null>(null);
+  readonly hiddenOnly = signal(false);
   readonly pharmacyDistribution = signal<Record<number, number>>({});
   readonly distributionTotal = signal<number>(0);
   readonly query = signal('');
@@ -222,9 +223,20 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     this.scheduleReload(true);
   }
 
+  setHiddenOnly(hidden: boolean): void {
+    if (this.hiddenOnly() === hidden) return;
+    this.hiddenOnly.set(hidden);
+    this.families.set([]);
+    this.total.set(0);
+    this.pharmacyDistribution.set({});
+    this.distributionTotal.set(0);
+    this.catalog.clearCache();
+    this.scheduleReload(true);
+  }
+
   loadPharmacyDistribution(): void {
     const cat = this.categorySlug().trim() || undefined;
-    this.catalog.getPharmacyDistributionCounts(cat).subscribe({
+    this.catalog.getPharmacyDistributionCounts(cat, this.hiddenOnly()).subscribe({
       next: (res) => {
         this.pharmacyDistribution.set(res.counts);
         this.distributionTotal.set(res.total);
@@ -955,6 +967,8 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
             list.map((f) => (f.familyKey === key ? { ...f, isHidden: res.isHidden } : f))
           );
           this.catalog.clearCache();
+          this.reload();
+          this.loadPharmacyDistribution();
           this.notifications.showSuccess(
             this.i18n.t('productsAdmin.moderation.updated'),
             this.i18n.t(willHide ? 'productsAdmin.moderation.hide' : 'productsAdmin.moderation.show')
@@ -996,6 +1010,8 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
           this.families.update((list) => list.filter((f) => f.familyKey !== key));
           this.total.update((t) => Math.max(0, t - 1));
           this.catalog.clearCache();
+          this.reload();
+          this.loadPharmacyDistribution();
           this.notifications.showSuccess(
             this.i18n.t('productsAdmin.moderation.deleted'),
             this.familyTitle(family)
@@ -1050,6 +1066,8 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
             }))
           );
           this.catalog.clearCache();
+          this.reload();
+          this.loadPharmacyDistribution();
           this.notifications.showSuccess(
             this.i18n.t('productsAdmin.moderation.updated'),
             this.i18n.t(willHide ? 'productsAdmin.moderation.hide' : 'productsAdmin.moderation.show')
@@ -1232,7 +1250,8 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
         sort,
         page: targetPage,
         pageSize,
-        pharmacyCount: this.pharmacyCount() || undefined
+        pharmacyCount: this.pharmacyCount() || undefined,
+        hiddenOnly: this.hiddenOnly()
       })
       .pipe(
         finalize(() => {

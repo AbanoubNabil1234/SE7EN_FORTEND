@@ -35,10 +35,11 @@ class FakeTtlCache {
 function setup(postResponse) {
   const gets = [];
   const posts = [];
+  const requests = [];
   // Angular HttpClient methods are cold: the request fires on subscription, so the
   // counters must also tick on subscription (defer), not on call.
   const http = {
-    get: (_url, _opts) => defer(() => { gets.push(_url); return of({ data: [], page: 1, pageSize: 24, total: 0 }); }),
+    get: (_url, _opts) => defer(() => { gets.push(_url); requests.push({url: _url, params: _opts?.params?.map}); return of({ data: [], page: 1, pageSize: 24, total: 0 }); }),
     post: (_url, _body) => defer(() => { posts.push({ url: _url, body: _body }); return postResponse(); })
   };
   const { HttpCatalogBrowseRepository } = load('./http-catalog-browse.repository.ts', {
@@ -57,6 +58,7 @@ function setup(postResponse) {
     '../http/api-endpoints.constants': {
       API_ENDPOINTS: {
         CATALOG_FAMILIES: '/catalog/families',
+        CATALOG_FAMILIES_PHARMACY_COUNTS: '/catalog/families/pharmacy-counts',
         ADMIN_MASTER_PRICE_SYNC: (id) => `/admin/masters/${id}/price-sync`
       }
     },
@@ -64,7 +66,7 @@ function setup(postResponse) {
     '../http/ttl-cache': { TtlCache: FakeTtlCache },
     '../http/category-image': { compressCategoryImage: async (x) => x }
   });
-  return { repo: new HttpCatalogBrowseRepository(), gets, posts };
+  return { repo: new HttpCatalogBrowseRepository(), gets, posts, requests };
 }
 
 it('setPriceSyncEnabled posts the toggled value and invalidates warmed catalog caches', () => {
@@ -112,4 +114,18 @@ it('setPriceSyncEnabled surfaces HTTP failures as errors', () => {
     error: () => { failed = true; }
   });
   assert.ok(failed);
+});
+
+
+it('keeps normal and isolated list and distribution requests out of each other caches', () => {
+  const { repo, requests } = setup(() => of({}));
+  repo.listFamilies({}).subscribe(() => {});
+  repo.listFamilies({ hiddenOnly: true }).subscribe(() => {});
+  repo.getPharmacyDistributionCounts(undefined, false).subscribe(() => {});
+  repo.getPharmacyDistributionCounts(undefined, true).subscribe(() => {});
+  assert.equal(requests.length, 4);
+  assert.equal(requests[0].params.get('hiddenOnly'), 'false');
+  assert.equal(requests[1].params.get('hiddenOnly'), 'true');
+  assert.equal(requests[2].params.get('hiddenOnly'), 'false');
+  assert.equal(requests[3].params.get('hiddenOnly'), 'true');
 });

@@ -25,8 +25,9 @@ export abstract class CatalogBrowseRepository {
     page?: number;
     pageSize?: number;
     pharmacyCount?: number;
+    hiddenOnly?: boolean;
   }): Observable<CatalogFamilyPage>;
-  abstract getPharmacyDistributionCounts(categorySlug?: string): Observable<{ counts: Record<number, number>; total: number }>;
+  abstract getPharmacyDistributionCounts(categorySlug?: string, hiddenOnly?: boolean): Observable<{ counts: Record<number, number>; total: number }>;
   abstract getFamilyByKey(familyKey: string): Observable<CatalogFamily>;
   abstract linkByGroupCode(pharmacyProductId: string, code: string): Observable<GroupCodeLinkResult>;
   abstract unlinkOffer(pharmacyProductId: string): Observable<boolean>;
