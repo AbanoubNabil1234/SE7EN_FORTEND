@@ -276,7 +276,7 @@
                       [attr.aria-label]="'productsAdmin.copyCode' | t"
                       [title]="'productsAdmin.copyCode' | t"
                     >
-                      <i class="pi pi-copy text-xs" aria-hidden="true"></i>
+                      <i class="pi pi-copy text-sm" aria-hidden="true"></i>
                     </button>
                     <button
                       type="button"
@@ -285,7 +285,7 @@
                       [attr.aria-label]="'productsAdmin.mergeGroup' | t"
                       [title]="'productsAdmin.mergeGroup' | t"
                     >
-                      <i class="pi pi-link text-xs" aria-hidden="true"></i>
+                      <i class="pi pi-link text-sm" aria-hidden="true"></i>
                     </button>
                   }
                 </div>
@@ -313,11 +313,13 @@
                         @if (canManageProducts() && canEditBarcode(family)) {
                           <button
                             type="button"
-                            class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-[#181A1D] px-2.5 text-[11px] font-bold text-white hover:bg-black disabled:opacity-50"
+                            class="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#181A1D] text-white hover:bg-black disabled:opacity-50"
+                            [attr.aria-label]="'productsAdmin.saveBarcode' | t"
+                            [title]="'productsAdmin.saveBarcode' | t"
                             [disabled]="barcodeBusyId() === cardMasterId(family)"
                             (click)="saveBarcode(family)"
                           >
-                            {{ 'productsAdmin.saveBarcode' | t }}
+                            <i class="pi pi-save text-sm" aria-hidden="true"></i>
                           </button>
                         }
                       </div>

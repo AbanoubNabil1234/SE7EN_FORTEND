@@ -32,7 +32,9 @@
 .catalog-product-name { grid-area: name; }
 .catalog-product-name h2 { font-weight: 700; }
 .catalog-product-code { grid-area: code; min-width: 0; }
-.catalog-product-code > div { max-width: 18rem; }
+.catalog-product-code > div { max-width: 18rem; flex-wrap: nowrap; }
+.catalog-product-code input { flex: 1; width: 0; }
+.catalog-product-code button { flex-shrink: 0; width: 2.25rem; height: 2.25rem; }
 .catalog-product-barcode { grid-area: barcode; min-width: 0; }
 .catalog-field-label { display: block; margin-block-end: .375rem; font-size: .6875rem; font-weight: 600; color: #8a735c; }
 .catalog-product-price { grid-area: price; text-align: end; white-space: nowrap; }
@@ -51,9 +53,9 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   .catalog-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (min-width: 1440px) {
-  .catalog-product-row { grid-template-columns: 3rem minmax(12rem, 1fr) 9rem 12rem 6rem auto; grid-template-areas: 'image name code barcode price actions'; gap: .875rem; }
+  .catalog-product-row { grid-template-columns: 3rem minmax(0, 1fr) 11rem 11rem 5rem auto; grid-template-areas: 'image name code barcode price actions'; gap: .875rem; }
   .catalog-product-actions { flex-wrap: nowrap; }
-  .catalog-product-code > div { flex-wrap: wrap; }
+  .catalog-product-code, .catalog-product-barcode { align-self: start; }
   .catalog-filter-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 @media (max-width: 479px) {
