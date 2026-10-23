@@ -302,6 +302,28 @@
                         <span class="rounded bg-[#F8EEE2] px-2 py-0.5 text-[11px] font-bold text-[#8A735C]">
                           {{ hit.pharmacyName }}
                         </span>
+                        @if (hit.productUrl) {
+                          <a
+                            [href]="hit.productUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#C27938] hover:bg-[#F8EEE2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C27938]"
+                            [attr.aria-label]="('quickAdd.openProductPage' | t) + ': ' + hit.name"
+                            [title]="'quickAdd.openProductPage' | t"
+                          >
+                            <i class="pi pi-external-link text-sm" aria-hidden="true"></i>
+                          </a>
+                        } @else {
+                          <button
+                            type="button"
+                            disabled
+                            class="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#8A735C] opacity-50"
+                            [attr.aria-label]="'quickAdd.productPageUnavailable' | t"
+                            [title]="'quickAdd.productPageUnavailable' | t"
+                          >
+                            <i class="pi pi-external-link text-sm" aria-hidden="true"></i>
+                          </button>
+                        }
                         @if (hit.packSize) {
                           <span class="text-[11px] font-semibold text-[#8A735C]" dir="ltr">
                             {{ hit.packSize }}
