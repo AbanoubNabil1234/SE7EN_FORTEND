@@ -1005,6 +1005,20 @@ export const messagesAr: MessageTree = {
     emptyPreviewHint: 'الأقسام الفرعية تظهر هنا بالعربي أو الإنجليزي حسب لغة الواجهة.'
   },
   productsAdmin: {
+    usability: {
+      familyVisibility: 'ظهور العيلة',
+      deleteFamily: 'حذف العيلة',
+      intro: 'ابحث عن المنتجات، قارن عروض الصيدليات، وتحكّم في ظهورها.',
+      relatedPages: 'صفحات مرتبطة بالمنتجات',
+      catalog: 'الكتالوج',
+      filters: 'تصفية',
+      clearFilters: 'مسح الفلاتر',
+      activeFilters: 'الفلاتر المختارة',
+      removeFilter: 'إزالة الفلتر',
+      more: 'المزيد',
+      moreActions: 'إجراءات أخرى للمنتج',
+      noResults: 'لا توجد منتجات تطابق البحث والفلاتر المختارة. جرّب مسح الفلاتر.'
+    },
     badge: 'إدارة الكتالوج',
     title: 'إدارة المنتجات',
     subtitle: 'عرض العائلات وعروض الصيدليات وربط العروض برمز المجموعة G-….',
@@ -2736,6 +2750,20 @@ export const messagesEn: MessageTree = {
     emptyPreviewHint: 'Subcategories appear here in Arabic or English, matching the UI language.'
   },
   productsAdmin: {
+    usability: {
+      familyVisibility: 'Family visibility',
+      deleteFamily: 'Delete family',
+      intro: 'Find products, compare pharmacy offers, and manage their visibility.',
+      relatedPages: 'Related product pages',
+      catalog: 'Catalog',
+      filters: 'Filters',
+      clearFilters: 'Clear filters',
+      activeFilters: 'Active filters',
+      removeFilter: 'Remove filter',
+      more: 'More',
+      moreActions: 'More product actions',
+      noResults: 'No products match your search and filters. Try clearing the filters.'
+    },
     badge: 'Catalog ops',
     title: 'Product management',
     subtitle: 'Family cards, pharmacy offers, and durable G-…. group codes for manual linking.',

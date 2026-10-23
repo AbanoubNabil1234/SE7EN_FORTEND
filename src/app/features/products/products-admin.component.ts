@@ -38,9 +38,6 @@ import { LocaleService } from '../../core/services/locale.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { QuickAddProductModalComponent } from './components/quick-add-product-modal/quick-add-product-modal.component';
-import { MatchReviewComponent } from '../match-review/match-review.component';
-import { MatchReviewRepository } from '../../core/domain/repositories/match-review.repository';
-import { AiMatchReviewModalComponent } from './components/ai-match-review-modal/ai-match-review-modal.component';
 import { ProductImageModalComponent } from './components/product-image-modal/product-image-modal.component';
 import { PermissionService } from '../../core/services/permission.service';
 import { CatalogReloadScheduler } from './catalog-reload-scheduler';
@@ -66,15 +63,13 @@ interface CategoryOption {
     CurrencyPipe,
     DecimalPipe,
     QuickAddProductModalComponent,
-    MatchReviewComponent,
-    AiMatchReviewModalComponent,
     ProductImageModalComponent
   ],
-  templateUrl: './products-admin.component.html'
+  templateUrl: './products-admin.component.html',
+  styleUrl: './products-admin.component.css'
 })
 export class ProductsAdminComponent implements OnInit, OnDestroy {
   private readonly catalog = inject(CatalogBrowseRepository);
-  private readonly matchReviews = inject(MatchReviewRepository);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly notifications = inject(NotificationService);
@@ -85,17 +80,13 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   readonly canManageProducts = computed(() => this.permissionService.hasPermission('products.manage'));
   readonly canManageLinking = computed(() => this.permissionService.hasPermission('product_linking.manage'));
-  readonly canViewMatchReview = computed(() => this.permissionService.hasPermission('match_review.view'));
-  readonly canManageMatchReview = computed(() => this.permissionService.hasPermission('match_review.manage'));
   /** Moderation is strictly Admin: staff permissions (even wildcard) never qualify. */
   readonly canModerateCatalog = computed(() => isAdminRole(this.permissionService.currentRole()));
 
-  readonly activeTab = signal<'catalog' | 'model-review'>('catalog');
-  readonly modelReviewCount = signal<number>(3712);
-  readonly autoCatalogMatchCount = signal<number>(2312);
-
-  readonly isAiReviewModalOpen = signal<boolean>(false);
-  readonly selectedAiMatchId = signal<string | null>(null);
+  readonly activeFilterCount = computed(() =>
+    Number(!!this.categorySlug()) + Number(!!this.brand())
+    + Number(this.pharmacyCount() !== null) + Number(this.sort() !== 'pharmaciesDesc'));
+  readonly hasActiveFilters = computed(() => !!this.query().trim() || this.activeFilterCount() > 0);
 
   readonly isImageModalOpen = signal<boolean>(false);
   readonly imageTargetFamily = signal<CatalogFamily | null>(null);
@@ -204,6 +195,21 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     return dist[n] ?? 0;
   }
 
+  selectedCategoryLabel(): string {
+    const node = this.selectedPrimaryNode();
+    return node ? this.categoryLabel(node) : this.categorySlug();
+  }
+
+  subcategoryLabel(): string {
+    const node = this.currentSubcategories().find(c => c.slug === this.subcategorySlug());
+    return node ? this.categoryLabel(node) : this.subcategorySlug();
+  }
+
+  pharmacyCountLabelKey(): string {
+    return this.pharmacyCountOptions.find(o => o.count === this.pharmacyCount())?.labelKey
+      ?? 'productsAdmin.pharmacyCountAll';
+  }
+
   setPharmacyCount(count: number | null): void {
     if (this.pharmacyCount() === count) return;
     this.pharmacyCount.set(count);
@@ -227,6 +233,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   setHiddenOnly(hidden: boolean): void {
     if (this.hiddenOnly() === hidden) return;
     this.hiddenOnly.set(hidden);
+    this.pharmacyCount.set(null);
     this.families.set([]);
     this.total.set(0);
     this.pharmacyDistribution.set({});
@@ -274,21 +281,6 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const tabParam = this.route.snapshot.queryParamMap.get('tab')?.trim();
-    if (tabParam === 'model-review') {
-      this.activeTab.set('model-review');
-    }
-
-    this.matchReviews.listQueue({ take: 1 }).subscribe({
-      next: (res) => this.modelReviewCount.set(res.queueDepth),
-      error: () => {}
-    });
-
-    this.matchReviews.listQueue({ take: 1, mode: 'auto_98_99' }).subscribe({
-      next: (res) => this.autoCatalogMatchCount.set(res.queueDepth),
-      error: () => {}
-    });
-
     const slug = this.route.snapshot.queryParamMap.get('categorySlug')?.trim() ?? '';
     if (slug) {
       this.categorySlug.set(slug);
@@ -298,10 +290,6 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     this.loadPharmacyDistribution();
     this.reload();
     this.route.queryParamMap.pipe(skip(1)).subscribe((params) => {
-      const t = params.get('tab')?.trim();
-      if (t === 'model-review' || t === 'catalog') {
-        this.activeTab.set(t);
-      }
       const next = params.get('categorySlug')?.trim() ?? '';
       if (next === this.categorySlug()) return;
       this.categorySlug.set(next);
@@ -311,13 +299,15 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
     });
   }
 
-  switchTab(tab: 'catalog' | 'model-review'): void {
-    this.activeTab.set(tab);
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab },
-      queryParamsHandling: 'merge'
-    });
+  resetFilters(): void {
+    this.query.set('');
+    this.brand.set('');
+    this.primaryCategorySlug.set('');
+    this.subcategorySlug.set('');
+    this.categorySlug.set('');
+    this.pharmacyCount.set(null);
+    this.sort.set('pharmaciesDesc');
+    this.scheduleReload(true);
   }
 
   ngOnDestroy(): void {
@@ -400,10 +390,6 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   }
 
   readonly isAiMatch = isAiMatch;
-
-  hasAiMatch(family: CatalogFamily): boolean {
-    return family.packs.some((p) => p.offers.some((o) => isAiMatch(o)));
-  }
 
   familyTitle(family: CatalogFamily): string {
     return catalogFamilyTitle(family, this.locale.locale());
@@ -682,24 +668,6 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   onQuickProductRestored(result?: CatalogProductRestoreResult): void {
     this.loadPharmacyDistribution();
     this.reloadKeepingSelection();
-  }
-
-  openAiReviewModal(matchId?: string | null): void {
-    this.selectedAiMatchId.set(matchId ?? null);
-    this.isAiReviewModalOpen.set(true);
-  }
-
-  closeAiReviewModal(): void {
-    this.isAiReviewModalOpen.set(false);
-    this.selectedAiMatchId.set(null);
-  }
-
-  onAiMatchResolved(event: { matchId: string; action: 'accept' | 'reject' }): void {
-    this.modelReviewCount.update((c) => Math.max(0, c - 1));
-    if (event.action === 'accept') {
-      this.loadPharmacyDistribution();
-      this.reloadKeepingSelection();
-    }
   }
 
   openImageModal(family: CatalogFamily): void {
