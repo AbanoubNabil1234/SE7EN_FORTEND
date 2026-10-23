@@ -38,12 +38,14 @@
 
 
     </div>
-    <details class="catalog-filters">
-      <summary><i class="pi pi-filter" aria-hidden="true"></i>{{ 'productsAdmin.usability.filters' | t }}
+    <button type="button" class="catalog-filter-toggle"
+      [attr.aria-expanded]="filtersOpen()" aria-controls="catalog-filter-fields"
+      (click)="filtersOpen.set(!filtersOpen())"><i class="pi pi-filter" aria-hidden="true"></i>{{ 'productsAdmin.usability.filters' | t }}
         @if (activeFilterCount()) { <span class="filter-count">{{ activeFilterCount() }}</span> }
         <i class="pi pi-chevron-down filter-chevron" aria-hidden="true"></i>
-      </summary>
-      <div class="catalog-filter-grid">
+    </button>
+    @if (filtersOpen()) {
+      <div id="catalog-filter-fields" class="catalog-filter-grid">
               <!-- 2. Primary Category Dropdown -->
               <label class="block">
                 <span class="flex items-center text-[11px] font-bold text-[#A68B6D] h-4 mb-1.5 truncate">{{ 'productsAdmin.filterPrimaryCategory' | t }}</span>
@@ -124,7 +126,7 @@
                 </select>
               </label>
       </div>
-    </details>
+    }
     @if (hasActiveFilters()) {
       <div class="catalog-filter-chips" [attr.aria-label]="'productsAdmin.usability.activeFilters' | t">
         @if (categorySlug()) {

@@ -98,6 +98,7 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
   readonly subcategorySlug = signal<string>('');
   readonly pharmacyCount = signal<number | null>(null);
   readonly hiddenOnly = signal(false);
+  readonly filtersOpen = signal(false);
   readonly pharmacyDistribution = signal<Record<number, number>>({});
   readonly distributionTotal = signal<number>(0);
   readonly query = signal('');
