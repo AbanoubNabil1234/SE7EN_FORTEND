@@ -4,6 +4,7 @@ import {
   CatalogFamily,
   CatalogFamilyPage,
   CatalogModerationResult,
+  CatalogProductRestoreResult,
   FamilyAiSuggestion,
   GroupCodeLinkResult,
   GroupCodeMergeResult,
@@ -44,6 +45,10 @@ export abstract class CatalogBrowseRepository {
   abstract deleteFamily(familyKey: string): Observable<CatalogModerationResult>;
   abstract setProductVisibility(pharmacyProductId: string, isHidden: boolean): Observable<CatalogModerationResult>;
   abstract deleteProduct(pharmacyProductId: string): Observable<CatalogModerationResult>;
+  abstract restoreProduct(
+    pharmacyProductId: string,
+    targetGroupCode?: string | null
+  ): Observable<CatalogProductRestoreResult>;
   abstract setMasterBarcode(
     masterProductId: string,
     barcode: string

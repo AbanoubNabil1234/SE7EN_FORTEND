@@ -1115,6 +1115,12 @@
                               <span class="text-[#D0BEAA]">|</span>
                               <span class="font-extrabold text-[#181A1D]">{{ hit.price }} {{ hit.currency }}</span>
                             }
+                            @if (hit.isEffectivelyHidden) {
+                              <span class="inline-flex items-center gap-1 rounded bg-rose-50 border border-rose-200 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
+                                <i class="pi pi-eye-slash text-[10px] text-rose-500" aria-hidden="true"></i>
+                                <span>{{ 'quickAdd.restore.isolated' | t }}</span>
+                              </span>
+                            }
                           </div>
                         </div>
                       </div>

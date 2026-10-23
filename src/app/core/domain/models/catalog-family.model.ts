@@ -235,6 +235,17 @@ export interface GroupCodeMergeResult {
   errorMessage?: string | null;
 }
 
+export interface CatalogProductRestoreResult {
+  pharmacyProductId: string;
+  previousMasterProductId?: string | null;
+  masterProductId?: string | null;
+  groupCode?: string | null;
+  detachedFromHiddenFamily: boolean;
+  linked: boolean;
+  isHidden: boolean;
+  restoredAtUtc: string;
+}
+
 export interface PharmacyProductSearchHit {
   id: string;
   name: string;
@@ -250,6 +261,9 @@ export interface PharmacyProductSearchHit {
   packSize?: string | null;
   manualGroupCode?: string | null;
   masterProductId?: string | null;
+  isHidden?: boolean;
+  masterIsHidden?: boolean;
+  isEffectivelyHidden?: boolean;
 }
 
 export interface ProductPharmacyImageOption {

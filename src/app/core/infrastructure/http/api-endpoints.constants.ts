@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
   ADMIN_CATALOG_MODERATION_FAMILIES: '/api/v1/admin/catalog-moderation/families',
   ADMIN_CATALOG_MODERATION_PRODUCT_VISIBILITY: (id: string) => `/api/v1/admin/catalog-moderation/products/${id}/visibility`,
   ADMIN_CATALOG_MODERATION_PRODUCT: (id: string) => `/api/v1/admin/catalog-moderation/products/${id}`,
+  ADMIN_CATALOG_MODERATION_PRODUCT_RESTORE: (id: string) => `/api/v1/admin/catalog-moderation/products/${id}/restore`,
   AUTH_LOGIN: '/api/v1/auth/login',
   AUTH_ME: '/api/v1/auth/me',
   AUTH_LOGOUT: '/api/v1/auth/logout',

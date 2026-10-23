@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../core/domain/repositories/catalog-browse.repository';
-import { CatalogFamily, CatalogOffer, CatalogPack, PharmacyProductSearchHit, catalogFamilyTitle, catalogPackTitle, familyMatchType, isAiMatch, isConfirmedMatch } from '../../core/domain/models/catalog-family.model';
+import { CatalogFamily, CatalogOffer, CatalogPack, CatalogProductRestoreResult, PharmacyProductSearchHit, catalogFamilyTitle, catalogPackTitle, familyMatchType, isAiMatch, isConfirmedMatch } from '../../core/domain/models/catalog-family.model';
 import {
   pharmacyDisplayName,
   pharmacyLogo as resolvePharmacyLogo
@@ -309,6 +309,12 @@ export class ProductDetailComponent implements OnInit {
       this.addOfferLocally(newOffer);
     }
     const key = fam?.familyKey || event?.groupCode;
+    if (key) this.silentRefresh(key);
+  }
+
+  onQuickProductRestored(result?: CatalogProductRestoreResult): void {
+    const fam = this.family();
+    const key = fam?.familyKey;
     if (key) this.silentRefresh(key);
   }
 

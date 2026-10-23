@@ -8,6 +8,7 @@ import {
   CatalogFamily,
   CatalogOffer,
   CatalogPack,
+  CatalogProductRestoreResult,
   PharmacyProductSearchHit,
   catalogFamilyTitle,
   catalogListingKey,
@@ -674,6 +675,11 @@ export class ProductsAdminComponent implements OnInit, OnDestroy {
 
   onFamilyMerged(): void {
     this.closeQuickAdd();
+    this.loadPharmacyDistribution();
+    this.reloadKeepingSelection();
+  }
+
+  onQuickProductRestored(result?: CatalogProductRestoreResult): void {
     this.loadPharmacyDistribution();
     this.reloadKeepingSelection();
   }

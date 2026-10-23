@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { CatalogBrowseRepository } from '../../../../core/domain/repositories/catalog-browse.repository';
 import {
   CatalogFamily,
+  CatalogProductRestoreResult,
   FamilyAiSuggestion,
   GroupCodeMergeResult,
   PharmacyProductSearchHit,
@@ -16,9 +17,12 @@ import {
   PharmacyBrand,
   pharmacyLogo as resolvePharmacyLogo
 } from '../../../../core/domain/pharmacy-brands';
+import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { PermissionService } from '../../../../core/services/permission.service';
+import { isAdminRole } from '../../catalog-moderation';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProxyImgPipe } from '../../../../shared/pipes/proxy-img.pipe';
 
@@ -31,6 +35,8 @@ import { ProxyImgPipe } from '../../../../shared/pipes/proxy-img.pipe';
 export class QuickAddProductModalComponent {
   private readonly catalog = inject(CatalogBrowseRepository);
   private readonly notifications = inject(NotificationService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly permissionService = inject(PermissionService);
   private readonly i18n = inject(I18nService);
   private readonly locale = inject(LocaleService);
 
@@ -43,6 +49,7 @@ export class QuickAddProductModalComponent {
     groupCode: string;
     hit?: PharmacyProductSearchHit;
   }>();
+  readonly productRestored = output<CatalogProductRestoreResult>();
   readonly familyMerged = output<GroupCodeMergeResult>();
 
   readonly searchQuery = signal<string>('');
@@ -52,9 +59,23 @@ export class QuickAddProductModalComponent {
   readonly loading = signal<boolean>(false);
   readonly suggestionsLoading = signal<boolean>(false);
   readonly linkingId = signal<string | null>(null);
+  readonly restoringId = signal<string | null>(null);
   readonly mergingCode = signal<string | null>(null);
+  readonly isConfirming = signal<boolean>(false);
+  readonly activeActionId = signal<string | null>(null);
+
+  readonly isBusy = computed(() =>
+    this.isConfirming() ||
+    this.restoringId() !== null ||
+    this.linkingId() !== null ||
+    this.mergingCode() !== null ||
+    this.activeActionId() !== null
+  );
+
   readonly hasSearched = signal<boolean>(false);
   readonly targetImageError = signal<boolean>(false);
+
+  readonly canModerateCatalog = computed(() => isAdminRole(this.permissionService.currentRole()));
 
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
   private suggestionsLoadedFor: string | null = null;
@@ -257,6 +278,7 @@ export class QuickAddProductModalComponent {
   }
 
   addHitToFamily(hit: PharmacyProductSearchHit): void {
+    if (this.isBusy()) return;
     const fam = this.family();
     const groupCode = fam?.groupCode;
     if (!fam || !groupCode) {
@@ -300,7 +322,183 @@ export class QuickAddProductModalComponent {
       });
   }
 
+  async restoreHitOnly(hit: PharmacyProductSearchHit): Promise<void> {
+    if (!this.canModerateCatalog() || this.isBusy()) return;
+
+    this.isConfirming.set(true);
+    this.activeActionId.set(hit.id);
+
+    let confirmed = false;
+    try {
+      confirmed = await this.confirmDialog.confirm({
+        title: this.i18n.t('quickAdd.restore.catalog'),
+        message: this.i18n.t('quickAdd.restore.confirmCatalog'),
+        confirmText: this.i18n.t('common.confirm'),
+        cancelText: this.i18n.t('common.cancel'),
+        type: 'warning'
+      });
+    } catch {
+      confirmed = false;
+    } finally {
+      this.isConfirming.set(false);
+    }
+
+    if (!confirmed) {
+      this.activeActionId.set(null);
+      return;
+    }
+
+    this.restoringId.set(hit.id);
+    this.catalog
+      .restoreProduct(hit.id, null)
+      .pipe(
+        finalize(() => {
+          this.restoringId.set(null);
+          this.activeActionId.set(null);
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.notifications.showSuccess(
+            this.i18n.t('quickAdd.restore.success'),
+            hit.name
+          );
+          this.hits.update((list) =>
+            list.map((h) =>
+              h.id === hit.id
+                ? {
+                    ...h,
+                    isEffectivelyHidden: res.isHidden,
+                    isHidden: res.isHidden,
+                    masterIsHidden: false,
+                    masterProductId: res.masterProductId,
+                    manualGroupCode: res.groupCode
+                  }
+                : h
+            )
+          );
+          this.productRestored.emit(res);
+        },
+        error: () => {
+          this.notifications.showError(
+            this.i18n.t('quickAdd.restore.failed'),
+            this.i18n.t('quickAdd.restore.catalog')
+          );
+        }
+      });
+  }
+
+  async restoreAndLinkHit(hit: PharmacyProductSearchHit): Promise<void> {
+    if (!this.canModerateCatalog() || this.isBusy()) return;
+
+    const fam = this.family();
+    const groupCode = fam?.groupCode;
+    if (!fam || !groupCode) {
+      this.notifications.showError(
+        this.i18n.t('quickAdd.linkFailed'),
+        this.i18n.t('productsAdmin.link')
+      );
+      return;
+    }
+
+    if (fam.isHidden) {
+      this.notifications.showError(
+        this.i18n.t('quickAdd.restore.hiddenTarget'),
+        this.i18n.t('quickAdd.restore.andLink')
+      );
+      return;
+    }
+
+    if (this.existingPharmacyCodes().has(hit.pharmacyCode.trim().toLowerCase())) {
+      this.notifications.showError(
+        this.i18n.t('quickAdd.conflictPharmacy'),
+        this.i18n.t('quickAdd.restore.andLink')
+      );
+      return;
+    }
+
+    this.isConfirming.set(true);
+    this.activeActionId.set(hit.id);
+
+    const confirmMsg = this.i18n
+      .t('quickAdd.restore.confirmLink')
+      .replace('{0}', groupCode);
+
+    let confirmed = false;
+    try {
+      confirmed = await this.confirmDialog.confirm({
+        title: this.i18n.t('quickAdd.restore.andLink'),
+        message: confirmMsg,
+        confirmText: this.i18n.t('common.confirm'),
+        cancelText: this.i18n.t('common.cancel'),
+        type: 'warning'
+      });
+    } catch {
+      confirmed = false;
+    } finally {
+      this.isConfirming.set(false);
+    }
+
+    if (!confirmed) {
+      this.activeActionId.set(null);
+      return;
+    }
+
+    this.restoringId.set(hit.id);
+    this.catalog
+      .restoreProduct(hit.id, groupCode)
+      .pipe(
+        finalize(() => {
+          this.restoringId.set(null);
+          this.activeActionId.set(null);
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.notifications.showSuccess(
+            this.i18n.t('quickAdd.restore.linkSuccess'),
+            hit.name
+          );
+          const targetCode = res.groupCode || groupCode;
+          this.hits.update((list) =>
+            list.map((h) =>
+              h.id === hit.id
+                ? {
+                    ...h,
+                    isEffectivelyHidden: res.isHidden,
+                    isHidden: res.isHidden,
+                    masterIsHidden: false,
+                    masterProductId: res.masterProductId,
+                    manualGroupCode: targetCode
+                  }
+                : h
+            )
+          );
+          this.productRestored.emit(res);
+          this.productAdded.emit({
+            pharmacyProductId: hit.id,
+            groupCode: targetCode,
+            hit
+          });
+        },
+        error: (err: { status?: number; error?: { code?: string } }) => {
+          if (err?.status === 409 || err?.error?.code === 'same_pharmacy_in_family') {
+            this.notifications.showError(
+              this.i18n.t('quickAdd.conflictPharmacy'),
+              this.i18n.t('quickAdd.restore.andLink')
+            );
+          } else {
+            this.notifications.showError(
+              this.i18n.t('quickAdd.restore.failed'),
+              this.i18n.t('quickAdd.restore.andLink')
+            );
+          }
+        }
+      });
+  }
+
   mergeGroup(otherCode: string): void {
+    if (this.isBusy()) return;
     const fam = this.family();
     const currentCode = (fam?.groupCode || '').trim().toUpperCase();
     const sourceCode = (otherCode || '').trim().toUpperCase();

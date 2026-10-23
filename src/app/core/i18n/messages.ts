@@ -1173,7 +1173,19 @@ export const messagesAr: MessageTree = {
     allPharmaciesPresent: 'جميع الصيدليات مضافة بالفعل لهذا المنتج',
     missingCount: 'صيدليات ناقصة',
     conflictPharmacy: 'هذه الصيدلية تمتلك عرضاً بالفعل في هذه العائلة.',
-    linkFailed: 'تعذر إضافة المنتج للعائلة — يرجى التحقق وإعادة المحاولة.'
+    linkFailed: 'تعذر إضافة المنتج للعائلة — يرجى التحقق وإعادة المحاولة.',
+    restore: {
+      isolated: 'معزول',
+      catalog: 'إرجاع للكتالوج',
+      andLink: 'إرجاع وربط يدوي',
+      familyWarning: 'سيتم إرجاع هذا المنتج وحده وفصله عن العيلة المخفية، وباقي العيلة ستظل معزولة.',
+      confirmCatalog: 'هل أنت متأكد من إرجاع هذا المنتج للكتالوج دون ربطه بالمجموعة؟',
+      confirmLink: 'هل أنت متأكد من إرجاع هذا المنتج وربطه بالمجموعة {0}؟',
+      success: 'تم إرجاع المنتج للكتالوج',
+      linkSuccess: 'تم إرجاع المنتج وربطه بالعيلة المحددة',
+      failed: 'تعذر إرجاع المنتج، لم يتم حفظ أي تغيير',
+      hiddenTarget: 'اختر عيلة غير معزولة للربط'
+    }
   },
   productDetail: {
     back: 'رجوع للمنتجات',
@@ -2892,7 +2904,19 @@ export const messagesEn: MessageTree = {
     allPharmaciesPresent: 'All pharmacies are already added to this product',
     missingCount: 'missing pharmacies',
     conflictPharmacy: 'This pharmacy already has an offer in this family.',
-    linkFailed: 'Failed to add product to family — please check and retry.'
+    linkFailed: 'Failed to add product to family — please check and retry.',
+    restore: {
+      isolated: 'Isolated',
+      catalog: 'Return to catalog',
+      andLink: 'Return and link manually',
+      familyWarning: 'Only this product will be detached from the hidden family and restored. The remaining family will stay isolated.',
+      confirmCatalog: 'Are you sure you want to return this product to the catalog without linking it?',
+      confirmLink: 'Are you sure you want to restore and link this product to group {0}?',
+      success: 'Product returned to catalog',
+      linkSuccess: 'Product restored and linked to the selected family',
+      failed: 'Could not restore the product. No changes were saved.',
+      hiddenTarget: 'Select a visible family to link to'
+    }
   },
   productDetail: {
     back: 'Back to products',

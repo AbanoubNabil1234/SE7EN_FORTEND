@@ -11,6 +11,7 @@ import {
   CatalogModerationResult,
   CatalogOffer,
   CatalogPack,
+  CatalogProductRestoreResult,
   FamilyAiSuggestion,
   GroupCodeLinkResult,
   GroupCodeMergeResult,
@@ -294,7 +295,10 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
             productUrl: this.optionalText(r['productUrl'] ?? r['ProductUrl']),
             packSize: this.optionalText(r['packSize'] ?? r['PackSize']),
             manualGroupCode: this.optionalText(r['manualGroupCode'] ?? r['ManualGroupCode']),
-            masterProductId: this.optionalText(r['masterProductId'] ?? r['MasterProductId'])
+            masterProductId: this.optionalText(r['masterProductId'] ?? r['MasterProductId']),
+            isHidden: normalizeHiddenFlag(r['isHidden'] ?? r['IsHidden']),
+            masterIsHidden: normalizeHiddenFlag(r['masterIsHidden'] ?? r['MasterIsHidden']),
+            isEffectivelyHidden: normalizeHiddenFlag(r['isEffectivelyHidden'] ?? r['IsEffectivelyHidden'])
           }))
         )
       );
@@ -391,6 +395,43 @@ export class HttpCatalogBrowseRepository extends CatalogBrowseRepository {
         map((raw) => {
           this.clearModerationCaches();
           return this.normalizeModerationResult(raw, pharmacyProductId);
+        })
+      );
+  }
+
+  restoreProduct(
+    pharmacyProductId: string,
+    targetGroupCode?: string | null
+  ): Observable<CatalogProductRestoreResult> {
+    const payload = targetGroupCode && targetGroupCode.trim().length > 0
+      ? { targetGroupCode: targetGroupCode.trim() }
+      : {};
+    return this.http
+      .post<Record<string, unknown>>(
+        API_ENDPOINTS.ADMIN_CATALOG_MODERATION_PRODUCT_RESTORE(pharmacyProductId),
+        payload
+      )
+      .pipe(
+        map((raw) => {
+          this.clearModerationCaches();
+          return {
+            pharmacyProductId: String(raw['pharmacyProductId'] ?? raw['PharmacyProductId'] ?? pharmacyProductId),
+            previousMasterProductId: this.optionalText(
+              raw['previousMasterProductId'] ?? raw['PreviousMasterProductId'] ?? raw['oldMasterProductId'] ?? raw['OldMasterProductId']
+            ),
+            masterProductId: this.optionalText(raw['masterProductId'] ?? raw['MasterProductId']),
+            groupCode: this.optionalText(
+              raw['groupCode'] ?? raw['GroupCode'] ?? raw['targetGroupCode'] ?? raw['TargetGroupCode']
+            ),
+            detachedFromHiddenFamily: Boolean(
+              raw['detachedFromHiddenFamily'] ?? raw['DetachedFromHiddenFamily'] ?? raw['wasDetachedFromHiddenFamily'] ?? raw['WasDetachedFromHiddenFamily']
+            ),
+            linked: Boolean(raw['linked'] ?? raw['Linked']),
+            isHidden: normalizeHiddenFlag(
+              raw['isHidden'] ?? raw['IsHidden'] ?? raw['isEffectivelyHidden'] ?? raw['IsEffectivelyHidden']
+            ),
+            restoredAtUtc: String(raw['restoredAtUtc'] ?? raw['RestoredAtUtc'] ?? new Date().toISOString())
+          };
         })
       );
   }
