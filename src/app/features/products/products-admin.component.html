@@ -1,7 +1,8 @@
 <section class="catalog-page" [attr.dir]="locale.isRtl() ? 'rtl' : 'ltr'">
   <header class="catalog-header">
     <div>
-      <h1 class="text-balance text-2xl font-extrabold text-[#181A1D]">{{ 'productsAdmin.title' | t }}</h1>
+      <span class="catalog-header-badge"><span aria-hidden="true"></span>{{ 'productsAdmin.badge' | t }}</span>
+      <h1 class="mt-2 text-balance text-2xl font-extrabold text-[#181A1D] sm:text-3xl">{{ 'productsAdmin.title' | t }}</h1>
       <p class="mt-1 text-pretty text-sm text-[#8A735C]">{{ 'productsAdmin.usability.intro' | t }}</p>
     </div>
     <nav class="catalog-header-links" [attr.aria-label]="'productsAdmin.usability.relatedPages' | t">
@@ -20,7 +21,7 @@
     </div>
     <div class="catalog-search-row">
               <label class="catalog-search">
-                <span class="flex items-center text-[11px] font-bold text-[#A68B6D] h-4 mb-1.5 truncate">{{ 'productsAdmin.search' | t }}</span>
+                <span class="sr-only">{{ 'productsAdmin.search' | t }}</span>
                 <div class="relative w-full">
                   <i class="pi pi-search absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-[#A68B6D] pointer-events-none"></i>
                   <input
@@ -36,9 +37,6 @@
               </label>
 
 
-      @if (hasActiveFilters()) {
-        <button type="button" class="catalog-reset" (click)="resetFilters()">{{ 'productsAdmin.usability.clearFilters' | t }}</button>
-      }
     </div>
     <details class="catalog-filters">
       <summary><i class="pi pi-filter" aria-hidden="true"></i>{{ 'productsAdmin.usability.filters' | t }}
@@ -127,7 +125,7 @@
               </label>
       </div>
     </details>
-    @if (activeFilterCount()) {
+    @if (hasActiveFilters()) {
       <div class="catalog-filter-chips" [attr.aria-label]="'productsAdmin.usability.activeFilters' | t">
         @if (categorySlug()) {
           <button type="button" (click)="onPrimaryCategoryChange('')" [attr.aria-label]="('productsAdmin.usability.removeFilter' | t) + ': ' + ('productsAdmin.filterPrimaryCategory' | t)">
@@ -147,6 +145,7 @@
             {{ (sort() === 'nameAsc' ? 'productsAdmin.sortNameAsc' : 'productsAdmin.sortNameDesc') | t }}<i class="pi pi-times" aria-hidden="true"></i>
           </button>
         }
+        <button type="button" class="catalog-reset" (click)="resetFilters()">{{ 'productsAdmin.usability.clearFilters' | t }}</button>
       </div>
     }
   </div>
