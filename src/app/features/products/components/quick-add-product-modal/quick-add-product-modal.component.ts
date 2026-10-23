@@ -30,7 +30,8 @@ import { ProxyImgPipe } from '../../../../shared/pipes/proxy-img.pipe';
   selector: 'app-quick-add-product-modal',
   standalone: true,
   imports: [CommonModule, FormsModule, CurrencyPipe, TranslatePipe, ProxyImgPipe],
-  templateUrl: './quick-add-product-modal.component.html'
+  templateUrl: './quick-add-product-modal.component.html',
+  styleUrl: './quick-add-product-modal.component.css'
 })
 export class QuickAddProductModalComponent {
   private readonly catalog = inject(CatalogBrowseRepository);

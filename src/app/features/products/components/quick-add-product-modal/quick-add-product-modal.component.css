@@ -1,0 +1,4 @@
+.quick-add-result { display: flex; flex-direction: column; gap: .875rem; padding: 1rem; border: 1px solid #ede0d0; border-radius: .875rem; background: white; }
+.quick-add-result-actions { display: flex; flex-wrap: wrap; gap: .5rem; padding-block-start: .875rem; border-block-start: 1px solid #ede0d0; }
+.quick-add-result-actions > button { flex: 1 1 12rem; min-height: 2.75rem; justify-content: center; }
+.quick-add-result-title { overflow-wrap: anywhere; }

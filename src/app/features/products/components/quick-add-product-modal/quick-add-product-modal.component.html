@@ -265,10 +265,10 @@
               </div>
             } @else if (hits().length > 0) {
               @for (hit of hits(); track hit.id) {
-                <div class="pt-2.5 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border border-[#EDE0D0] bg-white hover:bg-[#FBF8F4] transition-colors">
+                <div class="quick-add-result">
                   <!-- Product Info with Product Image & Pharmacy Logo -->
                   <div class="flex items-start gap-3 min-w-0 flex-1">
-                    <div class="relative size-12 shrink-0 rounded-lg border border-[#E8D5BE] bg-white p-0.5 overflow-hidden flex items-center justify-center">
+                    <div class="relative size-16 shrink-0 rounded-xl border border-[#E8D5BE] bg-white p-1 overflow-hidden flex items-center justify-center">
                       @if (hit.imageUrl) {
                         <img
                           [src]="hit.imageUrl | proxyImg"
@@ -307,7 +307,7 @@
                             [href]="hit.productUrl"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#C27938] hover:bg-[#F8EEE2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C27938]"
+                            class="order-1 ms-auto inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#C27938] hover:bg-[#F8EEE2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C27938]"
                             [attr.aria-label]="('quickAdd.openProductPage' | t) + ': ' + hit.name"
                             [title]="'quickAdd.openProductPage' | t"
                           >
@@ -317,7 +317,7 @@
                           <button
                             type="button"
                             disabled
-                            class="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#8A735C] opacity-50"
+                            class="order-1 ms-auto inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#E8D5BE] text-[#8A735C] opacity-50"
                             [attr.aria-label]="'quickAdd.productPageUnavailable' | t"
                             [title]="'quickAdd.productPageUnavailable' | t"
                           >
@@ -331,12 +331,12 @@
                         }
                       </div>
 
-                      <h4 class="mt-1 text-sm font-bold text-[#181A1D] text-pretty">
+                      <h4 class="quick-add-result-title mt-1 text-sm font-bold leading-6 text-[#181A1D] text-pretty">
                         {{ hit.name }}
                       </h4>
 
                       @if (hit.englishName && hit.englishName !== hit.name) {
-                        <p class="text-xs text-[#8A735C] truncate" dir="ltr">
+                        <p class="mt-1 text-xs leading-5 text-[#8A735C] text-pretty" dir="ltr">
                           {{ hit.englishName }}
                         </p>
                       }
@@ -383,7 +383,7 @@
                   </div>
 
                   <!-- Actions Button(s) -->
-                  <div class="shrink-0 flex flex-wrap items-center gap-1.5 justify-end">
+                  <div class="quick-add-result-actions">
                     @if (hit.isEffectivelyHidden) {
                       @if (canModerateCatalog()) {
                         <button
